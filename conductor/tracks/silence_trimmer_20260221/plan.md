@@ -10,7 +10,7 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [ ] Task: Generate a "silence map" (timestamps of segments to remove)
+- [~] Task: Generate a "silence map" (timestamps of segments to remove)
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
