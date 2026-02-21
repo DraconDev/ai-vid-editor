@@ -6,10 +6,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Project Setup' (Protocol in workflow.md) (fc01231)
 
 ## Phase 2: Video Analysis (Silence Detection)
-- [~] Task: Implement silence detection logic using FFmpeg/AI analysis
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
+- [x] Task: Implement silence detection logic using FFmpeg/AI analysis (331fd46)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
 - [ ] Task: Generate a "silence map" (timestamps of segments to remove)
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
