@@ -10,10 +10,10 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [~] Task: Generate a "silence map" (timestamps of segments to remove)
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
+- [x] Task: Generate a "silence map" (timestamps of segments to remove) (77ebf35)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Video Analysis (Silence Detection)' (Protocol in workflow.md)
 
 ## Phase 3: Video Manipulation (Trimming)
