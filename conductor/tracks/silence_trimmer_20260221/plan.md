@@ -17,7 +17,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Video Analysis (Silence Detection)' (Protocol in workflow.md) (f1b6884)
 
 ## Phase 3: Video Manipulation (Trimming)
-- [ ] Task: Implement the trimming logic using the silence map
+- [~] Task: Implement the trimming logic using the silence map
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
