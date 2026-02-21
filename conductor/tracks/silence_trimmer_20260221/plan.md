@@ -2,7 +2,7 @@
 
 ## Phase 1: Foundation & Project Setup
 - [x] Task: Initialize Rust project and dependencies (Clap, FFmpeg wrappers, etc.) (2e80ec8)
-- [ ] Task: Implement basic CLI structure and argument parsing
+- [~] Task: Implement basic CLI structure and argument parsing
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Project Setup' (Protocol in workflow.md)
 
 ## Phase 2: Video Analysis (Silence Detection)
