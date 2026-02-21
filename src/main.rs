@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+pub mod analyzer;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
