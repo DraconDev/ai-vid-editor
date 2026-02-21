@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement core AI silence detection and trimming engine**
+- [~] **Track: Implement core AI silence detection and trimming engine**
   *Link: [./tracks/silence_trimmer_20260221/](./tracks/silence_trimmer_20260221/)*
