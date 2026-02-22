@@ -1,0 +1,71 @@
+# AI Video Editor Configuration
+# Save this file as:
+#   - ./ai-vid-editor.toml (project-specific)
+#   - ~/.config/ai-vid-editor/config.toml (user global)
+
+[silence]
+# Silence detection threshold in decibels
+# Lower values = more sensitive (detects quieter silences)
+# Common values: -25 (aggressive) to -40 (conservative)
+threshold_db = -30.0
+
+# Minimum silence duration to detect (seconds)
+# Silences shorter than this are ignored
+min_duration = 0.5
+
+# Padding around cuts (seconds)
+# Adds a small buffer before and after cuts for natural transitions
+padding = 0.1
+
+# How to handle silences: "cut" or "speedup"
+# - cut: Remove silences completely (default)
+# - speedup: Speed through silences instead of cutting
+mode = "cut"
+
+# Speed multiplier when mode = "speedup"
+# 4.0 = 4x speed through silent parts
+speedup_factor = 4.0
+
+# Only speedup silences longer than this (seconds)
+# Shorter silences are still cut completely
+min_silence_for_speedup = 0.5
+
+[filler_words]
+# Enable filler word removal (requires STT/Whisper)
+enabled = true
+
+# Words to detect and remove
+words = ["um", "uh", "ah", "er", "like", "you know"]
+
+# Padding around filler word cuts (seconds)
+padding = 0.05
+
+[audio]
+# Enable audio enhancement (loudness normalization + EQ)
+enhance = true
+
+# Target loudness in LUFS
+# YouTube standard is -14 LUFS
+# Podcasts often use -16 to -19 LUFS
+target_lufs = -14.0
+
+# Path to background music file (optional)
+# If set, music will be mixed with the video audio
+# music_file = "/path/to/background/music.mp3"
+
+# Volume level during speech (ducking)
+# 0.0 = mute, 1.0 = full volume, 0.2 = 20% volume
+duck_volume = 0.2
+
+[export]
+# Generate SRT subtitle file
+subtitles = false
+
+# Generate YouTube chapters file
+chapters = false
+
+# Generate FCPXML for DaVinci Resolve / Premiere Pro
+fcpxml = false
+
+# Generate EDL (Edit Decision List)
+edl = false

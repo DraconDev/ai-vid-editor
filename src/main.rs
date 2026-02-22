@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
-use anyhow::{Result, Context};
+use anyhow::Result;
 
 pub mod analyzer;
 pub mod editor;

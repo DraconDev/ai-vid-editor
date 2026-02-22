@@ -2,8 +2,9 @@ use std::path::{PathBuf, Path};
 use anyhow::{Result, Context};
 use std::fs;
 
-use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer, ProcessedSegment};
-use crate::editor::{VideoEditor, FfmpegEditor, calculate_keep_segments};
+use crate::analyzer::VideoAnalyzer;
+use crate::editor::VideoEditor;
+use crate::editor::calculate_keep_segments;
 use crate::utils::find_video_files;
 use crate::config::Config;
 

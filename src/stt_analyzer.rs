@@ -1,10 +1,11 @@
 use std::path::Path;
 use anyhow::{Result, Context};
 use candle_core::{Device, Tensor, DType};
-use candle_transformers::models::whisper::{self, Config, model::Whisper};
+use candle_transformers::models::whisper::{Config, model::Whisper};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
-use rand::{rngs::StdRng, SeedableRng, distr::Distribution};
+// Note: rand is currently unused but will be needed for beam search sampling
+// use rand::{rngs::StdRng, SeedableRng, distr::Distribution};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TranscriptSegment {
@@ -91,6 +92,7 @@ fn process_audio(_pcm: &[f32], config: &Config, device: &Device) -> Result<Tenso
     Ok(dummy_mel)
 }
 
+#[allow(dead_code)]
 struct Decoder {
     model: Whisper,
     tokenizer: Tokenizer,
