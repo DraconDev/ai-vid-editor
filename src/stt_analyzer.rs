@@ -50,7 +50,7 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
         // Load and decode audio using ffmpeg
         let audio_data = load_audio_as_f32(audio_path)?;
         
-        // Convert to Mel Spectrogram
+        // Convert to Mel Spectrogram (Placeholder for full DSP logic)
         let mel = process_audio(&audio_data, &config, &device)?;
 
         // Decode
@@ -82,11 +82,11 @@ fn load_audio_as_f32(path: &Path) -> Result<Vec<f32>> {
     Ok(samples)
 }
 
-// Minimal Audio/Mel processing (Placeholder for logic usually found in candle examples)
 fn process_audio(_pcm: &[f32], config: &Config, device: &Device) -> Result<Tensor> {
-    // TODO: Implement actual Mel Spectrogram calculation.
+    // TODO: Implement actual Mel Spectrogram calculation (FFT + Filters).
+    // This is a complex DSP step. For the structural implementation, we return a dummy tensor
+    // matching the expected input shape of the Whisper model to verify the pipeline.
     let n_mels = config.num_mel_bins;
-    // Dummy shape: [1, n_mels, 3000] (30s)
     let dummy_mel = Tensor::zeros((1, n_mels, 3000), DType::F32, device)?;
     Ok(dummy_mel)
 }
@@ -105,7 +105,7 @@ impl Decoder {
 
     fn decode(&mut self, _mel: &Tensor) -> Result<Vec<TranscriptSegment>> {
         // TODO: Implement Greedy/Beam search loop.
-        // For now, return dummy segment to verify pipeline integration.
+        // Return dummy segment to verify pipeline integration.
         Ok(vec![TranscriptSegment {
             start: 0.0,
             end: 5.0,
@@ -121,7 +121,6 @@ mod tests {
 
     #[test]
     fn test_transcription_structure() {
-        // Structural test only
         let _analyzer = CandleSttAnalyzer;
     }
 }
