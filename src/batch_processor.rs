@@ -33,22 +33,41 @@ impl DurationGetter for FfmpegDurationGetter {
 }
 
 
-pub fn process_single_file<A, E, D>(input_file: PathBuf, output_file: PathBuf, threshold: f32, duration: f32, padding: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
+pub fn process_single_file<A, E, D>(
+    input_file: PathBuf, 
+    output_file: PathBuf, 
+    config: &Config,
+    analyzer: &A, 
+    editor: &E, 
+    duration_getter: &D
+) -> Result<()>
 where
     A: VideoAnalyzer,
     E: VideoEditor,
     D: DurationGetter,
 {
     println!("Analyzing video: {:?}", input_file);
-    let silences = analyzer.detect_silence(&input_file, threshold, duration)
-        .context("Failed to detect silence")?;
+    println!("Silence mode: {:?}", config.silence.mode);
+    
+    let silences = analyzer.detect_silence(
+        &input_file, 
+        config.silence.threshold_db, 
+        config.silence.min_duration
+    ).context("Failed to detect silence")?;
 
     println!("Detected {} silent segments.", silences.len());
 
     let video_duration = duration_getter.get_duration(&input_file)?; 
     println!("Total duration: {}s", video_duration);
 
-    let processed_segments = calculate_keep_segments(&silences, video_duration, padding);
+    let processed_segments = calculate_keep_segments(
+        &silences, 
+        video_duration, 
+        config.silence.padding,
+        config.silence.mode,
+        config.silence.speedup_factor,
+        config.silence.min_silence_for_speedup,
+    );
     println!("Segments to process: {}", processed_segments.len());
 
     editor.trim_video(&input_file, &output_file, &processed_segments)
@@ -58,7 +77,14 @@ where
     Ok(())
 }
 
-pub fn process_batch_dir<A, E, D>(input_dir: PathBuf, output_dir: PathBuf, threshold: f32, duration: f32, padding: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
+pub fn process_batch_dir<A, E, D>(
+    input_dir: PathBuf, 
+    output_dir: PathBuf, 
+    config: &Config,
+    analyzer: &A, 
+    editor: &E, 
+    duration_getter: &D
+) -> Result<()>
 where
     A: VideoAnalyzer,
     E: VideoEditor,
@@ -66,6 +92,7 @@ where
 {
     println!("Processing directory: {:?}", input_dir);
     println!("Output directory: {:?}", output_dir);
+    println!("Silence mode: {:?}", config.silence.mode);
 
     fs::create_dir_all(&output_dir)
         .context(format!("Failed to create output directory {:?}", output_dir))?;
@@ -87,7 +114,7 @@ where
         let output_file = output_dir.join(file_name);
 
         println!("\n--- Processing file {}/{} : {:?} ---", index + 1, total_files, input_file);
-        match process_single_file(input_file.clone(), output_file.clone(), threshold, duration, padding, analyzer, editor, duration_getter) {
+        match process_single_file(input_file.clone(), output_file.clone(), config, analyzer, editor, duration_getter) {
             Ok(_) => {
                 println!("Successfully processed {:?}", input_file);
                 successful_files += 1;
@@ -161,13 +188,14 @@ mod tests {
         let mock_analyzer = MockFfmpegAnalyzer;
         let mock_editor = MockFfmpegEditor;
         let mock_duration_getter = MockDurationGetter;
+        
+        // Use default config
+        let config = Config::default();
 
         let result = process_batch_dir(
             input_dir.path().to_path_buf(),
             output_dir.path().to_path_buf(),
-            -30.0,
-            0.5,
-            0.1,
+            &config,
             &mock_analyzer,
             &mock_editor,
             &mock_duration_getter,
