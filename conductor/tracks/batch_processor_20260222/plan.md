@@ -1,7 +1,7 @@
 # Track Plan: batch_processor_20260222
 
 ## Phase 1: Directory Traversal & File Discovery
-- [ ] Task: Update CLI to accept directory paths for input and output
+- [~] Task: Update CLI to accept directory paths for input and output
 - [ ] Task: Implement recursive or flat file discovery for video formats
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)

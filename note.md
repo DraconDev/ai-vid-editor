@@ -1,0 +1,1 @@
+cut out um uh with stt detection like whisper bu
