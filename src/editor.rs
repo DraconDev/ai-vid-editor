@@ -1,4 +1,5 @@
 use crate::analyzer::Segment;
+use crate::stt_analyzer::TranscriptSegment;
 use std::path::Path;
 use anyhow::{Result, Context};
 use std::process::Command;
@@ -15,6 +16,39 @@ pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32
             });
         }
         current_pos = silence.end;
+    }
+
+    if current_pos < total_duration {
+        keep.push(Segment {
+            start: current_pos,
+            end: total_duration,
+        });
+    }
+
+    keep
+}
+
+pub fn calculate_keep_segments_from_transcript(
+    transcript: &[TranscriptSegment],
+    total_duration: f32,
+    filler_words: &[&str],
+) -> Vec<Segment> {
+    let mut keep = Vec::new();
+    let mut current_pos = 0.0;
+
+    for seg in transcript {
+        let is_filler = filler_words.iter().any(|&f| seg.text.to_lowercase().contains(f));
+        
+        if is_filler {
+            // Cut this segment
+            if seg.start > current_pos {
+                keep.push(Segment {
+                    start: current_pos,
+                    end: seg.start,
+                });
+            }
+            current_pos = seg.end;
+        }
     }
 
     if current_pos < total_duration {
@@ -111,6 +145,25 @@ mod tests {
         assert_eq!(keeps[0], Segment { start: 0.0, end: 1.0 });
         assert_eq!(keeps[1], Segment { start: 2.0, end: 4.0 });
         assert_eq!(keeps[2], Segment { start: 5.0, end: 10.0 });
+    }
+
+    #[test]
+    fn test_calculate_keep_segments_from_transcript() {
+        let transcript = vec![
+            TranscriptSegment { start: 1.0, end: 2.0, text: "hello".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 3.0, end: 4.0, text: "um".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 5.0, end: 6.0, text: "world".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 7.0, end: 8.0, text: "uh".to_string(), confidence: 1.0 },
+        ];
+        let duration = 10.0;
+        let filler_words = vec!["um", "uh"];
+        let keeps = calculate_keep_segments_from_transcript(&transcript, duration, &filler_words);
+
+        // Should keep: [0-3], [4-7], [8-10]
+        assert_eq!(keeps.len(), 3);
+        assert_eq!(keeps[0], Segment { start: 0.0, end: 3.0 });
+        assert_eq!(keeps[1], Segment { start: 4.0, end: 7.0 });
+        assert_eq!(keeps[2], Segment { start: 8.0, end: 10.0 });
     }
 
     #[test]
