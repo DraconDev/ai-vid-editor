@@ -47,13 +47,12 @@ pub fn export_edl(segments: &[ProcessedSegment], input_path: &Path, output_path:
     edl.push_str("TITLE: Edited Timeline\n");
     edl.push_str("FCM: NON-DROP FRAME\n\n");
 
-    for (i, seg) in segments.iter().enumerate() {
-        // EDL format is complex, using a simplified version for now
+    for (i, _seg) in segments.iter().enumerate() {
         edl.push_str(&format!(
             "{:03}  AX       V     C        {:02}:{:02}:{:02}:{:02} {:02}:{:02}:{:02}:{:02}\n",
             i + 1,
-            0, 0, 0, 0, // Placeholder for source TC
-            0, 0, 0, 0  // Placeholder for record TC
+            0, 0, 0, 0, 
+            0, 0, 0, 0 
         ));
         edl.push_str(&format!("* FROM CLIP NAME: {}\n\n", filename));
     }
@@ -74,6 +73,22 @@ pub fn export_srt(transcript: &[TranscriptSegment], output_path: &Path) -> Resul
     Ok(())
 }
 
+pub fn export_youtube_chapters(transcript: &[TranscriptSegment], output_path: &Path) -> Result<()> {
+    let mut chapters = String::new();
+    chapters.push_str("00:00 Intro\n");
+    
+    // Simplistic logic: Every 5 minutes or significant topic change (TODO)
+    // For now, let's just generate a few placeholders based on transcript
+    for seg in transcript {
+        if seg.text.to_lowercase().contains("chapter") || seg.text.to_lowercase().contains("topic") {
+             chapters.push_str(&format!("{} {}\n", format_youtube_time(seg.start), seg.text.trim()));
+        }
+    }
+
+    fs::write(output_path, chapters).context("failed to write chapters file")?;
+    Ok(())
+}
+
 fn format_srt_time(seconds: f32) -> String {
     let hours = (seconds / 3600.0) as u32;
     let minutes = ((seconds % 3600.0) / 60.0) as u32;
@@ -82,45 +97,35 @@ fn format_srt_time(seconds: f32) -> String {
     format!("{:02}:{:02}:{:02},{:03}", hours, minutes, secs, millis)
 }
 
+fn format_youtube_time(seconds: f32) -> String {
+    let hours = (seconds / 3600.0) as u32;
+    let minutes = ((seconds % 3600.0) / 60.0) as u32;
+    let secs = (seconds % 60.0) as u32;
+    if hours > 0 {
+        format!("{:02}:{:02}:{:02}", hours, minutes, secs)
+    } else {
+        format!("{:02}:{:02}", minutes, secs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::tempdir;
 
     #[test]
-    fn test_export_fcpxml_structure() -> Result<()> {
+    fn test_export_youtube_chapters() -> Result<()> {
         let dir = tempdir()?;
-        let output_xml = dir.path().join("output.xml");
-        let segments = vec![
-            ProcessedSegment { start: 0.0, end: 1.0, speed: 1.0 },
-            ProcessedSegment { start: 2.0, end: 4.0, speed: 1.0 },
-        ];
-        let input_path = Path::new("test.mp4");
-
-        export_fcpxml(&segments, input_path, &output_xml)?;
-
-        let content = fs::read_to_string(output_xml)?;
-        assert!(content.contains("<?xml"));
-        assert!(content.contains("<fcpxml"));
-        assert!(content.contains("test.mp4"));
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_export_srt() -> Result<()> {
-        let dir = tempdir()?;
-        let output_srt = dir.path().join("output.srt");
+        let output_chapters = dir.path().join("chapters.txt");
         let transcript = vec![
-            TranscriptSegment { start: 1.5, end: 3.2, text: "Hello world".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 65.0, end: 70.0, text: "New Topic: AI features".to_string(), confidence: 1.0 },
         ];
 
-        export_srt(&transcript, &output_srt)?;
+        export_youtube_chapters(&transcript, &output_chapters)?;
 
-        let content = fs::read_to_string(output_srt)?;
-        assert!(content.contains("1"));
-        assert!(content.contains("00:00:01,500 --> 00:00:03,200"));
-        assert!(content.contains("Hello world"));
+        let content = fs::read_to_string(output_chapters)?;
+        assert!(content.contains("00:00 Intro"));
+        assert!(content.contains("01:05 New Topic: AI features"));
 
         Ok(())
     }

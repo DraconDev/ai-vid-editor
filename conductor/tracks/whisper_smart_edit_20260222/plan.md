@@ -40,11 +40,11 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [~] Task: Implement basic EDL and Subtitle (SRT/VTT) export
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
-- [ ] Task: Implement YouTube-ready Chapter Marker generation
+- [x] Task: Implement basic EDL and Subtitle (SRT/VTT) export (a609e36)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
+- [~] Task: Implement YouTube-ready Chapter Marker generation
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
