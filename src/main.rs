@@ -7,6 +7,7 @@ pub mod editor;
 pub mod utils;
 pub mod batch_processor;
 pub mod stt_analyzer;
+pub mod exporter;
 
 use crate::batch_processor::{process_single_file, process_batch_dir, FfmpegDurationGetter};
 use crate::analyzer::FfmpegAnalyzer;

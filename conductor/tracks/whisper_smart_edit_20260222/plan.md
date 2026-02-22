@@ -36,7 +36,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Smart Audio Mixing & Normalization' (Protocol in workflow.md) (ed7cf01)
 
 ## Phase 4: Professional Exports (XML/EDL/Chapters)
-- [ ] Task: Implement DaVinci Resolve / Premiere compatible XML export
+- [~] Task: Implement DaVinci Resolve / Premiere compatible XML export
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
