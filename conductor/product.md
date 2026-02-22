@@ -22,5 +22,8 @@ To empower creators (especially for YouTube and long-form content) with an intel
 
 ## Key Features (V1)
 - **AI Smart Trimming:** Automatically detect and remove silences, filler words, or redundant segments based on AI analysis.
+- **STT-Driven Editing:** Precision cuts of filler words (um/uh) and smart speed-up of segments based on high-quality transcripts.
+- **Smart Audio Mixing:** Automatically duck background music during speech and normalize loudness for platforms like YouTube.
+- **Professional Exports:** Seamlessly transition to DaVinci Resolve or Premiere Pro with XML/EDL exports, and generate YouTube-ready chapters.
 - **CLI Interface:** A powerful and flexible command-line interface for local processing.
 - **Logic-Centric Processing:** Modular architecture focused on video analysis and manipulation engines.
