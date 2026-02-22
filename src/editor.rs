@@ -4,19 +4,20 @@ use std::path::Path;
 use anyhow::{Result, Context};
 use std::process::Command;
 
-pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32) -> Vec<ProcessedSegment> {
+pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32, padding: f32) -> Vec<ProcessedSegment> {
     let mut processed = Vec::new();
     let mut current_pos = 0.0;
 
     for silence in silence_segments {
-        if silence.start > current_pos {
+        let keep_end = (silence.start + padding).min(total_duration);
+        if keep_end > current_pos {
             processed.push(ProcessedSegment {
                 start: current_pos,
-                end: silence.start,
+                end: keep_end,
                 speed: 1.0,
             });
         }
-        current_pos = silence.end;
+        current_pos = (silence.end - padding).max(0.0);
     }
 
     if current_pos < total_duration {
@@ -34,6 +35,7 @@ pub fn calculate_keep_segments_from_transcript(
     transcript: &[TranscriptSegment],
     total_duration: f32,
     filler_words: &[&str],
+    padding: f32,
 ) -> Vec<ProcessedSegment> {
     let mut processed = Vec::new();
     let mut current_pos = 0.0;
@@ -42,15 +44,16 @@ pub fn calculate_keep_segments_from_transcript(
         let is_filler = filler_words.iter().any(|&f| seg.text.to_lowercase().contains(f));
         
         if is_filler {
-            // Cut this segment
-            if seg.start > current_pos {
+            // Cut this segment with padding
+            let keep_end = (seg.start + padding).min(total_duration);
+            if keep_end > current_pos {
                 processed.push(ProcessedSegment {
                     start: current_pos,
-                    end: seg.start,
+                    end: keep_end,
                     speed: 1.0,
                 });
             }
-            current_pos = seg.end;
+            current_pos = (seg.end - padding).max(0.0);
         }
     }
 
@@ -150,16 +153,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_keep_segments() {
+    fn test_calculate_keep_segments_with_padding() {
         let silences = vec![
-            Segment { start: 1.0, end: 2.0 },
-            Segment { start: 4.0, end: 5.0 },
+            Segment { start: 2.0, end: 3.0 },
         ];
         let duration = 10.0;
-        let processed = calculate_keep_segments(&silences, duration);
+        let padding = 0.1;
+        let processed = calculate_keep_segments(&silences, duration, padding);
 
-        assert_eq!(processed.len(), 3);
-        assert_eq!(processed[0].speed, 1.0);
+        // Keep until 2.1 (start + padding), then resume from 2.9 (end - padding)
+        assert_eq!(processed.len(), 2);
+        assert_eq!(processed[0].start, 0.0);
+        assert_eq!(processed[0].end, 2.1);
+        assert_eq!(processed[1].start, 2.9);
+        assert_eq!(processed[1].end, 10.0);
     }
 
     #[test]

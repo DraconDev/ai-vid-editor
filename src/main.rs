@@ -34,6 +34,10 @@ pub struct Cli {
     /// Minimum silence duration in seconds
     #[arg(short, long, default_value_t = 0.5)]
     pub duration: f32,
+
+    /// Padding in seconds to add around cuts
+    #[arg(short, long, default_value_t = 0.1)]
+    pub padding: f32,
 }
 
 fn main() -> Result<()> {
@@ -46,11 +50,11 @@ fn main() -> Result<()> {
     if let Some(input_file) = cli.input_file {
         // Single file processing logic
         let output_file = cli.output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified for single file processing"))?;
-        process_single_file(input_file, output_file, cli.threshold, cli.duration, &analyzer, &editor, &duration_getter)?;
+        process_single_file(input_file, output_file, cli.threshold, cli.duration, cli.padding, &analyzer, &editor, &duration_getter)?;
     } else if let Some(input_dir) = cli.input_dir {
         // Batch processing logic
         let output_dir = cli.output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified for batch processing"))?;
-        process_batch_dir(input_dir, output_dir, cli.threshold, cli.duration, &analyzer, &editor, &duration_getter)?;
+        process_batch_dir(input_dir, output_dir, cli.threshold, cli.duration, cli.padding, &analyzer, &editor, &duration_getter)?;
     } else {
         anyhow::bail!("Either an input file or an input directory must be specified.");
     }

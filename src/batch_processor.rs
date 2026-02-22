@@ -32,7 +32,7 @@ impl DurationGetter for FfmpegDurationGetter {
 }
 
 
-pub fn process_single_file<A, E, D>(input_file: PathBuf, output_file: PathBuf, threshold: f32, duration: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
+pub fn process_single_file<A, E, D>(input_file: PathBuf, output_file: PathBuf, threshold: f32, duration: f32, padding: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
 where
     A: VideoAnalyzer,
     E: VideoEditor,
@@ -47,7 +47,7 @@ where
     let video_duration = duration_getter.get_duration(&input_file)?; 
     println!("Total duration: {}s", video_duration);
 
-    let processed_segments = calculate_keep_segments(&silences, video_duration);
+    let processed_segments = calculate_keep_segments(&silences, video_duration, padding);
     println!("Segments to process: {}", processed_segments.len());
 
     editor.trim_video(&input_file, &output_file, &processed_segments)
@@ -57,7 +57,7 @@ where
     Ok(())
 }
 
-pub fn process_batch_dir<A, E, D>(input_dir: PathBuf, output_dir: PathBuf, threshold: f32, duration: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
+pub fn process_batch_dir<A, E, D>(input_dir: PathBuf, output_dir: PathBuf, threshold: f32, duration: f32, padding: f32, analyzer: &A, editor: &E, duration_getter: &D) -> Result<()>
 where
     A: VideoAnalyzer,
     E: VideoEditor,
@@ -86,7 +86,7 @@ where
         let output_file = output_dir.join(file_name);
 
         println!("\n--- Processing file {}/{} : {:?} ---", index + 1, total_files, input_file);
-        match process_single_file(input_file.clone(), output_file.clone(), threshold, duration, analyzer, editor, duration_getter) {
+        match process_single_file(input_file.clone(), output_file.clone(), threshold, duration, padding, analyzer, editor, duration_getter) {
             Ok(_) => {
                 println!("Successfully processed {:?}", input_file);
                 successful_files += 1;
@@ -158,6 +158,7 @@ mod tests {
             output_dir.path().to_path_buf(),
             -30.0,
             0.5,
+            0.1,
             &mock_analyzer,
             &mock_editor,
             &mock_duration_getter,

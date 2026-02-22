@@ -14,11 +14,11 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [~] Task: Implement "Smart Speed-up" option for nonsense/low-confidence segments
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
-- [ ] Task: Add configurable padding logic to all cuts
+- [x] Task: Implement "Smart Speed-up" option for nonsense/low-confidence segments (69537d4)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
+- [~] Task: Add configurable padding logic to all cuts
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
