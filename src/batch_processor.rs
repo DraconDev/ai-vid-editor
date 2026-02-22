@@ -7,6 +7,8 @@ use crate::editor::VideoEditor;
 use crate::editor::calculate_keep_segments;
 use crate::utils::find_video_files;
 use crate::config::Config;
+use crate::exporter;
+use crate::analyzer::ProcessedSegment;
 
 // Trait for getting video duration
 pub trait DurationGetter {
@@ -71,10 +73,101 @@ where
     );
     println!("Segments to process: {}", processed_segments.len());
 
-    editor.trim_video(&input_file, &output_file, &processed_segments)
-        .context("Failed to trim video")?;
+    // Step 1: Trim video (silence removal/speedup)
+    let trimmed_file = if config.audio.enhance || config.audio.music_file.is_some() {
+        // Use temp file if we have post-processing
+        output_file.with_extension("trimmed.mp4")
+    } else {
+        output_file.clone()
+    };
 
-    println!("Successfully saved trimmed video to: {:?}", output_file);
+    editor.trim_video(&input_file, &trimmed_file, &processed_segments)
+        .context("Failed to trim video")?;
+    println!("Trimmed video saved to: {:?}", trimmed_file);
+
+    // Step 2: Audio enhancement (optional)
+    let enhanced_file = if config.audio.enhance {
+        let enhanced = output_file.with_extension("enhanced.mp4");
+        println!("Enhancing audio...");
+        editor.enhance_audio(&trimmed_file, &enhanced)
+            .context("Failed to enhance audio")?;
+        
+        // Clean up trimmed file if it was temp
+        if trimmed_file != output_file {
+            let _ = fs::remove_file(&trimmed_file);
+        }
+        enhanced
+    } else {
+        trimmed_file
+    };
+
+    // Step 3: Music mixing (optional)
+    let final_file = if let Some(ref music_path) = config.audio.music_file {
+        let with_music = output_file.clone();
+        println!("Mixing with background music: {:?}", music_path);
+        
+        // For now, use empty transcript (no ducking based on speech)
+        // TODO: Integrate with STT for speech-aware ducking
+        let empty_transcript = vec![];
+        editor.mix_with_music(&enhanced_file, music_path, &with_music, &empty_transcript)
+            .context("Failed to mix music")?;
+        
+        // Clean up enhanced file if it was temp
+        if enhanced_file != output_file {
+            let _ = fs::remove_file(&enhanced_file);
+        }
+        with_music
+    } else {
+        // Rename to final output if needed
+        if enhanced_file != output_file {
+            fs::rename(&enhanced_file, &output_file)?;
+        }
+        output_file.clone()
+    };
+
+    // Step 4: Export additional files
+    export_additional_files(&input_file, &final_file, &processed_segments, config)?;
+
+    println!("Successfully saved final video to: {:?}", final_file);
+    Ok(())
+}
+
+/// Export additional files (SRT, chapters, FCPXML, EDL) based on config
+fn export_additional_files(
+    input_file: &Path,
+    output_file: &Path,
+    segments: &[ProcessedSegment],
+    config: &Config,
+) -> Result<()> {
+    let base_path = output_file.with_extension("");
+
+    if config.export.subtitles {
+        let srt_path = format!("{}.srt", base_path.display());
+        println!("Exporting SRT subtitles to: {}", srt_path);
+        // TODO: Need actual transcript for subtitles
+        // For now, create placeholder
+        fs::write(&srt_path, "# Subtitles will be generated when STT is complete\n")?;
+    }
+
+    if config.export.chapters {
+        let chapters_path = format!("{}.chapters.txt", base_path.display());
+        println!("Exporting YouTube chapters to: {}", chapters_path);
+        // TODO: Need actual transcript for chapters
+        fs::write(&chapters_path, "00:00 Intro\n")?;
+    }
+
+    if config.export.fcpxml {
+        let fcpxml_path = format!("{}.fcpxml", base_path.display());
+        println!("Exporting FCPXML to: {}", fcpxml_path);
+        exporter::export_fcpxml(segments, input_file, Path::new(&fcpxml_path))?;
+    }
+
+    if config.export.edl {
+        let edl_path = format!("{}.edl", base_path.display());
+        println!("Exporting EDL to: {}", edl_path);
+        exporter::export_edl(segments, input_file, Path::new(&edl_path))?;
+    }
+
     Ok(())
 }
 
