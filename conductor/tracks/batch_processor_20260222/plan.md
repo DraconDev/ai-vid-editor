@@ -12,5 +12,5 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
 - [x] Task: Integrate silence trimmer engine into the batch loop
-- [~] Task: Add progress reporting and a final batch summary output
+- [x] Task: Add progress reporting and a final batch summary output (4fb140b)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Batch Execution Logic' (Protocol in workflow.md)
