@@ -5,9 +5,11 @@ use anyhow::{Result, Context};
 pub mod analyzer;
 pub mod editor;
 pub mod utils;
+pub mod batch_processor;
 
-use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer};
-use crate::editor::{VideoEditor, FfmpegEditor, calculate_keep_segments};
+use crate::batch_processor::{process_single_file, process_batch_dir, FfmpegDurationGetter};
+use crate::analyzer::FfmpegAnalyzer;
+use crate::editor::FfmpegEditor;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -36,61 +38,21 @@ pub struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    let analyzer = FfmpegAnalyzer;
+    let editor = FfmpegEditor;
+    let duration_getter = FfmpegDurationGetter;
+
     if let Some(input_file) = cli.input_file {
         // Single file processing logic
-        let output_file = cli.output_file.context("Output file must be specified for single file processing")?;
-        process_single_file(input_file, output_file, cli.threshold, cli.duration)?;
+        let output_file = cli.output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified for single file processing"))?;
+        process_single_file(input_file, output_file, cli.threshold, cli.duration, &analyzer, &editor, &duration_getter)?;
     } else if let Some(input_dir) = cli.input_dir {
         // Batch processing logic
-        let output_dir = cli.output_dir.context("Output directory must be specified for batch processing")?;
-        process_batch_dir(input_dir, output_dir, cli.threshold, cli.duration)?;
+        let output_dir = cli.output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified for batch processing"))?;
+        process_batch_dir(input_dir, output_dir, cli.threshold, cli.duration, &analyzer, &editor, &duration_getter)?;
     } else {
         anyhow::bail!("Either an input file or an input directory must be specified.");
     }
 
     Ok(())
-}
-
-fn process_single_file(input_file: PathBuf, output_file: PathBuf, threshold: f32, duration: f32) -> Result<()> {
-    println!("Analyzing video: {:?}", input_file);
-    let analyzer = FfmpegAnalyzer;
-    let silences = analyzer.detect_silence(&input_file, threshold, duration)
-        .context("Failed to detect silence")?;
-
-    println!("Detected {} silent segments.", silences.len());
-
-    let duration = get_video_duration(&input_file)?;
-    println!("Total duration: {}s", duration);
-
-    let keep_segments = calculate_keep_segments(&silences, duration);
-    println!("Segments to keep: {}", keep_segments.len());
-
-    let editor = FfmpegEditor;
-    editor.trim_video(&input_file, &output_file, &keep_segments)
-        .context("Failed to trim video")?;
-
-    println!("Successfully saved trimmed video to: {:?}", output_file);
-    Ok(())
-}
-
-fn process_batch_dir(input_dir: PathBuf, output_dir: PathBuf, threshold: f32, duration: f32) -> Result<()> {
-    println!("Processing directory: {:?}", input_dir);
-    println!("Output directory: {:?}", output_dir);
-    // TODO: Implement file discovery and batch processing loop
-    anyhow::bail!("Batch processing not yet implemented.");
-}
-
-fn get_video_duration(path: &std::path::Path) -> Result<f32> {
-    let output = std::process::Command::new("ffprobe")
-        .args([
-            "-v", "error",
-            "-show_entries", "format=duration",
-            "-of", "default=noprint_wrappers=1:nokey=1",
-            path.to_str().context("invalid path")?,
-        ])
-        .output()
-        .context("failed to execute ffprobe")?;
-
-    let val_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    val_str.parse::<f32>().context("failed to parse duration")
 }
