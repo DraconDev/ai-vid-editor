@@ -10,13 +10,14 @@ A command-line tool for automated video editing using AI. Designed for content c
 - **Speedup Mode** - Speed through silences instead of cutting (4x default)
 - **Batch Processing** - Process entire directories of videos
 - **TOML Configuration** - Customizable settings via config files
+- **Audio Enhancement** - Loudness normalization + EQ (`--enhance`)
+- **Music Mixing** - Auto-ducking background music (`--music`)
 - **Export Formats** - FCPXML, EDL, SRT subtitles, YouTube chapters
 
 ### 🔧 In Progress
 
-- **Whisper STT** - Speech-to-text for filler word detection
-- **Audio Enhancement** - Loudness normalization + EQ
-- **Music Mixing** - Auto-ducking background music
+- **Whisper STT** - Speech-to-text for filler word detection (model loads, decode TODO)
+- **Filler Word Removal** - Cut "um", "uh", etc. (needs STT completion)
 
 ## Installation
 
@@ -66,6 +67,12 @@ ai-vid-editor -i input.mp4 -o output.mp4 -c config.toml
 | `-d, --duration <SEC>` | Min silence duration (default: 0.5) |
 | `-p, --padding <SEC>` | Padding around cuts (default: 0.1) |
 | `-s, --speedup` | Speed up silences instead of cutting |
+| `-E, --enhance` | Enable audio enhancement (loudnorm + EQ) |
+| `-m, --music <FILE>` | Background music file (auto-ducking) |
+| `--export-srt` | Generate SRT subtitles |
+| `--export-chapters` | Generate YouTube chapters |
+| `--export-fcpxml` | Generate FCPXML for DaVinci/Premiere |
+| `--export-edl` | Generate EDL (Edit Decision List) |
 | `--generate-config` | Output a sample config file |
 
 ## Configuration
