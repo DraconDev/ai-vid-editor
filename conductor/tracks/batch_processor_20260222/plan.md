@@ -8,9 +8,9 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Directory Traversal & File Discovery' (Protocol in workflow.md) (b5440dc)
 
 ## Phase 2: Batch Execution Logic
-- [~] Task: Implement the batch processing loop and file-level error handling
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-- [ ] Task: Integrate silence trimmer engine into the batch loop
+- [x] Task: Implement the batch processing loop and file-level error handling (e163637)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+- [x] Task: Integrate silence trimmer engine into the batch loop
 - [ ] Task: Add progress reporting and a final batch summary output
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Batch Execution Logic' (Protocol in workflow.md)
