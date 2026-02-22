@@ -25,7 +25,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Intelligent Editing (Semantic Cuts)' (Protocol in workflow.md) (9320dd4)
 
 ## Phase 3: Smart Audio Mixing & Normalization
-- [ ] Task: Implement STT-driven music ducking (leveraging transcript timestamps)
+- [~] Task: Implement STT-driven music ducking (leveraging transcript timestamps)
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage

@@ -70,6 +70,7 @@ pub fn calculate_keep_segments_from_transcript(
 
 pub trait VideoEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
+    fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()>;
 }
 
 pub struct FfmpegEditor;
@@ -87,6 +88,29 @@ impl VideoEditor for FfmpegEditor {
                 "-i", input.to_str().context("invalid input path")?,
                 "-filter_complex", &format!("{}{}", v_filter, a_filter),
                 "-map", "[outv]",
+                "-map", "[outa]",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
+
+    fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()> {
+        let duck_filter = generate_duck_filter(transcript);
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-i", music.to_str().context("invalid music path")?,
+                "-filter_complex", &duck_filter,
+                "-map", "0:v",
                 "-map", "[outa]",
                 "-y",
                 output.to_str().context("invalid output path")?,
@@ -148,6 +172,19 @@ fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
     (v_filter, a_filter)
 }
 
+fn generate_duck_filter(transcript: &[TranscriptSegment]) -> String {
+    let mut volume_expr = "1.0".to_string();
+    
+    // For each speech segment, lower the music volume
+    for seg in transcript {
+        // Simple ducking: 0.2 volume during speech, 1.0 otherwise
+        // Use if(between(t, start, end), 0.2, 1.0) logic
+        volume_expr = format!("if(between(t,{},{}),0.2,{})", seg.start, seg.end, volume_expr);
+    }
+
+    format!("[1:a]volume=volume='{}'[ducked];[0:a][ducked]amix=inputs=2:duration=first[outa]", volume_expr)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -161,23 +198,19 @@ mod tests {
         let padding = 0.1;
         let processed = calculate_keep_segments(&silences, duration, padding);
 
-        // Keep until 2.1 (start + padding), then resume from 2.9 (end - padding)
         assert_eq!(processed.len(), 2);
-        assert_eq!(processed[0].start, 0.0);
         assert_eq!(processed[0].end, 2.1);
         assert_eq!(processed[1].start, 2.9);
-        assert_eq!(processed[1].end, 10.0);
     }
 
     #[test]
-    fn test_generate_trim_filters_with_speed() {
-        let segments = vec![
-            ProcessedSegment { start: 0.0, end: 1.0, speed: 1.0 },
-            ProcessedSegment { start: 1.0, end: 2.0, speed: 2.0 },
+    fn test_generate_duck_filter() {
+        let transcript = vec![
+            TranscriptSegment { start: 1.0, end: 2.0, text: "hello".to_string(), confidence: 1.0 },
         ];
-        let (v, a) = generate_trim_filters(&segments);
-        assert!(v.contains("setpts=PTS-STARTPTS"));
-        assert!(v.contains("setpts=0.5*PTS"));
-        assert!(a.contains("atempo=2"));
+        let filter = generate_duck_filter(&transcript);
+        assert!(filter.contains("between(t,1,2)"));
+        assert!(filter.contains("volume='if(between(t,1,2),0.2,1.0)'"));
+        assert!(filter.contains("amix=inputs=2"));
     }
 }

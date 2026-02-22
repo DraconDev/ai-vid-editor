@@ -128,6 +128,10 @@ mod tests {
             fs::File::create(output)?;
             Ok(())
         }
+
+        fn mix_with_music(&self, _input: &Path, _music: &Path, _output: &Path, _transcript: &[crate::stt_analyzer::TranscriptSegment]) -> Result<()> {
+            Ok(())
+        }
     }
 
     // Mock DurationGetter for testing purposes
