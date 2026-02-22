@@ -29,10 +29,10 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [~] Task: Integrate FFmpeg `loudnorm` and basic EQ for voice enhancement
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
+- [x] Task: Integrate FFmpeg `loudnorm` and basic EQ for voice enhancement (cfebc5b)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Smart Audio Mixing & Normalization' (Protocol in workflow.md)
 
 ## Phase 4: Professional Exports (XML/EDL/Chapters)
