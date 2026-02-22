@@ -50,6 +50,30 @@ pub struct Cli {
     #[arg(short = 's', long)]
     pub speedup: bool,
 
+    /// Enable audio enhancement (loudness normalization + EQ)
+    #[arg(short = 'E', long)]
+    pub enhance: bool,
+
+    /// Path to background music file (enables auto-ducking)
+    #[arg(short = 'm', long, value_name = "FILE")]
+    pub music: Option<PathBuf>,
+
+    /// Generate SRT subtitles
+    #[arg(long)]
+    pub export_srt: bool,
+
+    /// Generate YouTube chapters
+    #[arg(long)]
+    pub export_chapters: bool,
+
+    /// Generate FCPXML for DaVinci Resolve/Premiere Pro
+    #[arg(long)]
+    pub export_fcpxml: bool,
+
+    /// Generate EDL (Edit Decision List)
+    #[arg(long)]
+    pub export_edl: bool,
+
     /// Generate a default config file
     #[arg(long)]
     pub generate_config: bool,
@@ -67,7 +91,7 @@ fn main() -> Result<()> {
     }
 
     // Load config with precedence: CLI > project config > global config > defaults
-    let config = Config::load_with_precedence(
+    let mut config = Config::load_with_precedence(
         cli.config.as_deref(),
         cli.threshold,
         cli.duration,
@@ -75,10 +99,37 @@ fn main() -> Result<()> {
         cli.speedup,
     )?;
 
+    // Apply CLI overrides for new flags
+    if cli.enhance {
+        config.audio.enhance = true;
+    }
+    if let Some(ref music_path) = cli.music {
+        config.audio.music_file = Some(music_path.clone());
+    }
+    if cli.export_srt {
+        config.export.subtitles = true;
+    }
+    if cli.export_chapters {
+        config.export.chapters = true;
+    }
+    if cli.export_fcpxml {
+        config.export.fcpxml = true;
+    }
+    if cli.export_edl {
+        config.export.edl = true;
+    }
+
     println!("Loaded configuration:");
     println!("  Silence threshold: {} dB", config.silence.threshold_db);
     println!("  Silence mode: {:?}", config.silence.mode);
     println!("  Padding: {}s", config.silence.padding);
+    println!("  Audio enhance: {}", config.audio.enhance);
+    if let Some(ref music) = config.audio.music_file {
+        println!("  Background music: {:?}", music);
+    }
+    println!("  Export: SRT={} Chapters={} FCPXML={} EDL={}", 
+        config.export.subtitles, config.export.chapters, 
+        config.export.fcpxml, config.export.edl);
 
     let analyzer = FfmpegAnalyzer;
     let editor = FfmpegEditor;
