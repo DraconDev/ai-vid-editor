@@ -6,8 +6,8 @@
 - [x] Silence detection via ffmpeg `silencedetect`
 - [x] Automatic trimming of silent segments
 - [x] Configurable threshold (dB), min duration, and padding
-- [x] **NEW: Speedup mode** - speed through silences instead of cutting
-- [x] **NEW: TOML configuration file support**
+- [x] Speedup mode - speed through silences instead of cutting
+- [x] TOML configuration file support
 
 ### Video Processing
 - [x] Single file processing
@@ -15,19 +15,19 @@
 - [x] Support for MP4, MOV, AVI formats
 
 ### Audio
-- [x] Audio enhancement (loudnorm + EQ) - `enhance_audio()` implemented
+- [x] Audio enhancement (loudnorm + EQ) - `--enhance` flag
 - [x] Loudness normalization targeting -14 LUFS (YouTube standard)
-- [x] Music ducking filter generation - `mix_with_music()` implemented
+- [x] Music mixing with auto-ducking - `--music <file>` flag
 
 ### Export
-- [x] FCPXML export for DaVinci Resolve / Premiere Pro
-- [x] EDL (Edit Decision List) export
-- [x] SRT subtitle export
-- [x] YouTube chapters export
+- [x] FCPXML export for DaVinci Resolve / Premiere Pro - `--export-fcpxml`
+- [x] EDL (Edit Decision List) export - `--export-edl`
+- [x] SRT subtitle export - `--export-srt` (placeholder, needs STT)
+- [x] YouTube chapters export - `--export-chapters` (placeholder, needs STT)
 
 ---
 
-## 🔧 Partially Implemented (Needs Wiring)
+## 🔧 Partially Implemented (Needs Work)
 
 ### STT / Whisper Integration
 - [x] Model loading from HuggingFace Hub
@@ -40,24 +40,12 @@
 - [x] `calculate_keep_segments_from_transcript()` implemented
 - [ ] **TODO: Wire to CLI** (needs STT to work first)
 
-### Audio Mixing
-- [x] `mix_with_music()` function implemented
-- [x] Duck filter generation based on transcript
-- [ ] **TODO: Wire to CLI** (needs `--music` flag)
-
-### Audio Enhancement
-- [x] `enhance_audio()` function implemented
-- [ ] **TODO: Wire to CLI** (needs `--enhance` flag)
-
 ---
 
 ## ❌ Not Yet Implemented
 
 ### CLI Flags Needed
-- [ ] `--enhance` - Enable audio enhancement
-- [ ] `--music <file>` - Add background music with auto-ducking
 - [ ] `--remove-fillers` - Enable filler word removal (needs STT)
-- [ ] `--export-srt`, `--export-fcpxml`, `--export-chapters` flags
 
 ### Pipeline Composition
 - [ ] "Full auto" mode that chains all operations
@@ -124,8 +112,6 @@ ai-vid-editor --generate-config > ai-vid-editor.toml
 
 ## Priority TODO
 
-1. **Wire audio enhancement to CLI** - Add `--enhance` flag
-2. **Wire music mixing to CLI** - Add `--music <file>` flag
-3. **Complete Whisper STT** - Implement mel spectrogram + decode loop
-4. **Wire filler word removal** - Add `--remove-fillers` flag
-5. **Wire export options** - Add export flags to CLI
+1. **Complete Whisper STT** - Implement mel spectrogram + decode loop
+2. **Wire filler word removal** - Add `--remove-fillers` flag (needs STT)
+3. **Preset profiles** - Add "youtube-podcast", "tiktok-fast" presets

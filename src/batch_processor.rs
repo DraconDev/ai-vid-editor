@@ -283,8 +283,9 @@ mod tests {
         let mock_editor = MockFfmpegEditor;
         let mock_duration_getter = MockDurationGetter;
         
-        // Use default config
-        let config = Config::default();
+        // Use config with audio enhancement disabled (mock doesn't create files)
+        let mut config = Config::default();
+        config.audio.enhance = false;
 
         let result = process_batch_dir(
             input_dir.path().to_path_buf(),
