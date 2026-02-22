@@ -5,6 +5,7 @@ use std::fs;
 use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer, ProcessedSegment};
 use crate::editor::{VideoEditor, FfmpegEditor, calculate_keep_segments};
 use crate::utils::find_video_files;
+use crate::config::Config;
 
 // Trait for getting video duration
 pub trait DurationGetter {

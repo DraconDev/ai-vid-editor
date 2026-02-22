@@ -269,17 +269,87 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_keep_segments_with_padding() {
+    fn test_calculate_keep_segments_cut_mode() {
         let silences = vec![
             Segment { start: 2.0, end: 3.0 },
         ];
         let duration = 10.0;
         let padding = 0.1;
-        let processed = calculate_keep_segments(&silences, duration, padding);
+        let processed = calculate_keep_segments(
+            &silences, duration, padding, SilenceMode::Cut, 4.0, 0.5
+        );
 
         assert_eq!(processed.len(), 2);
         assert_eq!(processed[0].end, 2.1);
         assert_eq!(processed[1].start, 2.9);
+        assert_eq!(processed[0].speed, 1.0);
+        assert_eq!(processed[1].speed, 1.0);
+    }
+
+    #[test]
+    fn test_calculate_keep_segments_speedup_mode() {
+        let silences = vec![
+            Segment { start: 2.0, end: 4.0 }, // 2 second silence
+        ];
+        let duration = 10.0;
+        let padding = 0.1;
+        let processed = calculate_keep_segments(
+            &silences, duration, padding, SilenceMode::Speedup, 4.0, 0.5
+        );
+
+        // Should have 3 segments: before silence, silence (sped up), after silence
+        assert_eq!(processed.len(), 3);
+        assert_eq!(processed[0].end, 2.1);
+        assert_eq!(processed[0].speed, 1.0);
+        
+        // Silence segment should be sped up
+        assert_eq!(processed[1].start, 2.1);
+        assert_eq!(processed[1].end, 3.9);
+        assert_eq!(processed[1].speed, 4.0);
+        
+        // After silence
+        assert_eq!(processed[2].start, 3.9);
+        assert_eq!(processed[2].speed, 1.0);
+    }
+
+    #[test]
+    fn test_calculate_keep_segments_speedup_short_silence() {
+        // Silence too short for speedup should be cut
+        let silences = vec![
+            Segment { start: 2.0, end: 2.3 }, // 0.3 second silence (below min)
+        ];
+        let duration = 10.0;
+        let padding = 0.1;
+        let min_silence = 0.5;
+        let processed = calculate_keep_segments(
+            &silences, duration, padding, SilenceMode::Speedup, 4.0, min_silence
+        );
+
+        // Short silence should be cut, not sped up
+        assert_eq!(processed.len(), 2);
+        assert_eq!(processed[0].speed, 1.0);
+        assert_eq!(processed[1].speed, 1.0);
+    }
+
+    #[test]
+    fn test_calculate_keep_segments_multiple_silences() {
+        let silences = vec![
+            Segment { start: 2.0, end: 3.0 },
+            Segment { start: 5.0, end: 7.0 },
+        ];
+        let duration = 10.0;
+        let padding = 0.1;
+        let processed = calculate_keep_segments(
+            &silences, duration, padding, SilenceMode::Cut, 4.0, 0.5
+        );
+
+        assert_eq!(processed.len(), 3);
+        assert_eq!(processed[0].start, 0.0);
+        assert_eq!(processed[0].end, 2.1);
+        assert_eq!(processed[1].start, 2.9);
+        assert_eq!(processed[1].end, 5.1);
+        assert_eq!(processed[2].start, 6.9);
+        assert_eq!(processed[2].end, 10.0);
     }
 
     #[test]
