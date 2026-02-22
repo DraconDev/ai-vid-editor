@@ -3,10 +3,12 @@
 ## Phase 1: High-Quality STT Engine Integration [checkpoint: ac74535]
 - [x] Task: Research and select the most optimized Rust bindings for Whisper (e.g. `whisper-rs`) (0e6c383)
     - *Note: Switched to candle-whisper for pure-Rust implementation.*
-- [~] Task: Implement `SttAnalyzer` module to generate timestamped transcripts
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
+- [x] Task: Implement `SttAnalyzer` module to generate timestamped transcripts (f5d44f6)
+    - *Note: Structural implementation complete. DSP/Decoding logic pending.*
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
+- [ ] Task: Implement full Mel Spectrogram DSP and Decoding Loop
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: High-Quality STT Engine Integration' (Protocol in workflow.md)
 
 ## Phase 2: Intelligent Editing (Semantic Cuts) [checkpoint: 9320dd4]
