@@ -123,11 +123,11 @@ Settings are applied in this order (later overrides earlier):
 | Speedup mode | ✅ Done | Speed through silences |
 | Batch processing | ✅ Done | Recursive directory support |
 | TOML config | ✅ Done | Full configuration support |
-| Audio enhancement | 🔧 Partial | Implemented, needs CLI flag |
-| Music mixing | 🔧 Partial | Implemented, needs CLI flag |
+| Audio enhancement | ✅ Done | `--enhance` flag |
+| Music mixing | ✅ Done | `--music <file>` flag |
 | Whisper STT | 🔧 Partial | Model loads, decode TODO |
 | Filler word removal | 🔧 Partial | Needs STT completion |
-| Export formats | ✅ Done | FCPXML, EDL, SRT, chapters |
+| Export formats | ✅ Done | `--export-srt`, `--export-fcpxml`, etc. |
 
 ## Architecture
 
@@ -166,7 +166,7 @@ MIT
 ## Contributing
 
 Contributions welcome! Priority areas:
-1. Complete Whisper STT implementation
-2. Wire audio enhancement to CLI
-3. Add music mixing CLI flags
+1. Complete Whisper STT implementation (mel spectrogram + decode loop)
+2. Wire filler word removal to CLI (needs STT)
+3. Add preset profiles ("youtube-podcast", "tiktok-fast")
 4. Improve error messages
