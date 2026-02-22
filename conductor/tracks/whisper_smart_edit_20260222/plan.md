@@ -1,8 +1,8 @@
 # Track Plan: whisper_smart_edit_20260222
 
 ## Phase 1: High-Quality STT Engine Integration
-- [~] Task: Research and select the most optimized Rust bindings for Whisper (e.g. `whisper-rs`)
-- [ ] Task: Implement `SttAnalyzer` module to generate timestamped transcripts
+- [x] Task: Research and select the most optimized Rust bindings for Whisper (e.g. `whisper-rs`) (cd82cac)
+- [~] Task: Implement `SttAnalyzer` module to generate timestamped transcripts
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage
