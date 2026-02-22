@@ -1,11 +1,17 @@
 use std::path::Path;
-use anyhow::{Result, Context};
-use std::process::Command;
+use anyhow::Result;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Segment {
     pub start: f32,
     pub end: f32,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ProcessedSegment {
+    pub start: f32,
+    pub end: f32,
+    pub speed: f32,
 }
 
 pub trait VideoAnalyzer {
@@ -16,7 +22,7 @@ pub struct FfmpegAnalyzer;
 
 impl VideoAnalyzer for FfmpegAnalyzer {
     fn detect_silence(&self, path: &Path, threshold_db: f32, duration_s: f32) -> Result<Vec<Segment>> {
-        let output = Command::new("ffmpeg")
+        let output = std::process::Command::new("ffmpeg")
             .args([
                 "-i", path.to_str().context("invalid path")?,
                 "-af", &format!("silencedetect=noise={}dB:d={}", threshold_db, duration_s),
@@ -64,6 +70,8 @@ fn parse_ffmpeg_silence(output: &str) -> Vec<Segment> {
     }
     segments
 }
+
+use anyhow::Context;
 
 #[cfg(test)]
 mod tests {

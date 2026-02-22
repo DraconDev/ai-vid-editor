@@ -2,7 +2,7 @@ use std::path::{PathBuf, Path};
 use anyhow::{Result, Context};
 use std::fs;
 
-use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer};
+use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer, ProcessedSegment};
 use crate::editor::{VideoEditor, FfmpegEditor, calculate_keep_segments};
 use crate::utils::find_video_files;
 
@@ -44,13 +44,13 @@ where
 
     println!("Detected {} silent segments.", silences.len());
 
-    let video_duration = duration_getter.get_duration(&input_file)?; // Use a different name to avoid confusion
+    let video_duration = duration_getter.get_duration(&input_file)?; 
     println!("Total duration: {}s", video_duration);
 
-    let keep_segments = calculate_keep_segments(&silences, video_duration);
-    println!("Segments to keep: {}", keep_segments.len());
+    let processed_segments = calculate_keep_segments(&silences, video_duration);
+    println!("Segments to process: {}", processed_segments.len());
 
-    editor.trim_video(&input_file, &output_file, &keep_segments)
+    editor.trim_video(&input_file, &output_file, &processed_segments)
         .context("Failed to trim video")?;
 
     println!("Successfully saved trimmed video to: {:?}", output_file);
@@ -123,7 +123,7 @@ mod tests {
 
     struct MockFfmpegEditor;
     impl VideoEditor for MockFfmpegEditor {
-        fn trim_video(&self, _input: &Path, output: &Path, _keep_segments: &[crate::analyzer::Segment]) -> Result<()> {
+        fn trim_video(&self, _input: &Path, output: &Path, _segments: &[crate::analyzer::ProcessedSegment]) -> Result<()> {
             // Simulate successful trimming by creating an empty output file
             fs::File::create(output)?;
             Ok(())

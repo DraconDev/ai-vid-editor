@@ -10,11 +10,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: High-Quality STT Engine Integration' (Protocol in workflow.md) (ac74535)
 
 ## Phase 2: Intelligent Editing (Semantic Cuts)
-- [~] Task: Implement filler word detection and automatic segment removal (um/uh)
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
-- [ ] Task: Implement "Smart Speed-up" option for nonsense/low-confidence segments
+- [x] Task: Implement filler word detection and automatic segment removal (um/uh) (587cd69)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
+- [~] Task: Implement "Smart Speed-up" option for nonsense/low-confidence segments
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage

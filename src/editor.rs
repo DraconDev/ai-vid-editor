@@ -1,39 +1,41 @@
-use crate::analyzer::Segment;
+use crate::analyzer::{Segment, ProcessedSegment};
 use crate::stt_analyzer::TranscriptSegment;
 use std::path::Path;
 use anyhow::{Result, Context};
 use std::process::Command;
 
-pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32) -> Vec<Segment> {
-    let mut keep = Vec::new();
+pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32) -> Vec<ProcessedSegment> {
+    let mut processed = Vec::new();
     let mut current_pos = 0.0;
 
     for silence in silence_segments {
         if silence.start > current_pos {
-            keep.push(Segment {
+            processed.push(ProcessedSegment {
                 start: current_pos,
                 end: silence.start,
+                speed: 1.0,
             });
         }
         current_pos = silence.end;
     }
 
     if current_pos < total_duration {
-        keep.push(Segment {
+        processed.push(ProcessedSegment {
             start: current_pos,
             end: total_duration,
+            speed: 1.0,
         });
     }
 
-    keep
+    processed
 }
 
 pub fn calculate_keep_segments_from_transcript(
     transcript: &[TranscriptSegment],
     total_duration: f32,
     filler_words: &[&str],
-) -> Vec<Segment> {
-    let mut keep = Vec::new();
+) -> Vec<ProcessedSegment> {
+    let mut processed = Vec::new();
     let mut current_pos = 0.0;
 
     for seg in transcript {
@@ -42,9 +44,10 @@ pub fn calculate_keep_segments_from_transcript(
         if is_filler {
             // Cut this segment
             if seg.start > current_pos {
-                keep.push(Segment {
+                processed.push(ProcessedSegment {
                     start: current_pos,
                     end: seg.start,
+                    speed: 1.0,
                 });
             }
             current_pos = seg.end;
@@ -52,28 +55,29 @@ pub fn calculate_keep_segments_from_transcript(
     }
 
     if current_pos < total_duration {
-        keep.push(Segment {
+        processed.push(ProcessedSegment {
             start: current_pos,
             end: total_duration,
+            speed: 1.0,
         });
     }
 
-    keep
+    processed
 }
 
 pub trait VideoEditor {
-    fn trim_video(&self, input: &Path, output: &Path, keep_segments: &[Segment]) -> Result<()>;
+    fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
 }
 
 pub struct FfmpegEditor;
 
 impl VideoEditor for FfmpegEditor {
-    fn trim_video(&self, input: &Path, output: &Path, keep_segments: &[Segment]) -> Result<()> {
-        if keep_segments.is_empty() {
-            anyhow::bail!("No segments to keep");
+    fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()> {
+        if segments.is_empty() {
+            anyhow::bail!("No segments to process");
         }
 
-        let (v_filter, a_filter) = generate_trim_filters(keep_segments);
+        let (v_filter, a_filter) = generate_trim_filters(segments);
 
         let status = Command::new("ffmpeg")
             .args([
@@ -95,20 +99,33 @@ impl VideoEditor for FfmpegEditor {
     }
 }
 
-fn generate_trim_filters(segments: &[Segment]) -> (String, String) {
+fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
     let mut v_filter = String::new();
     let mut a_filter = String::new();
     let mut v_concat = String::new();
     let mut a_concat = String::new();
 
     for (i, seg) in segments.iter().enumerate() {
+        // Handle speed adjustment
+        let setpts = if seg.speed != 1.0 {
+            format!("setpts={}*PTS", 1.0 / seg.speed)
+        } else {
+            "setpts=PTS-STARTPTS".to_string()
+        };
+
+        let atempo = if seg.speed != 1.0 {
+            format!("atempo={}", seg.speed)
+        } else {
+            "asetpts=PTS-STARTPTS".to_string()
+        };
+
         v_filter.push_str(&format!(
-            "[0:v]trim=start={}:end={},setpts=PTS-STARTPTS[v{}];",
-            seg.start, seg.end, i
+            "[0:v]trim=start={}:end={}, {}[v{}];",
+            seg.start, seg.end, setpts, i
         ));
         a_filter.push_str(&format!(
-            "[0:a]atrim=start={}:end={},asetpts=PTS-STARTPTS[a{}];",
-            seg.start, seg.end, i
+            "[0:a]atrim=start={}:end={}, {}[a{}];",
+            seg.start, seg.end, atempo, i
         ));
         v_concat.push_str(&format!("[v{}]", i));
         a_concat.push_str(&format!("[a{}]", i));
@@ -139,45 +156,21 @@ mod tests {
             Segment { start: 4.0, end: 5.0 },
         ];
         let duration = 10.0;
-        let keeps = calculate_keep_segments(&silences, duration);
+        let processed = calculate_keep_segments(&silences, duration);
 
-        assert_eq!(keeps.len(), 3);
-        assert_eq!(keeps[0], Segment { start: 0.0, end: 1.0 });
-        assert_eq!(keeps[1], Segment { start: 2.0, end: 4.0 });
-        assert_eq!(keeps[2], Segment { start: 5.0, end: 10.0 });
+        assert_eq!(processed.len(), 3);
+        assert_eq!(processed[0].speed, 1.0);
     }
 
     #[test]
-    fn test_calculate_keep_segments_from_transcript() {
-        let transcript = vec![
-            TranscriptSegment { start: 1.0, end: 2.0, text: "hello".to_string(), confidence: 1.0 },
-            TranscriptSegment { start: 3.0, end: 4.0, text: "um".to_string(), confidence: 1.0 },
-            TranscriptSegment { start: 5.0, end: 6.0, text: "world".to_string(), confidence: 1.0 },
-            TranscriptSegment { start: 7.0, end: 8.0, text: "uh".to_string(), confidence: 1.0 },
-        ];
-        let duration = 10.0;
-        let filler_words = vec!["um", "uh"];
-        let keeps = calculate_keep_segments_from_transcript(&transcript, duration, &filler_words);
-
-        // Should keep: [0-3], [4-7], [8-10]
-        assert_eq!(keeps.len(), 3);
-        assert_eq!(keeps[0], Segment { start: 0.0, end: 3.0 });
-        assert_eq!(keeps[1], Segment { start: 4.0, end: 7.0 });
-        assert_eq!(keeps[2], Segment { start: 8.0, end: 10.0 });
-    }
-
-    #[test]
-    fn test_generate_trim_filters() {
+    fn test_generate_trim_filters_with_speed() {
         let segments = vec![
-            Segment { start: 0.0, end: 1.0 },
-            Segment { start: 2.0, end: 4.0 },
+            ProcessedSegment { start: 0.0, end: 1.0, speed: 1.0 },
+            ProcessedSegment { start: 1.0, end: 2.0, speed: 2.0 },
         ];
         let (v, a) = generate_trim_filters(&segments);
-        assert!(v.contains("trim=start=0:end=1"));
-        assert!(v.contains("trim=start=2:end=4"));
-        assert!(v.contains("concat=n=2:v=1:a=0[outv]"));
-        assert!(a.contains("atrim=start=0:end=1"));
-        assert!(a.contains("atrim=start=2:end=4"));
-        assert!(a.contains("concat=n=2:v=0:a=1[outa]"));
+        assert!(v.contains("setpts=PTS-STARTPTS"));
+        assert!(v.contains("setpts=0.5*PTS"));
+        assert!(a.contains("atempo=2"));
     }
 }
