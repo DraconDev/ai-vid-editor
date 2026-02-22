@@ -4,6 +4,7 @@ use anyhow::{Result, Context};
 
 pub mod analyzer;
 pub mod editor;
+pub mod utils;
 
 use crate::analyzer::{VideoAnalyzer, FfmpegAnalyzer};
 use crate::editor::{VideoEditor, FfmpegEditor, calculate_keep_segments};

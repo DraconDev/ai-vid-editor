@@ -2,7 +2,7 @@
 
 ## Phase 1: Directory Traversal & File Discovery
 - [x] Task: Update CLI to accept directory paths for input and output (72ecef7)
-- [ ] Task: Implement recursive or flat file discovery for video formats
+- [~] Task: Implement recursive or flat file discovery for video formats
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Directory Traversal & File Discovery' (Protocol in workflow.md)
