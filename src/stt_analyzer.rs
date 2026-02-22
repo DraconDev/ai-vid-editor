@@ -1,9 +1,10 @@
 use std::path::Path;
 use anyhow::{Result, Context};
-use candle_core::{Device, DType};
+use candle_core::{Device, Tensor, DType};
 use candle_transformers::models::whisper::{self, Config, model::Whisper};
-use hf_hub::{api::sync::Api, Repo};
+use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
+use rand::{rngs::StdRng, SeedableRng, distr::Distribution};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TranscriptSegment {
@@ -25,7 +26,7 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
         
         // Load model and tokenizer from HF hub
         let api = Api::new().context("failed to create hf-hub api")?;
-        let repo = api.repo(Repo::model("openai/whisper-tiny".to_string()));
+        let repo = api.repo(Repo::new("openai/whisper-tiny".to_string(), RepoType::Model));
         
         let config_filename = repo.get("config.json").context("failed to get config.json")?;
         let tokenizer_filename = repo.get("tokenizer.json").context("failed to get tokenizer.json")?;
@@ -33,7 +34,7 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
 
         let config: Config = serde_json::from_str(&std::fs::read_to_string(config_filename)?)
             .context("failed to parse config")?;
-        let _tokenizer = Tokenizer::from_file(tokenizer_filename)
+        let tokenizer = Tokenizer::from_file(tokenizer_filename)
             .map_err(anyhow::Error::msg).context("failed to load tokenizer")?;
         
         let vb = unsafe {
@@ -44,12 +45,19 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
             )?
         };
         
-        let mut _model = Whisper::load(&vb, config).context("failed to load model")?;
+        let model = Whisper::load(&vb, config.clone()).context("failed to load model")?;
 
-        // Load and decode audio using ffmpeg (whisper needs 16kHz mono f32)
-        let _audio_data = load_audio_as_f32(audio_path)?;
+        // Load and decode audio using ffmpeg
+        let audio_data = load_audio_as_f32(audio_path)?;
+        
+        // Convert to Mel Spectrogram
+        let mel = process_audio(&audio_data, &config, &device)?;
 
-        Ok(vec![])
+        // Decode
+        let mut dc = Decoder::new(model, tokenizer, 0, &device)?;
+        let segments = dc.decode(&mel)?;
+
+        Ok(segments)
     }
 }
 
@@ -74,12 +82,46 @@ fn load_audio_as_f32(path: &Path) -> Result<Vec<f32>> {
     Ok(samples)
 }
 
+// Minimal Audio/Mel processing (Placeholder for logic usually found in candle examples)
+fn process_audio(_pcm: &[f32], config: &Config, device: &Device) -> Result<Tensor> {
+    // TODO: Implement actual Mel Spectrogram calculation.
+    let n_mels = config.num_mel_bins;
+    // Dummy shape: [1, n_mels, 3000] (30s)
+    let dummy_mel = Tensor::zeros((1, n_mels, 3000), DType::F32, device)?;
+    Ok(dummy_mel)
+}
+
+struct Decoder {
+    model: Whisper,
+    tokenizer: Tokenizer,
+    seed: u64,
+    device: Device,
+}
+
+impl Decoder {
+    fn new(model: Whisper, tokenizer: Tokenizer, seed: u64, device: &Device) -> Result<Self> {
+        Ok(Self { model, tokenizer, seed, device: device.clone() })
+    }
+
+    fn decode(&mut self, _mel: &Tensor) -> Result<Vec<TranscriptSegment>> {
+        // TODO: Implement Greedy/Beam search loop.
+        // For now, return dummy segment to verify pipeline integration.
+        Ok(vec![TranscriptSegment {
+            start: 0.0,
+            end: 5.0,
+            text: "This is a dummy transcription from Candle.".to_string(),
+            confidence: 0.9,
+        }])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_transcription_structure() {
+        // Structural test only
         let _analyzer = CandleSttAnalyzer;
     }
 }
