@@ -24,7 +24,7 @@
     - [x] Verify Coverage
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Intelligent Editing (Semantic Cuts)' (Protocol in workflow.md) (9320dd4)
 
-## Phase 3: Smart Audio Mixing & Normalization
+## Phase 3: Smart Audio Mixing & Normalization [checkpoint: ed7cf01]
 - [x] Task: Implement STT-driven music ducking (leveraging transcript timestamps) (63bd67f)
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
@@ -33,7 +33,7 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Smart Audio Mixing & Normalization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Smart Audio Mixing & Normalization' (Protocol in workflow.md) (ed7cf01)
 
 ## Phase 4: Professional Exports (XML/EDL/Chapters)
 - [ ] Task: Implement DaVinci Resolve / Premiere compatible XML export
