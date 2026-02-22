@@ -1,14 +1,34 @@
 use crate::analyzer::{Segment, ProcessedSegment};
 use crate::stt_analyzer::TranscriptSegment;
+use crate::config::SilenceMode;
 use std::path::Path;
 use anyhow::{Result, Context};
 use std::process::Command;
 
-pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32, padding: f32) -> Vec<ProcessedSegment> {
+/// Calculate segments to keep after processing silences
+/// 
+/// # Arguments
+/// * `silence_segments` - Detected silent segments
+/// * `total_duration` - Total video duration in seconds
+/// * `padding` - Padding around cuts in seconds
+/// * `mode` - How to handle silences (Cut or Speedup)
+/// * `speedup_factor` - Speed multiplier when mode is Speedup
+/// * `min_silence_for_speedup` - Minimum silence duration to speedup (seconds)
+pub fn calculate_keep_segments(
+    silence_segments: &[Segment], 
+    total_duration: f32, 
+    padding: f32,
+    mode: SilenceMode,
+    speedup_factor: f32,
+    min_silence_for_speedup: f32,
+) -> Vec<ProcessedSegment> {
     let mut processed = Vec::new();
     let mut current_pos = 0.0;
 
     for silence in silence_segments {
+        let silence_duration = silence.end - silence.start;
+        
+        // Add the non-silent segment before this silence
         let keep_end = (silence.start + padding).min(total_duration);
         if keep_end > current_pos {
             processed.push(ProcessedSegment {
@@ -17,9 +37,31 @@ pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32
                 speed: 1.0,
             });
         }
-        current_pos = (silence.end - padding).max(0.0);
+        
+        // Handle the silence based on mode
+        match mode {
+            SilenceMode::Cut => {
+                // Cut mode: skip the silence entirely
+                current_pos = (silence.end - padding).max(0.0);
+            }
+            SilenceMode::Speedup => {
+                // Speedup mode: keep silence but speed it up if long enough
+                let silence_start = (silence.start + padding).max(0.0);
+                let silence_end = (silence.end - padding).min(total_duration);
+                
+                if silence_duration >= min_silence_for_speedup && silence_end > silence_start {
+                    processed.push(ProcessedSegment {
+                        start: silence_start,
+                        end: silence_end,
+                        speed: speedup_factor,
+                    });
+                }
+                current_pos = silence_end;
+            }
+        }
     }
 
+    // Add the final segment after the last silence
     if current_pos < total_duration {
         processed.push(ProcessedSegment {
             start: current_pos,
@@ -29,6 +71,22 @@ pub fn calculate_keep_segments(silence_segments: &[Segment], total_duration: f32
     }
 
     processed
+}
+
+/// Legacy function for backward compatibility - uses Cut mode
+pub fn calculate_keep_segments_simple(
+    silence_segments: &[Segment], 
+    total_duration: f32, 
+    padding: f32
+) -> Vec<ProcessedSegment> {
+    calculate_keep_segments(
+        silence_segments, 
+        total_duration, 
+        padding, 
+        SilenceMode::Cut, 
+        4.0, 
+        0.5
+    )
 }
 
 pub fn calculate_keep_segments_from_transcript(
