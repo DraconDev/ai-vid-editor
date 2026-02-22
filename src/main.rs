@@ -20,7 +20,7 @@ pub struct Cli {
     pub output: PathBuf,
 
     /// Silence threshold in decibels (e.g., -30.0)
-    #[arg(short, long, default_value_t = -30.0)]
+    #[arg(short, long, default_value_t = -30.0, allow_hyphen_values = true)]
     pub threshold: f32,
 
     /// Minimum silence duration in seconds
