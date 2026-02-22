@@ -25,11 +25,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Intelligent Editing (Semantic Cuts)' (Protocol in workflow.md) (9320dd4)
 
 ## Phase 3: Smart Audio Mixing & Normalization
-- [~] Task: Implement STT-driven music ducking (leveraging transcript timestamps)
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
-- [ ] Task: Integrate FFmpeg `loudnorm` and basic EQ for voice enhancement
+- [x] Task: Implement STT-driven music ducking (leveraging transcript timestamps) (63bd67f)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
+- [~] Task: Integrate FFmpeg `loudnorm` and basic EQ for voice enhancement
     - [ ] Write Failing Tests (Red Phase)
     - [ ] Implement to Pass Tests (Green Phase)
     - [ ] Verify Coverage

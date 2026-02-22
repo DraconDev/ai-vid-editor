@@ -132,6 +132,10 @@ mod tests {
         fn mix_with_music(&self, _input: &Path, _music: &Path, _output: &Path, _transcript: &[crate::stt_analyzer::TranscriptSegment]) -> Result<()> {
             Ok(())
         }
+
+        fn enhance_audio(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
     }
 
     // Mock DurationGetter for testing purposes

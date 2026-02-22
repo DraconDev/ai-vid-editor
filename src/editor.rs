@@ -71,6 +71,7 @@ pub fn calculate_keep_segments_from_transcript(
 pub trait VideoEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
     fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()>;
+    fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()>;
 }
 
 pub struct FfmpegEditor;
@@ -112,6 +113,28 @@ impl VideoEditor for FfmpegEditor {
                 "-filter_complex", &duck_filter,
                 "-map", "0:v",
                 "-map", "[outa]",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
+
+    fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()> {
+        // Apply loudnorm and basic speech EQ
+        let filter = "loudnorm=I=-14:TP=-1:LRA=11,equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3";
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-af", filter,
+                "-c:v", "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -177,8 +200,6 @@ fn generate_duck_filter(transcript: &[TranscriptSegment]) -> String {
     
     // For each speech segment, lower the music volume
     for seg in transcript {
-        // Simple ducking: 0.2 volume during speech, 1.0 otherwise
-        // Use if(between(t, start, end), 0.2, 1.0) logic
         volume_expr = format!("if(between(t,{},{}),0.2,{})", seg.start, seg.end, volume_expr);
     }
 
