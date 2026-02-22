@@ -44,7 +44,7 @@ where
 
     println!("Detected {} silent segments.", silences.len());
 
-    let video_duration = duration_getter.get_duration(&input_file)?;
+    let video_duration = duration_getter.get_duration(&input_file)?; // Use a different name to avoid confusion
     println!("Total duration: {}s", video_duration);
 
     let keep_segments = calculate_keep_segments(&silences, video_duration);
@@ -76,17 +76,32 @@ where
         return Ok(());
     }
 
-    for input_file in video_files {
+    let total_files = video_files.len();
+    let mut successful_files = 0;
+    let mut failed_files = 0;
+
+    for (index, input_file) in video_files.iter().enumerate() {
         let file_name = input_file.file_name()
             .context(format!("Could not get file name for {:?}", input_file))?;
         let output_file = output_dir.join(file_name);
 
-        println!("\n--- Processing file: {:?} ---", input_file);
+        println!("\n--- Processing file {}/{} : {:?} ---", index + 1, total_files, input_file);
         match process_single_file(input_file.clone(), output_file.clone(), threshold, duration, analyzer, editor, duration_getter) {
-            Ok(_) => println!("Successfully processed {:?}", input_file),
-            Err(e) => eprintln!("Error processing {:?}: {}", input_file, e),
+            Ok(_) => {
+                println!("Successfully processed {:?}", input_file);
+                successful_files += 1;
+            },
+            Err(e) => {
+                eprintln!("Error processing {:?}: {}", input_file, e);
+                failed_files += 1;
+            },
         }
     }
+
+    println!("\n--- Batch Processing Summary ---");
+    println!("Total files processed: {}", total_files);
+    println!("Successful: {}", successful_files);
+    println!("Failed: {}", failed_files);
 
     Ok(())
 }
