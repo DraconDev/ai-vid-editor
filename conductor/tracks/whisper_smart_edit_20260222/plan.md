@@ -44,8 +44,8 @@
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [~] Task: Implement YouTube-ready Chapter Marker generation
-    - [ ] Write Failing Tests (Red Phase)
-    - [ ] Implement to Pass Tests (Green Phase)
-    - [ ] Verify Coverage
+- [x] Task: Implement YouTube-ready Chapter Marker generation (f0195a5)
+    - [x] Write Failing Tests (Red Phase)
+    - [x] Implement to Pass Tests (Green Phase)
+    - [x] Verify Coverage
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Professional Exports (XML/EDL/Chapters)' (Protocol in workflow.md)
