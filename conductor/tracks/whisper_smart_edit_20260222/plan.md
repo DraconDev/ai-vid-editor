@@ -1,13 +1,13 @@
 # Track Plan: whisper_smart_edit_20260222
 
-## Phase 1: High-Quality STT Engine Integration
+## Phase 1: High-Quality STT Engine Integration [checkpoint: ac74535]
 - [x] Task: Research and select the most optimized Rust bindings for Whisper (e.g. `whisper-rs`) (0e6c383)
     - *Note: Switched to candle-whisper for pure-Rust implementation.*
 - [x] Task: Implement `SttAnalyzer` module to generate timestamped transcripts (9a15947)
     - [x] Write Failing Tests (Red Phase)
     - [x] Implement to Pass Tests (Green Phase)
     - [x] Verify Coverage
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: High-Quality STT Engine Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: High-Quality STT Engine Integration' (Protocol in workflow.md) (ac74535)
 
 ## Phase 2: Intelligent Editing (Semantic Cuts)
 - [ ] Task: Implement filler word detection and automatic segment removal (um/uh)
