@@ -1,4 +1,4 @@
-# Track batch_processor_20260222 Context
+# Track whisper_smart_edit_20260222 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
