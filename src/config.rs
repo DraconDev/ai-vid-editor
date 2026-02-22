@@ -419,11 +419,20 @@ enhance = false
 
     #[test]
     fn test_silence_mode_serde() {
-        let mode = SilenceMode::Speedup;
-        let serialized = toml::to_string(&mode).unwrap();
-        assert!(serialized.contains("speedup"));
+        // Test serialization through a config struct
+        let mut config = Config::default();
+        config.silence.mode = SilenceMode::Speedup;
         
-        let deserialized: SilenceMode = toml::from_str(&serialized).unwrap();
-        assert_eq!(deserialized, SilenceMode::Speedup);
+        let serialized = toml::to_string_pretty(&config).unwrap();
+        assert!(serialized.contains("mode = \"speedup\""));
+        
+        let deserialized: Config = toml::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.silence.mode, SilenceMode::Speedup);
+        
+        // Test cut mode
+        config.silence.mode = SilenceMode::Cut;
+        let serialized = toml::to_string_pretty(&config).unwrap();
+        let deserialized: Config = toml::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.silence.mode, SilenceMode::Cut);
     }
 }
