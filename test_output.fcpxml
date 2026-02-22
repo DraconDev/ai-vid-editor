@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.8">
+  <resources>
+    <asset id="r1" name="example_trimmed.mp4" src="file://example_trimmed.mp4" />
+  </resources>
+  <library>
+    <event name="Automated Cuts">
+      <project name="Edited Timeline">
+        <sequence duration="3600/1s" format="r1">
+          <spine>
+            <video name="example_trimmed.mp4" offset="0s" ref="r1" start="0s" duration="5.598958s" role="video" />
+            <video name="example_trimmed.mp4" offset="5.598958s" ref="r1" start="5.977625s" duration="10.679771s" role="video" />
+            <video name="example_trimmed.mp4" offset="16.278728s" ref="r1" start="17.263832s" duration="2.767168s" role="video" />
+            <video name="example_trimmed.mp4" offset="19.045897s" ref="r1" start="20.394646s" duration="8.13373s" role="video" />
+            <video name="example_trimmed.mp4" offset="27.179626s" ref="r1" start="28.83025s" duration="4.591854s" role="video" />
+            <video name="example_trimmed.mp4" offset="31.77148s" ref="r1" start="34.008106s" duration="0.58810043s" role="video" />
+            <video name="example_trimmed.mp4" offset="32.35958s" ref="r1" start="34.92248s" duration="21.976078s" role="video" />
+            <video name="example_trimmed.mp4" offset="54.33566s" ref="r1" start="57.387024s" duration="24.035706s" role="video" />
+            <video name="example_trimmed.mp4" offset="78.37137s" ref="r1" start="81.77692s" duration="17.313187s" role="video" />
+            <video name="example_trimmed.mp4" offset="95.684555s" ref="r1" start="99.46848s" duration="3.2806854s" role="video" />
+            <video name="example_trimmed.mp4" offset="98.96524s" ref="r1" start="103.56652s" duration="19.666374s" role="video" />
+            <video name="example_trimmed.mp4" offset="118.631615s" ref="r1" start="123.53975s" duration="6.1976776s" role="video" />
+            <video name="example_trimmed.mp4" offset="124.82929s" ref="r1" start="130.05623s" duration="6.186859s" role="video" />
+            <video name="example_trimmed.mp4" offset="131.01614s" ref="r1" start="136.85101s" duration="15.967804s" role="video" />
+            <video name="example_trimmed.mp4" offset="146.98395s" ref="r1" start="153.33006s" duration="7.976532s" role="video" />
+            <video name="example_trimmed.mp4" offset="154.96048s" ref="r1" start="161.88454s" duration="9.227402s" role="video" />
+            <video name="example_trimmed.mp4" offset="164.18788s" ref="r1" start="171.6675s" duration="0.8173065s" role="video" />
+            <video name="example_trimmed.mp4" offset="165.00519s" ref="r1" start="172.8971s" duration="16.477997s" role="video" />
+            <video name="example_trimmed.mp4" offset="181.48318s" ref="r1" start="189.72145s" duration="4.4376373s" role="video" />
+            <video name="example_trimmed.mp4" offset="185.92082s" ref="r1" start="194.67699s" duration="3.8257294s" role="video" />
+            <video name="example_trimmed.mp4" offset="189.74655s" ref="r1" start="198.81116s" duration="0.84591675s" role="video" />
+            <video name="example_trimmed.mp4" offset="190.59247s" ref="r1" start="200.02316s" duration="7.4774475s" role="video" />
+            <video name="example_trimmed.mp4" offset="198.06992s" ref="r1" start="208.01477s" duration="0.53141785s" role="video" />
+            <video name="example_trimmed.mp4" offset="198.60133s" ref="r1" start="208.90302s" duration="0.39297485s" role="video" />
+            <video name="example_trimmed.mp4" offset="198.99431s" ref="r1" start="209.7197s" duration="2.8377533s" role="video" />
+            <video name="example_trimmed.mp4" offset="201.83206s" ref="r1" start="213.08289s" duration="4.2319336s" role="video" />
+            <video name="example_trimmed.mp4" offset="206.064s" ref="r1" start="217.76749s" duration="3.5410156s" role="video" />
+            <video name="example_trimmed.mp4" offset="209.60501s" ref="r1" start="221.77777s" duration="4.731186s" role="video" />
+            <video name="example_trimmed.mp4" offset="214.3362s" ref="r1" start="227.03333s" duration="0.20018005s" role="video" />
+            <video name="example_trimmed.mp4" offset="214.53638s" ref="r1" start="227.65074s" duration="27.303284s" role="video" />
+            <video name="example_trimmed.mp4" offset="241.83966s" ref="r1" start="255.31258s" duration="0.59376526s" role="video" />
+            <video name="example_trimmed.mp4" offset="242.43343s" ref="r1" start="256.37463s" duration="3.3581238s" role="video" />
+            <video name="example_trimmed.mp4" offset="245.79155s" ref="r1" start="260.05765s" duration="2.5916138s" role="video" />
+            <video name="example_trimmed.mp4" offset="248.38316s" ref="r1" start="263.21133s" duration="4.630127s" role="video" />
+            <video name="example_trimmed.mp4" offset="253.01329s" ref="r1" start="268.2751s" duration="8.249634s" role="video" />
+            <video name="example_trimmed.mp4" offset="261.26294s" ref="r1" start="276.87366s" duration="1.3370056s" role="video" />
+            <video name="example_trimmed.mp4" offset="262.59995s" ref="r1" start="278.595s" duration="16.691864s" role="video" />
+            <video name="example_trimmed.mp4" offset="279.2918s" ref="r1" start="295.8015s" duration="6.0771484s" role="video" />
+            <video name="example_trimmed.mp4" offset="285.36896s" ref="r1" start="302.36298s" duration="1.2522278s" role="video" />
+            <video name="example_trimmed.mp4" offset="286.6212s" ref="r1" start="304.1059s" duration="5.556366s" role="video" />
+            <video name="example_trimmed.mp4" offset="292.17755s" ref="r1" start="310.12546s" duration="0.24450684s" role="video" />
+            <video name="example_trimmed.mp4" offset="292.42206s" ref="r1" start="310.76907s" duration="1.4111938s" role="video" />
+            <video name="example_trimmed.mp4" offset="293.83325s" ref="r1" start="312.88992s" duration="25.881561s" role="video" />
+            <video name="example_trimmed.mp4" offset="319.7148s" ref="r1" start="339.16373s" duration="7.622345s" role="video" />
+            <video name="example_trimmed.mp4" offset="327.33716s" ref="r1" start="347.16412s" duration="4.94104s" role="video" />
+            <video name="example_trimmed.mp4" offset="332.2782s" ref="r1" start="352.72263s" duration="6.5380554s" role="video" />
+            <video name="example_trimmed.mp4" offset="338.81625s" ref="r1" start="359.73642s" duration="18.748718s" role="video" />
+            <video name="example_trimmed.mp4" offset="357.56497s" ref="r1" start="379.02405s" duration="3.264618s" role="video" />
+            <video name="example_trimmed.mp4" offset="360.8296s" ref="r1" start="382.65436s" duration="5.0344543s" role="video" />
+            <video name="example_trimmed.mp4" offset="365.86404s" ref="r1" start="388.25928s" duration="2.5468445s" role="video" />
+            <video name="example_trimmed.mp4" offset="368.4109s" ref="r1" start="391.41492s" duration="13.144592s" role="video" />
+            <video name="example_trimmed.mp4" offset="381.55548s" ref="r1" start="404.93793s" duration="12.087128s" role="video" />
+            <video name="example_trimmed.mp4" offset="393.6426s" ref="r1" start="417.35074s" duration="2.4214783s" role="video" />
+            <video name="example_trimmed.mp4" offset="396.0641s" ref="r1" start="420.21417s" duration="1.5410767s" role="video" />
+            <video name="example_trimmed.mp4" offset="397.60516s" ref="r1" start="422.14032s" duration="7.806366s" role="video" />
+            <video name="example_trimmed.mp4" offset="405.41153s" ref="r1" start="430.51926s" duration="0.99176025s" role="video" />
+            <video name="example_trimmed.mp4" offset="406.4033s" ref="r1" start="432.51755s" duration="10.661072s" role="video" />
+            <video name="example_trimmed.mp4" offset="417.06436s" ref="r1" start="443.4901s" duration="8.766754s" role="video" />
+            <video name="example_trimmed.mp4" offset="425.83112s" ref="r1" start="452.81967s" duration="0.61032104s" role="video" />
+            <video name="example_trimmed.mp4" offset="426.44144s" ref="r1" start="453.98578s" duration="4.5995483s" role="video" />
+            <video name="example_trimmed.mp4" offset="431.041s" ref="r1" start="459.1892s" duration="2.4683838s" role="video" />
+            <video name="example_trimmed.mp4" offset="433.50937s" ref="r1" start="462.0071s" duration="10.401245s" role="video" />
+            <video name="example_trimmed.mp4" offset="443.9106s" ref="r1" start="472.80154s" duration="8.241669s" role="video" />
+            <video name="example_trimmed.mp4" offset="452.15228s" ref="r1" start="481.36575s" duration="8.426117s" role="video" />
+            <video name="example_trimmed.mp4" offset="460.5784s" ref="r1" start="490.23978s" duration="13.755798s" role="video" />
+            <video name="example_trimmed.mp4" offset="474.3342s" ref="r1" start="504.4566s" duration="11.186584s" role="video" />
+            <video name="example_trimmed.mp4" offset="485.52078s" ref="r1" start="516.13196s" duration="2.8892212s" role="video" />
+            <video name="example_trimmed.mp4" offset="488.41s" ref="r1" start="519.53723s" duration="14.269653s" role="video" />
+            <video name="example_trimmed.mp4" offset="502.67966s" ref="r1" start="534.36096s" duration="13.974121s" role="video" />
+            <video name="example_trimmed.mp4" offset="516.6538s" ref="r1" start="548.84705s" duration="19.777588s" role="video" />
+            <video name="example_trimmed.mp4" offset="536.4314s" ref="r1" start="569.052s" duration="6.944458s" role="video" />
+            <video name="example_trimmed.mp4" offset="543.37585s" ref="r1" start="576.5112s" duration="9.255737s" role="video" />
+            <video name="example_trimmed.mp4" offset="552.6316s" ref="r1" start="586.1195s" duration="11.587402s" role="video" />
+            <video name="example_trimmed.mp4" offset="564.219s" ref="r1" start="598.02985s" duration="9.95874s" role="video" />
+            <video name="example_trimmed.mp4" offset="574.17773s" ref="r1" start="608.4155s" duration="10.365967s" role="video" />
+            <video name="example_trimmed.mp4" offset="584.5437s" ref="r1" start="619.2636s" duration="1.5141602s" role="video" />
+            <video name="example_trimmed.mp4" offset="586.05786s" ref="r1" start="621.19165s" duration="2.13031s" role="video" />
+            <video name="example_trimmed.mp4" offset="588.1882s" ref="r1" start="623.6409s" duration="2.691101s" role="video" />
+            <video name="example_trimmed.mp4" offset="590.8793s" ref="r1" start="626.85236s" duration="1.4518433s" role="video" />
+            <video name="example_trimmed.mp4" offset="592.3311s" ref="r1" start="628.6973s" duration="5.6294556s" role="video" />
+            <video name="example_trimmed.mp4" offset="597.9606s" ref="r1" start="634.9129s" duration="3.007019s" role="video" />
+            <video name="example_trimmed.mp4" offset="600.9676s" ref="r1" start="638.45386s" duration="9.786133s" role="video" />
+            <video name="example_trimmed.mp4" offset="610.7537s" ref="r1" start="648.8323s" duration="5.471985s" role="video" />
+            <video name="example_trimmed.mp4" offset="616.2257s" ref="r1" start="654.60596s" duration="24.013672s" role="video" />
+            <video name="example_trimmed.mp4" offset="640.2394s" ref="r1" start="679.06836s" duration="16.116272s" role="video" />
+            <video name="example_trimmed.mp4" offset="656.35565s" ref="r1" start="695.7145s" duration="6.024353s" role="video" />
+            <video name="example_trimmed.mp4" offset="662.38s" ref="r1" start="702.2057s" duration="0.67852783s" role="video" />
+            <video name="example_trimmed.mp4" offset="663.05853s" ref="r1" start="703.2719s" duration="4.41864s" role="video" />
+            <video name="example_trimmed.mp4" offset="667.4772s" ref="r1" start="708.0335s" duration="2.0813599s" role="video" />
+            <video name="example_trimmed.mp4" offset="669.55853s" ref="r1" start="710.5424s" duration="10.055054s" role="video" />
+            <video name="example_trimmed.mp4" offset="679.6136s" ref="r1" start="721.1009s" duration="4.139099s" role="video" />
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>
