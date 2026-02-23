@@ -1,0 +1,21 @@
+# YouTube preset: Long-form video optimization
+
+[silence]
+mode = "cut"
+threshold_db = -30.0
+min_duration = 0.5
+padding = 0.15
+
+[audio]
+enhance = true
+target_lufs = -14.0
+
+[video]
+stabilize = false
+color_correct = false
+reframe = false
+blur_background = false
+
+[export]
+chapters = true
+fcpxml = true

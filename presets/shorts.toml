@@ -1,0 +1,21 @@
+# Shorts/TikTok/Reels preset: Vertical format, speedup silences
+
+[silence]
+mode = "speedup"
+threshold_db = -30.0
+min_duration = 0.5
+padding = 0.05
+speedup_factor = 3.0
+
+[audio]
+enhance = true
+target_lufs = -14.0
+
+[video]
+stabilize = false
+color_correct = false
+reframe = true
+blur_background = false
+
+[export]
+chapters = false

@@ -1,0 +1,22 @@
+# Minimal preset: Just silence removal, no enhancements
+
+[silence]
+mode = "cut"
+threshold_db = -30.0
+min_duration = 0.5
+padding = 0.1
+
+[audio]
+enhance = false
+noise_reduction = false
+
+[video]
+stabilize = false
+color_correct = false
+reframe = false
+blur_background = false
+
+[export]
+subtitles = false
+chapters = false
+fcpxml = false
