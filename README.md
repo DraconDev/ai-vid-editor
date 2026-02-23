@@ -19,10 +19,10 @@ A command-line tool for automated video editing using AI. Designed for content c
 - **Dry Run** - Preview changes without processing
 - **JSON Output** - For scripting and CI/CD integration
 
-### ❌ Not Working Yet
+### ✅ Now Working
 
-- **Whisper STT** - Speech-to-text (model loads, decode not implemented)
-- **Filler Word Removal** - Depends on Whisper STT
+- **Whisper STT** - Speech-to-text using Candle (HuggingFace model)
+- **Filler Word Removal** - `--remove-fillers` flag
 
 ## Installation
 

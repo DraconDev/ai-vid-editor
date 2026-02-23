@@ -39,18 +39,18 @@
 
 ---
 
-## ❌ Not Working (Needs Implementation)
+## ✅ Now Working
 
 ### Whisper STT
-- [x] Model loading from HuggingFace Hub (done)
-- [x] Audio extraction via ffmpeg (done)
-- [ ] **Mel spectrogram calculation** (placeholder only)
-- [ ] **Decode loop** (returns dummy text, not usable)
+- [x] Model loading from HuggingFace Hub
+- [x] Audio extraction via ffmpeg
+- [x] Mel spectrogram calculation
+- [x] Greedy decode loop
 
 ### Filler Word Removal
-- [x] Config structure with filler words list (done)
-- [x] `calculate_keep_segments_from_transcript()` (done)
-- [ ] **Needs Whisper STT to work**
+- [x] Config structure with filler words list
+- [x] `calculate_keep_segments_from_transcript()`
+- [x] CLI flag `--remove-fillers`
 
 ---
 
