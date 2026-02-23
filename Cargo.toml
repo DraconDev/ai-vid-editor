@@ -1,14 +1,19 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.117"
+version = "0.1.118"
 edition = "2024"
+
+[features]
+default = ["cli"]
+cli = ["clap"]
+gui = ["dioxus", "dioxus-desktop", "rfd"]
 
 [dependencies]
 anyhow = "1.0.102"
 candle-core = "0.9.2"
 candle-nn = "0.9.2"
 candle-transformers = "0.9.2"
-clap = { version = "4.5.60", features = ["derive"] }
+clap = { version = "4.5.60", features = ["derive"], optional = true }
 directories = "5.0"
 hf-hub = "0.5.0"
 image = "0.25"
@@ -20,5 +25,20 @@ toml = "0.8"
 tract-onnx = "0.21"
 walkdir = "2.5.0"
 
+# GUI dependencies (optional)
+dioxus = { version = "0.7.3", optional = true }
+dioxus-desktop = { version = "0.7.3", optional = true }
+rfd = { version = "0.15", optional = true }
+
 [dev-dependencies]
 tempfile = "3.25.0"
+
+[[bin]]
+name = "ai-vid-editor"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "ai-vid-editor-gui"
+path = "src/gui_main.rs"
+required-features = ["gui"]
