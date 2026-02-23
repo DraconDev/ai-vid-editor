@@ -17,6 +17,7 @@
 ### Audio
 - [x] Audio enhancement (loudnorm + EQ) - `--enhance`
 - [x] Loudness normalization targeting -14 LUFS (YouTube standard)
+- [x] Noise reduction - `--noise-reduction`
 - [x] Music mixing with auto-ducking - `--music <file>`
 - [x] Music library folder - `--music-dir <dir>` (picks random track)
 
@@ -36,6 +37,14 @@
 - [x] JSON output - `--json` for scripting/automation
 - [x] Watch folder mode - `--watch <dir>` daemon mode
 - [x] Config file support - `--config <file>`
+- [x] Project mode - `--project <dir>`
+- [x] Minimal CLI (config-first architecture)
+
+### Installation
+- [x] Install script (`install.sh`)
+- [x] User install (`./install.sh --user`)
+- [x] System install (`sudo ./install.sh`)
+- [x] Systemd service support
 
 ### Whisper STT
 - [x] Model loading from HuggingFace Hub
@@ -51,46 +60,91 @@
 
 ---
 
-## 🚧 In Progress
+## 🚧 Phase 1: Easy Wins (ffmpeg-native)
 
-### Phase 1: Quick Fixes
-- [ ] Fix `sample_rate` unused variable warning
-- [ ] Show help when no args provided (instead of error)
+### Video Stabilization
+- [ ] Add `--stabilize` flag
+- [ ] Use ffmpeg `vidstab` filter (two-pass)
+- [ ] Add to config: `[video] stabilize = true`
 
-### Phase 2: Noise Reduction
-- [ ] Add `--noise-reduction` flag using ffmpeg `afftdn`
+### Auto-Color Correction
+- [ ] Add `--color-correct` flag
+- [ ] Use ffmpeg `eq` filter for auto-levels
+- [ ] Add to config: `[video] color_correct = true`
 
-### Phase 3: Project System
-- [ ] `--project <dir>` flag to load project config
-- [ ] Auto-detect subfolders: watch/, output/, music/
-- [ ] Project-level intro/outro
-
-### Phase 4: Video Joining
-- [ ] `--join` flag to concatenate multiple input files
+### Tests
+- [ ] Integration tests for silence detection
+- [ ] Integration tests for audio enhancement
+- [ ] Integration tests for batch processing
+- [ ] Performance benchmarks
 
 ---
 
-## 📋 Later (Complex Features)
+## 📋 Phase 2: Thumbnail Guide from Transcript
 
-### Face Detection
-- [ ] Research best approach for Rust (OpenCV vs mediapipe vs ffmpeg)
-- [ ] Implement face detection
+### Thumbnail Guide Export
+- [ ] Add `--export-thumbnail-guide` flag
+- [ ] Analyze transcript for highlight moments
+- [ ] Detect hooks (questions, bold statements)
+- [ ] Detect chapter starts
+- [ ] Extract key quotes for overlay text
+- [ ] Generate title suggestions
+- [ ] Output as JSON
+
+Example output (`thumbnail-guide.json`):
+```json
+{
+  "title_suggestions": [
+    "How to Edit Videos Like a Pro",
+    "3 Secrets to Viral Content"
+  ],
+  "thumbnail_moments": [
+    {"time": 12.5, "text": "The secret is...", "type": "hook"},
+    {"time": 45.0, "text": "Watch this!", "type": "action"},
+    {"time": 120.0, "text": "The results were amazing", "type": "climax"}
+  ],
+  "key_quotes": [
+    "This one trick changed everything",
+    "Most people don't know this"
+  ]
+}
+```
+
+---
+
+## 📋 Phase 3: ML Features (Model Size Aware)
+
+### Face Detection (Required for reframe/blur)
+- [ ] Research MediaPipe vs tract+ONNX
+- [ ] Add face detection dependency (~10MB)
+- [ ] Implement face detection in video frames
+
+### Auto-Reframe (Horizontal → Vertical)
+- [ ] Crop 16:9 to 9:16 following speaker's face
+- [ ] Smooth camera movement between faces
+- [ ] Add `--reframe` flag
 
 ### Background Blur
-- [ ] Detect faces, blur background
-- [ ] Requires face detection
-
-### Auto-Reframe
-- [ ] Horizontal → Vertical crop following speaker
-- [ ] Requires face detection
-
-### Auto-Zoom
-- [ ] Zoom in on speaker during active speech
-- [ ] Requires face detection + timing
+- [ ] Person segmentation (MODNet ~25MB)
+- [ ] Blur background while keeping speaker sharp
+- [ ] Add `--blur-background` flag
 
 ---
 
-## ❌ Not Doing
+## ❌ Not Doing (Too Heavy)
+
+### Eye Contact Correction
+- Requires ~100MB+ model
+- Complex pixel manipulation
+- Not worth the cost
+
+### Large Language Models
+- GB-sized models
+- Out of scope for this tool
+
+### Thumbnail Generation
+- Not our arena
+- We provide the guide, user creates the thumbnail
 
 ### Parallel Processing
 - FFmpeg already uses multiple threads internally
@@ -107,34 +161,79 @@
 
 ---
 
+## Competitor Research
+
+| Feature | Descript | Gling | Adobe Podcast | Auphonic | Us |
+|---------|----------|-------|---------------|----------|-----|
+| Silence removal | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Filler removal | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Audio enhancement | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Noise reduction | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Video stabilization | ✅ | ❌ | ❌ | ❌ | TODO |
+| Auto-color correction | ✅ | ❌ | ❌ | ❌ | TODO |
+| Thumbnail guide | ❌ | ✅ | ❌ | ❌ | TODO |
+| Auto-reframe | ✅ | ✅ | ❌ | ❌ | LATER |
+| Background blur | ✅ | ❌ | ❌ | ❌ | LATER |
+| Eye contact correction | ✅ | ✅ | ❌ | ❌ | NO |
+
+---
+
+## Model Size Reference
+
+| Feature | Model | Size | Verdict |
+|---------|-------|------|---------|
+| Whisper STT | Whisper Tiny | ~75MB | ✅ Already using |
+| Face detection | MediaPipe | ~10MB | ✅ OK to add |
+| Person segmentation | MODNet | ~25MB | ✅ OK to add |
+| Background blur | Uses segmentation | ~25MB | ✅ OK to add |
+| Auto-reframe | Uses face detection | ~10MB | ✅ OK to add |
+| Eye contact | Custom model | ~100MB+ | ⚠️ Too heavy |
+| LLM for titles | Various | GBs | ❌ No |
+
+---
+
 ## Configuration
 
 Save as `ai-vid-editor.toml` in project root or `~/.config/ai-vid-editor/config.toml`:
 
 ```toml
+[paths]
+input_dir = "watch"
+output_dir = "output"
+music_dir = "music"
+
 [silence]
 threshold_db = -30.0
 min_duration = 0.5
 padding = 0.1
 mode = "cut"
 speedup_factor = 4.0
-min_silence_for_speedup = 0.5
 
 [filler_words]
-enabled = true
+enabled = false
 words = ["um", "uh", "ah", "er"]
 padding = 0.05
 
 [audio]
 enhance = true
+noise_reduction = false
 target_lufs = -14.0
 duck_volume = 0.2
+
+[video]
+stabilize = false
+color_correct = false
 
 [export]
 subtitles = false
 chapters = false
 fcpxml = false
 edl = false
+thumbnail_guide = false
+
+[watch]
+enabled = false
+interval = 5
 ```
 
 ---
@@ -153,28 +252,18 @@ ai-vid-editor -i input.mp4 -o output.mp4 \
   --preset youtube \
   --intro intro.mp4 \
   --outro outro.mp4 \
-  --music-dir ./music
+  --music-dir ./music \
+  --stabilize \
+  --color-correct
 
 # Batch processing
 ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
 
-# Watch mode
+# Watch mode (daemon)
 ai-vid-editor --watch ./incoming -O ./processed --preset youtube
 
 # Preview
 ai-vid-editor -i input.mp4 --dry-run
-```
 
----
-
-## Competitor Research
-
-| Feature | Descript | Adobe Podcast | Auphonic | Gling | Us |
-|---------|----------|---------------|----------|-------|-----|
-| Silence removal | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Filler removal | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Audio enhancement | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Noise reduction | ✅ | ✅ | ✅ | ❌ | TODO |
-| Auto-captions | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Background blur | ✅ | ❌ | ❌ | ❌ | LATER |
-| Auto-reframe | ✅ | ❌ | ❌ | ✅ | LATER |
+# Generate thumbnail guide
+ai-vid-editor -i input.mp4 -o output.mp4 --export-thumbnail-guide
