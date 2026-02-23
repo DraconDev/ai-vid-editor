@@ -258,6 +258,12 @@ fn main() -> Result<()> {
     if cli.color_correct {
         config.video.color_correct = true;
     }
+    if cli.reframe {
+        config.video.reframe = true;
+    }
+    if cli.blur_background {
+        config.video.blur_background = true;
+    }
 
     // Print config (unless JSON mode)
     if !cli.json {
