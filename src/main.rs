@@ -102,16 +102,39 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Load config with precedence: CLI > project config > global config > defaults
-    let mut config = Config::load_with_precedence(
-        cli.config.as_deref(),
-        cli.threshold,
-        cli.duration,
-        cli.padding,
-        cli.speedup,
-    )?;
+    // Start with preset or default config
+    let mut config = if let Some(ref preset_str) = cli.preset {
+        let preset = Preset::from_str(preset_str)
+            .ok_or_else(|| anyhow::anyhow!("Unknown preset: {}. Valid presets: youtube, shorts, podcast, minimal", preset_str))?;
+        if !cli.json {
+            println!("Using preset: {}", preset.as_str());
+        }
+        preset.to_config()
+    } else {
+        Config::default()
+    };
 
-    // Apply CLI overrides for new flags
+    // Apply config file if specified
+    if let Some(ref config_path) = cli.config {
+        if config_path.exists() {
+            let file_config = Config::from_file(config_path)?;
+            config = config.merge(file_config);
+        }
+    }
+
+    // Apply CLI overrides
+    if let Some(threshold) = cli.threshold {
+        config.silence.threshold_db = threshold;
+    }
+    if let Some(duration) = cli.duration {
+        config.silence.min_duration = duration;
+    }
+    if let Some(padding) = cli.padding {
+        config.silence.padding = padding;
+    }
+    if cli.speedup {
+        config.silence.mode = crate::config::SilenceMode::Speedup;
+    }
     if cli.enhance {
         config.audio.enhance = true;
     }
@@ -131,17 +154,25 @@ fn main() -> Result<()> {
         config.export.edl = true;
     }
 
-    println!("Loaded configuration:");
-    println!("  Silence threshold: {} dB", config.silence.threshold_db);
-    println!("  Silence mode: {:?}", config.silence.mode);
-    println!("  Padding: {}s", config.silence.padding);
-    println!("  Audio enhance: {}", config.audio.enhance);
-    if let Some(ref music) = config.audio.music_file {
-        println!("  Background music: {:?}", music);
+    // Print config (unless JSON mode)
+    if !cli.json {
+        println!("Loaded configuration:");
+        println!("  Silence threshold: {} dB", config.silence.threshold_db);
+        println!("  Silence mode: {:?}", config.silence.mode);
+        println!("  Padding: {}s", config.silence.padding);
+        println!("  Audio enhance: {}", config.audio.enhance);
+        if let Some(ref music) = config.audio.music_file {
+            println!("  Background music: {:?}", music);
+        }
+        println!("  Export: SRT={} Chapters={} FCPXML={} EDL={}", 
+            config.export.subtitles, config.export.chapters, 
+            config.export.fcpxml, config.export.edl);
     }
-    println!("  Export: SRT={} Chapters={} FCPXML={} EDL={}", 
-        config.export.subtitles, config.export.chapters, 
-        config.export.fcpxml, config.export.edl);
+
+    // Handle dry-run mode
+    if cli.dry_run {
+        return handle_dry_run(&cli, &config);
+    }
 
     let analyzer = FfmpegAnalyzer;
     let editor = FfmpegEditor;
@@ -157,6 +188,74 @@ fn main() -> Result<()> {
         process_batch_dir(input_dir, output_dir, &config, &analyzer, &editor, &duration_getter)?;
     } else {
         anyhow::bail!("Either an input file or an input directory must be specified.");
+    }
+
+    Ok(())
+}
+
+/// Handle dry-run mode: analyze and show what would be done
+fn handle_dry_run(cli: &Cli, config: &Config) -> Result<()> {
+    use crate::analyzer::VideoAnalyzer;
+    use crate::batch_processor::DurationGetter;
+    use serde_json::json;
+
+    let analyzer = FfmpegAnalyzer;
+    let duration_getter = FfmpegDurationGetter;
+
+    let input_path = cli.input_file.as_ref()
+        .or(cli.input_dir.as_ref())
+        .ok_or_else(|| anyhow::anyhow!("Input file or directory required"))?;
+
+    let silences = analyzer.detect_silence(input_path, config.silence.threshold_db, config.silence.min_duration)?;
+    let video_duration = duration_getter.get_duration(input_path)?;
+
+    // Calculate total silence duration
+    let total_silence: f32 = silences.iter().map(|s| s.end - s.start).sum();
+    let output_duration = match config.silence.mode {
+        crate::config::SilenceMode::Cut => video_duration - total_silence,
+        crate::config::SilenceMode::Speedup => {
+            // Approximate: silences are sped up
+            video_duration - total_silence + (total_silence / config.silence.speedup_factor)
+        }
+    };
+
+    if cli.json {
+        let result = json!({
+            "input": input_path.to_string_lossy(),
+            "input_duration_sec": video_duration,
+            "silence_segments": silences.len(),
+            "total_silence_sec": total_silence,
+            "output_duration_sec": output_duration,
+            "time_saved_sec": video_duration - output_duration,
+            "config": {
+                "silence_mode": format!("{:?}", config.silence.mode),
+                "threshold_db": config.silence.threshold_db,
+                "padding_sec": config.silence.padding,
+                "enhance_audio": config.audio.enhance,
+            }
+        });
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    } else {
+        println!("\n=== DRY RUN ANALYSIS ===");
+        println!("Input: {:?}", input_path);
+        println!("Input duration: {:.1}s ({:.1} min)", video_duration, video_duration / 60.0);
+        println!("Silent segments detected: {}", silences.len());
+        println!("Total silence: {:.1}s ({:.1} min)", total_silence, total_silence / 60.0);
+        println!("\nWould produce:");
+        println!("  Output duration: {:.1}s ({:.1} min)", output_duration, output_duration / 60.0);
+        println!("  Time saved: {:.1}s ({:.1} min)", video_duration - output_duration, (video_duration - output_duration) / 60.0);
+        println!("\nOperations:");
+        println!("  - Silence mode: {:?}", config.silence.mode);
+        if config.audio.enhance {
+            println!("  - Audio enhancement: enabled (target {} LUFS)", config.audio.target_lufs);
+        }
+        if config.audio.music_file.is_some() {
+            println!("  - Background music: {:?}", config.audio.music_file);
+        }
+        if config.export.subtitles { println!("  - Export SRT subtitles"); }
+        if config.export.chapters { println!("  - Export YouTube chapters"); }
+        if config.export.fcpxml { println!("  - Export FCPXML"); }
+        if config.export.edl { println!("  - Export EDL"); }
     }
 
     Ok(())
