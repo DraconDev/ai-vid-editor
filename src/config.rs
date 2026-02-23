@@ -312,6 +312,27 @@ impl Default for WatchConfig {
     }
 }
 
+/// Configuration for video processing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoConfig {
+    /// Enable video stabilization (vidstab filter)
+    #[serde(default)]
+    pub stabilize: bool,
+    
+    /// Enable auto color correction
+    #[serde(default)]
+    pub color_correct: bool,
+}
+
+impl Default for VideoConfig {
+    fn default() -> Self {
+        Self {
+            stabilize: false,
+            color_correct: false,
+        }
+    }
+}
+
 /// Main configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
@@ -330,6 +351,10 @@ pub struct Config {
     /// Audio processing
     #[serde(default)]
     pub audio: AudioConfig,
+    
+    /// Video processing
+    #[serde(default)]
+    pub video: VideoConfig,
     
     /// Export options
     #[serde(default)]
