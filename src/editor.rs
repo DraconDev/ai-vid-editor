@@ -302,6 +302,66 @@ impl VideoEditor for FfmpegEditor {
 
         Ok(())
     }
+
+    fn reframe(&self, input: &Path, output: &Path) -> Result<()> {
+        // Auto-reframe: Convert horizontal (16:9) to vertical (9:16)
+        // This is a placeholder - full implementation would:
+        // 1. Extract frames at key intervals
+        // 2. Detect face position using FaceDetector
+        // 3. Calculate crop region following face
+        // 4. Apply smooth crop filter
+        
+        // For now, use a simple center crop as fallback
+        // Crop to 9:16 from center (assumes 16:9 input)
+        let filter = "crop=ih*9/16:ih,scale=1080:1920";
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-vf", filter,
+                "-c:a", "copy",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
+
+    fn blur_background(&self, input: &Path, output: &Path) -> Result<()> {
+        // Background blur using person segmentation
+        // This is a placeholder - full implementation would:
+        // 1. Extract frames
+        // 2. Run PersonSegmenter to get mask
+        // 3. Apply blur to background pixels
+        // 4. Composite person over blurred background
+        
+        // For now, apply a simple boxblur as fallback
+        // This blurs the entire frame (not person-aware)
+        let filter = "boxblur=20:5";
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-vf", filter,
+                "-c:a", "copy",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
 }
 
 fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
