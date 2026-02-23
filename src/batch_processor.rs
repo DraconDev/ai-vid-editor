@@ -347,6 +347,10 @@ mod tests {
         fn enhance_audio(&self, _input: &Path, _output: &Path) -> Result<()> {
             Ok(())
         }
+
+        fn reduce_noise(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
     }
 
     // Mock DurationGetter for testing purposes
