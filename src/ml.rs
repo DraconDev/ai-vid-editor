@@ -320,6 +320,172 @@ impl SegmentationMask {
     }
 }
 
+/// Crop region for auto-reframe
+#[derive(Debug, Clone, Copy)]
+pub struct CropRegion {
+    /// X offset (0-1, normalized to video width)
+    pub x: f32,
+    /// Y offset (0-1, normalized to video height)
+    pub y: f32,
+    /// Width of crop (0-1)
+    pub width: f32,
+    /// Height of crop (0-1)
+    pub height: f32,
+}
+
+impl CropRegion {
+    /// Create a center crop for 9:16 aspect ratio from 16:9 video
+    pub fn center_crop_9_16() -> Self {
+        // For 16:9 -> 9:16, we crop to 9/16 of the width
+        let crop_width = 9.0 / 16.0; // ~0.56 of original width
+        Self {
+            x: (1.0 - crop_width) / 2.0, // Center horizontally
+            y: 0.0,
+            width: crop_width,
+            height: 1.0,
+        }
+    }
+    
+    /// Create crop region following a face
+    pub fn from_face(face: &FaceBox, video_aspect: f32) -> Self {
+        // video_aspect = width / height (e.g., 16/9 = 1.78)
+        // Target aspect = 9/16 = 0.5625
+        
+        let target_aspect = 9.0 / 16.0;
+        let crop_width = target_aspect / video_aspect;
+        
+        // Center crop on face X position
+        let face_center_x = face.x + face.width / 2.0;
+        
+        // Calculate crop X to center on face
+        let mut crop_x = face_center_x - crop_width / 2.0;
+        
+        // Clamp to valid range
+        crop_x = crop_x.max(0.0).min(1.0 - crop_width);
+        
+        Self {
+            x: crop_x,
+            y: 0.0,
+            width: crop_width,
+            height: 1.0,
+        }
+    }
+}
+
+/// Auto-reframe processor
+pub struct AutoReframeProcessor {
+    detector: FaceDetector,
+}
+
+impl AutoReframeProcessor {
+    /// Create a new auto-reframe processor
+    pub fn new() -> Result<Self> {
+        let detector = FaceDetector::load()?;
+        Ok(Self { detector })
+    }
+    
+    /// Analyze video and generate crop regions for each frame
+    pub fn analyze_video(&self, video_path: &Path, sample_fps: f32) -> Result<Vec<(f32, CropRegion)>> {
+        let temp_dir = std::env::temp_dir().join("ai-vid-editor-frames");
+        let frames = FrameExtractor::extract_frames(video_path, &temp_dir, sample_fps)?;
+        
+        let video_duration = FrameExtractor::get_video_duration(video_path)?;
+        let (video_width, video_height) = FrameExtractor::get_video_dimensions(video_path)?;
+        let video_aspect = video_width as f32 / video_height as f32;
+        
+        let mut crop_regions = Vec::new();
+        
+        for (i, frame_path) in frames.iter().enumerate() {
+            let timestamp = (i as f32) / sample_fps;
+            
+            // Load frame
+            let frame = image::open(frame_path)?;
+            
+            // Detect faces
+            let faces = self.detector.detect(&frame)?;
+            
+            // Determine crop region
+            let crop = if let Some(main_face) = faces.first() {
+                CropRegion::from_face(main_face, video_aspect)
+            } else {
+                // No face detected, use center crop
+                CropRegion::center_crop_9_16()
+            };
+            
+            crop_regions.push((timestamp, crop));
+        }
+        
+        // Cleanup temp frames
+        for frame in &frames {
+            let _ = std::fs::remove_file(frame);
+        }
+        
+        Ok(crop_regions)
+    }
+    
+    /// Generate ffmpeg filter for smooth crop following faces
+    pub fn generate_crop_filter(&self, crop_regions: &[(f32, CropRegion)], video_width: u32, video_height: u32) -> String {
+        if crop_regions.is_empty() {
+            // Fallback to center crop
+            return "crop=ih*9/16:ih,scale=1080:1920".to_string();
+        }
+        
+        // For simplicity, use the first detected crop region
+        // Full implementation would interpolate between regions
+        let region = &crop_regions[0].1;
+        
+        let crop_w = (region.width * video_width as f32) as u32;
+        let crop_h = video_height;
+        let crop_x = (region.x * video_width as f32) as u32;
+        let crop_y = 0u32;
+        
+        format!("crop={}:{}:{}:{},scale=1080:1920", crop_w, crop_h, crop_x, crop_y)
+    }
+}
+
+/// Background blur processor
+pub struct BackgroundBlurProcessor {
+    segmenter: PersonSegmenter,
+}
+
+impl BackgroundBlurProcessor {
+    /// Create a new background blur processor
+    pub fn new() -> Result<Self> {
+        let segmenter = PersonSegmenter::load()?;
+        Ok(Self { segmenter })
+    }
+    
+    /// Process a single frame, returning the blurred version
+    pub fn process_frame(&self, frame: &image::DynamicImage, blur_strength: u32) -> Result<image::DynamicImage> {
+        // Get segmentation mask
+        let mask = self.segmenter.segment(frame)?;
+        
+        // Apply blur to the entire frame
+        let blurred = frame.blur(blur_strength as f32);
+        
+        // Composite: person from original, background from blurred
+        let mut result = frame.to_rgb8();
+        let blurred_rgb = blurred.to_rgb8();
+        
+        for y in 0..frame.height() {
+            for x in 0..frame.width() {
+                let mask_val = mask.get(x, y);
+                let original = frame.get_pixel(x, y);
+                let blurred_px = blurred_rgb.get_pixel(x, y);
+                
+                // Blend based on mask (1.0 = person, 0.0 = background)
+                let r = (original.0[0] as f32 * mask_val + blurred_px.0[0] as f32 * (1.0 - mask_val)) as u8;
+                let g = (original.0[1] as f32 * mask_val + blurred_px.0[1] as f32 * (1.0 - mask_val)) as u8;
+                let b = (original.0[2] as f32 * mask_val + blurred_px.0[2] as f32 * (1.0 - mask_val)) as u8;
+                
+                result.put_pixel(x, y, image::Rgb([r, g, b]));
+            }
+        }
+        
+        Ok(image::DynamicImage::ImageRgb8(result))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
