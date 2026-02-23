@@ -179,8 +179,10 @@ fn main() -> Result<()> {
         && !cli.generate_config
         && !cli.dry_run
     {
-        // Let clap show the help message
-        let _ = Cli::try_parse_from(vec!["ai-vid-editor", "--help"]);
+        // Show help and exit
+        use clap::CommandFactory;
+        Cli::command().print_help()?;
+        println!();
         return Ok(());
     }
 
