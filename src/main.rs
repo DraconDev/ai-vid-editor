@@ -354,14 +354,14 @@ fn main() -> Result<()> {
 }
 
 /// Run in watch mode - monitor a directory and process new videos
-fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, cli: &Cli) -> Result<()> {
+fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, intro: &Option<PathBuf>, outro: &Option<PathBuf>) -> Result<()> {
     use std::collections::HashSet;
     use std::time::Duration;
     
     println!("=== WATCH MODE ===");
     println!("Watching: {:?}", watch_dir);
     println!("Output to: {:?}", output_dir);
-    println!("Polling interval: {}s", cli.watch_interval);
+    println!("Polling interval: {}s", config.watch.interval);
     println!("Press Ctrl+C to stop\n");
     
     // Create output directory if it doesn't exist
