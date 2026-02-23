@@ -130,6 +130,7 @@ pub trait VideoEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
     fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()>;
     fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()>;
+    fn reduce_noise(&self, input: &Path, output: &Path) -> Result<()>;
 }
 
 pub struct FfmpegEditor;
@@ -187,6 +188,29 @@ impl VideoEditor for FfmpegEditor {
     fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()> {
         // Apply loudnorm and basic speech EQ
         let filter = "loudnorm=I=-14:TP=-1:LRA=11,equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3";
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-af", filter,
+                "-c:v", "copy",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
+
+    fn reduce_noise(&self, input: &Path, output: &Path) -> Result<()> {
+        // Apply FFT-based noise reduction
+        // afftdn removes steady background noise (fans, AC, hiss)
+        let filter = "afftdn=nf=-25:tn=1";
         
         let status = Command::new("ffmpeg")
             .args([
