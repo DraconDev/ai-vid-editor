@@ -79,16 +79,21 @@
 - Uses `tract` (pure Rust ONNX runtime) - no external dependencies
 
 ### Auto-Reframe (Horizontal → Vertical)
-- [ ] Add face detection dependency (`tract`)
-- [ ] Download MediaPipe face model
+- [x] Add face detection dependency (`tract-onnx`)
+- [x] Add `--reframe` CLI flag
+- [x] Add config option `video.reframe`
+- [ ] Download MediaPipe face model from HuggingFace
+- [ ] Implement frame extraction and face tracking
 - [ ] Crop 16:9 to 9:16 following speaker's face
 - [ ] Smooth camera movement between faces
-- [ ] Add `--reframe` flag
 
 ### Background Blur
-- [ ] Add person segmentation model (MODNet ~25MB)
+- [x] Add person segmentation dependency (`tract-onnx`)
+- [x] Add `--blur-background` CLI flag
+- [x] Add config option `video.blur_background`
+- [ ] Download MODNet model from HuggingFace
+- [ ] Implement frame extraction and segmentation
 - [ ] Blur background while keeping speaker sharp
-- [ ] Add `--blur-background` flag
 
 ---
 
