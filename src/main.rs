@@ -135,6 +135,14 @@ pub struct Cli {
     /// Enable auto color correction
     #[arg(long)]
     pub color_correct: bool,
+    
+    /// Auto-reframe horizontal video to vertical (9:16) following speaker's face
+    #[arg(long)]
+    pub reframe: bool,
+    
+    /// Blur background while keeping speaker sharp
+    #[arg(long)]
+    pub blur_background: bool,
 }
 
 fn main() -> Result<()> {
