@@ -6,12 +6,13 @@
 //!
 //! Models are lazy-loaded to minimize memory usage when features aren't used.
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::path::Path;
+use std::sync::Arc;
 use tract_onnx::prelude::*;
 
 /// Type alias for the ONNX model
-type OnnxModel = RunnableModel<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
+type OnnxModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
 
 /// Face detector using ONNX model
 pub struct FaceDetector {
