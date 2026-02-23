@@ -9,6 +9,7 @@ pub mod batch_processor;
 pub mod stt_analyzer;
 pub mod exporter;
 pub mod config;
+pub mod ml;
 
 use crate::batch_processor::{process_single_file_with_intro_outro, process_batch_dir, FfmpegDurationGetter};
 use crate::analyzer::FfmpegAnalyzer;
