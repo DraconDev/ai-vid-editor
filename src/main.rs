@@ -19,171 +19,112 @@ use crate::config::{Config, Preset};
 #[command(
     author, 
     version, 
-    about = "AI-powered video editor for automatic silence removal and audio enhancement",
-    long_about = "AI Video Editor - Automatically remove silences, enhance audio, and add intros/outros.\n\n\
-        EXAMPLES:\n\
-          ai-vid-editor -i input.mp4 -o output.mp4                    # Basic silence removal\n\
-          ai-vid-editor -i input.mp4 -o output.mp4 --preset youtube   # YouTube preset\n\
-          ai-vid-editor -i input.mp4 -o output.mp4 --enhance --music bg.mp3  # With music\n\
-          ai-vid-editor -I ./raw -O ./edited --preset youtube         # Batch process\n\
-          ai-vid-editor --watch ./incoming -O ./processed             # Watch mode\n\n\
-        For more info: https://github.com/DraconDev/ai-vid-editor"
+    about = "AI video editor - configure via config.toml, CLI for quick overrides",
+    long_about = "AI Video Editor\n\n\
+        CONFIG-FIRST: Create ai-vid-editor.toml with all your settings.\n\
+        CLI flags are optional overrides.\n\n\
+        QUICK START:\n\
+          ai-vid-editor --generate-config > config.toml  # Create config\n\
+          ai-vid-editor --config config.toml             # Run with config\n\
+          ai-vid-editor --project ./my-project           # Project mode\n\n\
+        See ai-vid-editor.example.toml for full documentation."
 )]
 pub struct Cli {
-    /// Input video file to process
-    #[arg(group = "input_group", short, long, value_name = "FILE")]
+    /// Input video file
+    #[arg(group = "input_group", short, long)]
     pub input_file: Option<PathBuf>,
 
-    /// Input directory for batch processing (processes all videos in folder)
-    #[arg(group = "input_group", short = 'I', long, value_name = "DIRECTORY")]
+    /// Input directory (batch mode)
+    #[arg(group = "input_group", short = 'I', long)]
     pub input_dir: Option<PathBuf>,
 
-    /// Output video file path
-    #[arg(group = "output_group", short, long, value_name = "FILE")]
+    /// Output video file
+    #[arg(group = "output_group", short, long)]
     pub output_file: Option<PathBuf>,
 
-    /// Output directory for batch processing
-    #[arg(group = "output_group", short = 'O', long, value_name = "DIRECTORY")]
+    /// Output directory (batch mode)
+    #[arg(group = "output_group", short = 'O', long)]
     pub output_dir: Option<PathBuf>,
 
-    /// Use a preset profile (youtube, shorts, podcast, minimal)
-    /// 
-    /// Presets configure optimal settings for common use cases:
-    ///   youtube  - Cut silences, enhance audio, export chapters + FCPXML
-    ///   shorts   - Speedup silences (3x), enhance audio, tight padding
-    ///   podcast  - Cut silences, enhance audio (-16 LUFS), export SRT
-    ///   minimal  - Just silence detection, no enhancement
-    #[arg(short = 'P', long, value_name = "PRESET")]
-    pub preset: Option<String>,
-
-    /// Path to TOML configuration file
-    /// 
-    /// Config files can be placed at:
-    ///   - ./ai-vid-editor.toml (project-local)
-    ///   - ~/.config/ai-vid-editor/config.toml (user-global)
-    #[arg(short = 'c', long, value_name = "FILE")]
+    /// Config file path (default: ./ai-vid-editor.toml)
+    #[arg(short = 'c', long)]
     pub config: Option<PathBuf>,
 
-    /// Silence detection threshold in decibels (e.g., -30.0)
-    /// 
-    /// Lower values = more sensitive (detects quieter silences)
-    /// Common values: -25 (aggressive) to -40 (conservative)
-    #[arg(short, long, allow_hyphen_values = true)]
-    pub threshold: Option<f32>,
-
-    /// Minimum silence duration to detect in seconds
-    /// 
-    /// Silences shorter than this are ignored
-    #[arg(short, long)]
-    pub duration: Option<f32>,
-
-    /// Padding around cuts in seconds
-    /// 
-    /// Adds a small buffer before and after cuts for natural transitions
-    #[arg(short, long)]
-    pub padding: Option<f32>,
-
-    /// Speed up silences instead of cutting them
-    /// 
-    /// Silences are played at 4x speed (configurable via config) instead of being removed
-    #[arg(short = 's', long)]
-    pub speedup: bool,
-
-    /// Enable audio enhancement (loudness normalization + EQ)
-    /// 
-    /// Normalizes to -14 LUFS (YouTube standard) and applies speech EQ
-    #[arg(short = 'E', long)]
-    pub enhance: bool,
-
-    /// Enable audio noise reduction
-    /// 
-    /// Removes background noise (fans, AC, hiss) using ffmpeg afftdn filter
+    /// Project directory (loads config.toml from here)
     #[arg(long)]
-    pub noise_reduction: bool,
+    pub project: Option<PathBuf>,
 
-    /// Background music file to mix with video audio
-    /// 
-    /// Music will be auto-ducked (lowered) during speech segments
-    #[arg(short = 'm', long, value_name = "FILE")]
-    pub music: Option<PathBuf>,
+    /// Preset: youtube, shorts, podcast, minimal
+    #[arg(short = 'P', long)]
+    pub preset: Option<String>,
 
-    /// Directory containing music files (picks a random track)
-    /// 
-    /// Supports: mp3, wav, m4a, aac, ogg, flac
-    #[arg(long, value_name = "DIRECTORY")]
-    pub music_dir: Option<PathBuf>,
+    /// Watch mode - monitor input_dir for new videos
+    #[arg(short = 'w', long)]
+    pub watch: Option<PathBuf>,
 
-    /// Video file to prepend as intro
-    /// 
-    /// The intro video will be concatenated before the processed content
-    #[arg(long, value_name = "FILE")]
-    pub intro: Option<PathBuf>,
-
-    /// Video file to append as outro
-    /// 
-    /// The outro video will be concatenated after the processed content
-    #[arg(long, value_name = "FILE")]
-    pub outro: Option<PathBuf>,
-
-    /// Generate SRT subtitle file (requires STT - placeholder)
-    #[arg(long)]
-    pub export_srt: bool,
-
-    /// Generate YouTube chapters file
-    #[arg(long)]
-    pub export_chapters: bool,
-
-    /// Generate FCPXML for DaVinci Resolve / Premiere Pro
-    #[arg(long)]
-    pub export_fcpxml: bool,
-
-    /// Generate EDL (Edit Decision List)
-    #[arg(long)]
-    pub export_edl: bool,
-
-    /// Remove filler words (um, uh, like, etc.) using Whisper STT
-    /// 
-    /// Requires downloading Whisper model from HuggingFace on first use
-    #[arg(long)]
-    pub remove_fillers: bool,
-
-    /// Dry run: analyze and show what would be done without processing
-    /// 
-    /// Shows: input duration, silent segments, estimated output duration, time saved
+    /// Dry run - preview without processing
     #[arg(short = 'n', long)]
     pub dry_run: bool,
 
-    /// Output results as JSON (useful for scripting and CI/CD)
+    /// JSON output
     #[arg(short = 'j', long)]
     pub json: bool,
 
-    /// Generate a sample configuration file
-    /// 
-    /// Outputs a default TOML config that can be saved to a file
+    /// Generate sample config
     #[arg(long)]
     pub generate_config: bool,
 
-    /// Watch a directory for new videos and process them automatically
-    /// 
-    /// Runs continuously, processing new videos as they appear.
-    /// Existing files are skipped (not reprocessed).
-    #[arg(short = 'w', long, value_name = "DIRECTORY")]
-    pub watch: Option<PathBuf>,
-
-    /// Polling interval for watch mode in seconds
-    #[arg(long, default_value = "5")]
+    // === Advanced overrides (use config file instead) ===
+    
+    #[arg(long, hide = true)]
+    pub threshold: Option<f32>,
+    
+    #[arg(long, hide = true)]
+    pub duration: Option<f32>,
+    
+    #[arg(short = 'p', long, hide = true)]
+    pub padding: Option<f32>,
+    
+    #[arg(short = 's', long, hide = true)]
+    pub speedup: bool,
+    
+    #[arg(short = 'E', long, hide = true)]
+    pub enhance: bool,
+    
+    #[arg(long, hide = true)]
+    pub noise_reduction: bool,
+    
+    #[arg(short = 'm', long, hide = true)]
+    pub music: Option<PathBuf>,
+    
+    #[arg(long, hide = true)]
+    pub music_dir: Option<PathBuf>,
+    
+    #[arg(long, hide = true)]
+    pub intro: Option<PathBuf>,
+    
+    #[arg(long, hide = true)]
+    pub outro: Option<PathBuf>,
+    
+    #[arg(long, hide = true)]
+    pub export_srt: bool,
+    
+    #[arg(long, hide = true)]
+    pub export_chapters: bool,
+    
+    #[arg(long, hide = true)]
+    pub export_fcpxml: bool,
+    
+    #[arg(long, hide = true)]
+    pub export_edl: bool,
+    
+    #[arg(long, hide = true)]
+    pub remove_fillers: bool,
+    
+    #[arg(long, hide = true, default_value = "5")]
     pub watch_interval: u64,
-
-    /// Project directory containing config.toml and subfolders (watch/, output/, music/)
-    /// 
-    /// Auto-loads config.toml and sets up paths for the project
-    #[arg(long, value_name = "DIRECTORY")]
-    pub project: Option<PathBuf>,
-
-    /// Join multiple input files into one output video
-    /// 
-    /// Files are concatenated in the order specified
-    #[arg(long)]
+    
+    #[arg(long, hide = true)]
     pub join: bool,
 }
 

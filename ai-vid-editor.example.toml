@@ -1,193 +1,561 @@
-# AI Video Editor Configuration
-# ==============================
-# This is the PRIMARY way to configure the editor.
-# CLI flags are optional overrides.
+# =============================================================================
+# AI VIDEO EDITOR - CONFIGURATION FILE
+# =============================================================================
 #
-# Save as:
-#   - ./ai-vid-editor.toml (project-local)
-#   - ~/.config/ai-vid-editor/config.toml (user-global)
+# This is the PRIMARY way to configure the editor. CLI flags are optional
+# overrides for testing or one-off changes.
 #
-# Usage:
-#   ai-vid-editor --config config.toml
-#   ai-vid-editor --project ./my-project
+# SAVE LOCATIONS:
+#   - ./ai-vid-editor.toml          (project-local, highest priority)
+#   - ~/.config/ai-vid-editor/config.toml  (user-global)
+#   - Specify with --config flag   (explicit path)
+#
+# USAGE:
+#   ai-vid-editor --config ai-vid-editor.toml
+#   ai-vid-editor --project ./my-project  (loads config.toml from that folder)
+#
+# =============================================================================
 
 # =============================================================================
-# PATHS
+# PATHS - Input/Output Locations
 # =============================================================================
-# All paths can be absolute or relative to this config file
+# All paths support:
+#   - Absolute paths: "/home/user/videos/input.mp4"
+#   - Relative paths: "watch/input.mp4" (relative to this config file)
+#   - Empty string "" means "not set" (will use CLI or error)
 
 [paths]
-# Input video file (for single file processing)
+# -----------------------------------------------------------------------------
+# INPUT PATHS
+# -----------------------------------------------------------------------------
+
+# Single input video file
+# Use this for processing one specific video
 # Example: input = "raw/my-video.mp4"
+# CLI equivalent: -i, --input-file
 input = ""
 
-# Input directory (for batch processing)
-# Process all videos in this folder
-# Example: input_dir = "raw"
+# Input directory for batch processing
+# ALL videos in this folder will be processed
+# Supports: mp4, mov, avi, mkv, webm
+# Example: input_dir = "raw_videos"
+# CLI equivalent: -I, --input-dir
+#
+# DEFAULT: "watch" (standard project structure)
 input_dir = "watch"
 
-# Output video file (for single file processing)
+# -----------------------------------------------------------------------------
+# OUTPUT PATHS
+# -----------------------------------------------------------------------------
+
+# Single output video file
+# Required when using single input file
 # Example: output = "edited/my-video.mp4"
+# CLI equivalent: -o, --output-file
 output = ""
 
-# Output directory (for batch/watch mode)
-# Processed videos go here
+# Output directory for batch/watch mode
+# Processed videos are saved here with same filename
+# Example: output_dir = "edited"
+# CLI equivalent: -O, --output-dir
+#
+# DEFAULT: "output" (standard project structure)
 output_dir = "output"
 
+# -----------------------------------------------------------------------------
+# MUSIC PATHS
+# -----------------------------------------------------------------------------
+
 # Background music file (single track)
-# Example: music = "music/background.mp3"
+# Music will be auto-ducked (lowered) during speech segments
+# Supports: mp3, wav, m4a, aac, ogg, flac
+# Example: music = "music/upbeat.mp3"
+# CLI equivalent: -m, --music
 music = ""
 
-# Background music directory (picks random track)
-# Example: music_dir = "music"
+# Background music directory (random track selection)
+# A random music file is picked from this folder for each video
+# Useful for variety in batch processing
+# Example: music_dir = "music_library"
+# CLI equivalent: --music-dir
+#
+# DEFAULT: "music" (standard project structure)
 music_dir = "music"
 
+# -----------------------------------------------------------------------------
+# INTRO/OUTRO PATHS
+# -----------------------------------------------------------------------------
+
 # Intro video (prepended to all processed videos)
-# Example: intro = "branding/intro.mp4"
+# Great for channel branding, logos, disclaimers
+# Example: intro = "branding/channel-intro.mp4"
+# CLI equivalent: --intro
 intro = ""
 
 # Outro video (appended to all processed videos)
-# Example: outro = "branding/outro.mp4"
+# Great for end screens, calls to action, credits
+# Example: outro = "branding/subscribe-outro.mp4"
+# CLI equivalent: --outro
 outro = ""
 
 # =============================================================================
-# SILENCE DETECTION
+# SILENCE DETECTION - How Silent Segments Are Handled
 # =============================================================================
+# The editor detects silent segments and either removes them or speeds through
 
 [silence]
-# Silence detection threshold in decibels
-# -25 = Aggressive, -30 = Balanced, -35 = Conservative, -40 = Very conservative
+# -----------------------------------------------------------------------------
+# DETECTION SETTINGS
+# -----------------------------------------------------------------------------
+
+# Silence detection threshold in decibels (dB)
+# 
+# HOW IT WORKS:
+#   Audio below this volume level is considered "silence"
+#   Lower values = more sensitive (detects quieter silences)
+#   Higher values = less sensitive (only detects obvious silences)
+#
+# RECOMMENDED VALUES:
+#   -25 dB = Aggressive (may cut quiet speech, breaths)
+#   -30 dB = Balanced (recommended for most content) ← DEFAULT
+#   -35 dB = Conservative (only obvious pauses)
+#   -40 dB = Very conservative (only long, complete silences)
+#
+# TUNING TIPS:
+#   - If quiet speech is being cut: lower threshold (e.g., -35)
+#   - If silences aren't being detected: raise threshold (e.g., -25)
+#   - Different microphones may need different thresholds
+#
+# CLI equivalent: -t, --threshold
 threshold_db = -30.0
 
 # Minimum silence duration to detect (seconds)
-# 0.3-0.5 = snappy, 0.5-1.0 = natural
+#
+# HOW IT WORKS:
+#   Silences shorter than this are IGNORED (not cut/sped up)
+#   This prevents cutting natural pauses in speech
+#
+# RECOMMENDED VALUES:
+#   0.3 seconds = Snappy (cuts most pauses, may feel abrupt)
+#   0.5 seconds = Balanced (recommended) ← DEFAULT
+#   0.8 seconds = Natural (keeps conversational pauses)
+#   1.0 seconds = Relaxed (only cuts long pauses)
+#
+# TUNING TIPS:
+#   - For fast-paced content (news, tutorials): 0.3-0.5
+#   - For conversational content (podcasts, interviews): 0.5-0.8
+#   - For dramatic content: 0.8-1.0
+#
+# CLI equivalent: -d, --duration
 min_duration = 0.5
 
 # Padding around cuts (seconds)
-# 0.05-0.1 = tight, 0.15-0.3 = relaxed
+#
+# HOW IT WORKS:
+#   Adds a buffer before and after each cut
+#   Prevents abrupt cuts that sound jarring
+#
+# RECOMMENDED VALUES:
+#   0.05 seconds = Very tight (abrupt, may sound unnatural)
+#   0.10 seconds = Balanced (recommended) ← DEFAULT
+#   0.15 seconds = Comfortable (smooth transitions)
+#   0.20 seconds = Relaxed (very smooth, less aggressive)
+#   0.30 seconds = Very relaxed (keeps more silence)
+#
+# TUNING TIPS:
+#   - For fast-paced content: 0.05-0.10
+#   - For professional content: 0.10-0.15
+#   - For podcasts/interviews: 0.15-0.25
+#
+# CLI equivalent: -p, --padding
 padding = 0.1
 
-# How to handle silences: "cut" or "speedup"
+# -----------------------------------------------------------------------------
+# SILENCE HANDLING MODE
+# -----------------------------------------------------------------------------
+
+# How to handle detected silences
+#
+# OPTIONS:
+#   "cut"     = Remove silences completely (default)
+#              - Makes video shorter
+#              - Good for tutorials, lectures, news
+#              - Most common choice
+#
+#   "speedup" = Speed through silences instead of cutting
+#              - Video stays same length but silences are fast
+#              - Good for vlogs, casual content, shorts
+#              - Preserves timing for music sync
+#
+# WHEN TO USE SPEEDUP:
+#   - YouTube Shorts / TikTok (keeps video under time limit)
+#   - When you want to preserve video length
+#   - When silence timing matters (music beats, etc.)
+#
+# CLI equivalent: -s, --speedup (sets mode to "speedup")
 mode = "cut"
 
-# Speed multiplier when mode = "speedup" (2.0-4.0 recommended)
+# Speed multiplier when mode = "speedup"
+#
+# HOW IT WORKS:
+#   Silent segments play at this speed
+#   Higher = faster through silences
+#
+# RECOMMENDED VALUES:
+#   2.0 = 2x speed (subtle, good for vlogs)
+#   3.0 = 3x speed (good for shorts) 
+#   4.0 = 4x speed (aggressive, recommended) ← DEFAULT
+#   6.0 = 6x speed (very fast, may be noticeable)
+#
+# NOTE: Only applies when mode = "speedup"
 speedup_factor = 4.0
 
-# Minimum silence to apply speedup (seconds)
+# Minimum silence duration to apply speedup (seconds)
+#
+# HOW IT WORKS:
+#   Silences shorter than this are CUT, not sped up
+#   Prevents jarring speed changes on short pauses
+#
+# RECOMMENDED: 0.5 seconds (default)
+#
+# WHY THIS EXISTS:
+#   Speeding up a 0.2 second pause creates a weird blip
+#   Better to just cut very short silences
 min_silence_for_speedup = 0.5
 
 # =============================================================================
-# FILLER WORD REMOVAL
+# FILLER WORD REMOVAL - Remove "um", "uh", etc.
 # =============================================================================
+# Uses Whisper AI to detect and remove filler words
+# NOTE: Requires downloading Whisper model on first use (~150MB)
 
 [filler_words]
-# Enable filler word removal (requires Whisper STT)
+# Enable filler word removal
+#
+# HOW IT WORKS:
+#   1. Transcribes audio using Whisper AI
+#   2. Detects filler words in transcript
+#   3. Cuts those segments from video
+#
+# WHEN TO USE:
+#   - Professional presentations
+#   - Educational content
+#   - Podcasts with lots of "ums"
+#
+# WHEN NOT TO USE:
+#   - Casual/vlog content (fillers add authenticity)
+#   - Interview content (may cut natural speech patterns)
+#
+# CLI equivalent: --remove-fillers
 enabled = false
 
-# Words to remove (only words that are ALWAYS fillers)
+# Words to remove (case-insensitive)
+#
+# IMPORTANT: Only include words that are ALWAYS fillers!
+# Words like "like", "so", "basically" can be legitimate words:
+#   - "I like pizza" ← "like" is a verb, NOT a filler
+#   - "So, what happened?" ← "so" is a transition, NOT a filler
+#
+# SAFE DEFAULTS (always fillers):
+#   um, uh, ah, er, hmm, uhh, umm
+#
+# NOT RECOMMENDED (context-dependent):
+#   like, so, basically, actually, literally
+#
+# CUSTOMIZATION:
+#   Add your own filler words specific to your speech patterns
+#   Example: words = ["um", "uh", "ah", "er", "hmm", "you know"]
 words = ["um", "uh", "ah", "er", "hmm", "uhh", "umm"]
 
 # Padding around filler cuts (seconds)
+#
+# HOW IT WORKS:
+#   Small buffer to avoid cutting into actual speech
+#   Filler detection isn't frame-perfect
+#
+# RECOMMENDED: 0.05 seconds (default)
+#   - Small enough to be precise
+#   - Large enough to avoid cutting speech
 padding = 0.05
 
 # =============================================================================
-# AUDIO PROCESSING
+# AUDIO PROCESSING - Enhancement & Music
 # =============================================================================
 
 [audio]
-# Enable audio enhancement (loudnorm + speech EQ)
+# -----------------------------------------------------------------------------
+# AUDIO ENHANCEMENT
+# -----------------------------------------------------------------------------
+
+# Enable audio enhancement
+#
+# WHAT IT DOES:
+#   1. Loudness normalization (consistent volume)
+#   2. Speech EQ (boosts clarity frequencies)
+#
+# WHY USE IT:
+#   - Consistent volume across videos
+#   - Better speech clarity
+#   - Professional sound quality
+#   - Meets platform loudness standards
+#
+# RECOMMENDED: true (for all content)
+#
+# CLI equivalent: -E, --enhance
 enhance = true
 
-# Enable noise reduction (removes fans, AC, hiss)
+# Enable noise reduction
+#
+# WHAT IT DOES:
+#   Removes steady background noise:
+#   - Fan noise, air conditioning
+#   - Room tone, hiss
+#   - Computer hum
+#
+# WHEN TO USE:
+#   - Recordings in non-studio environments
+#   - Home office recordings
+#   - Outdoor recordings with wind noise
+#
+# WHEN NOT TO USE:
+#   - Studio recordings (already clean)
+#   - Music content (may affect audio quality)
+#
+# NOTE: Uses ffmpeg afftdn filter
+# CLI equivalent: --noise-reduction
 noise_reduction = false
 
-# Target loudness in LUFS
-# -14 = YouTube/Spotify, -16 = Podcasts, -18 = Broadcast EBU, -24 = Broadcast ATSC
+# Target loudness in LUFS (Loudness Units Full Scale)
+#
+# WHAT IS LUFS:
+#   Industry standard for measuring perceived loudness
+#   Higher = louder, Lower = quieter
+#
+# PLATFORM STANDARDS:
+#   -14 LUFS = YouTube, Spotify ← DEFAULT
+#   -16 LUFS = Apple Podcasts, podcasts
+#   -18 LUFS = Broadcast (EBU R128 European)
+#   -24 LUFS = Broadcast (ATSC A/85 American)
+#
+# RECOMMENDED:
+#   - YouTube videos: -14 LUFS
+#   - Podcasts: -16 LUFS
+#   - Don't change unless you have a specific reason
+#
+# WHY IT MATTERS:
+#   - Platforms normalize to their standard
+#   - Too loud = gets turned down, loses dynamics
+#   - Too quiet = gets turned up, may have noise
 target_lufs = -14.0
 
-# Music volume during speech (0.0-1.0)
+# -----------------------------------------------------------------------------
+# MUSIC SETTINGS
+# -----------------------------------------------------------------------------
+
+# Music volume during speech (0.0 to 1.0)
+#
+# HOW IT WORKS:
+#   When speech is detected, music volume drops to this level
+#   This is called "ducking" or "sidechain compression"
+#
+# VALUES:
+#   0.0 = Music completely muted during speech
+#   0.1 = Music at 10% volume during speech (very subtle)
+#   0.2 = Music at 20% volume during speech (recommended) ← DEFAULT
+#   0.3 = Music at 30% volume during speech (noticeable)
+#   0.5 = Music at 50% volume during speech (may compete with speech)
+#
+# TUNING TIPS:
+#   - For background music: 0.1-0.2
+#   - For ambient music: 0.2-0.3
+#   - Lower = speech is clearer
+#   - Higher = music is more present
 duck_volume = 0.2
 
 # =============================================================================
-# EXPORT OPTIONS
+# EXPORT OPTIONS - Additional Output Files
 # =============================================================================
+# Generate additional files alongside the processed video
 
 [export]
 # Generate SRT subtitle file
+#
+# OUTPUT: <video_name>.srt
+#
+# WHAT IT IS:
+#   Standard subtitle format
+#   Can be uploaded to YouTube, embedded in videos
+#
+# NOTE: Currently requires Whisper STT
+#       Placeholder file generated if STT not available
+#
+# USE CASES:
+#   - YouTube auto-captions (upload SRT for accuracy)
+#   - Accessibility
+#   - Non-native speakers
+#
+# CLI equivalent: --export-srt
 subtitles = false
 
 # Generate YouTube chapters file
+#
+# OUTPUT: <video_name>.chapters.txt
+#
+# WHAT IT IS:
+#   Timestamped chapter markers
+#   Paste into YouTube description
+#
+# FORMAT:
+#   00:00 Intro
+#   00:45 Main Topic
+#   05:30 Conclusion
+#
+# NOTE: Currently generates placeholder
+#       Real chapters need scene detection or manual input
+#
+# USE CASES:
+#   - YouTube SEO
+#   - Viewer navigation
+#
+# CLI equivalent: --export-chapters
 chapters = false
 
-# Generate FCPXML for DaVinci Resolve / Premiere Pro
+# Generate FCPXML for DaVinci Resolve / Adobe Premiere Pro
+#
+# OUTPUT: <video_name>.fcpxml
+#
+# WHAT IT IS:
+#   Project file for professional video editors
+#   Contains edit timeline with cuts
+#
+# USE CASES:
+#   - Fine-tune edits in professional NLE
+#   - Add effects, color grading
+#   - Collaborate with editors
+#
+# CLI equivalent: --export-fcpxml
 fcpxml = false
 
 # Generate EDL (Edit Decision List)
+#
+# OUTPUT: <video_name>.edl
+#
+# WHAT IT IS:
+#   Universal edit format
+#   Works with most video editors
+#
+# USE CASES:
+#   - Transfer edits between different software
+#   - Archive edit decisions
+#
+# CLI equivalent: --export-edl
 edl = false
 
 # =============================================================================
-# WATCH MODE
+# WATCH MODE - Automatic Processing
 # =============================================================================
+# Monitor a folder and automatically process new videos
 
 [watch]
-# Enable watch mode (monitor input_dir for new videos)
+# Enable watch mode
+#
+# HOW IT WORKS:
+#   1. Monitors input_dir for new video files
+#   2. Automatically processes them
+#   3. Saves to output_dir
+#   4. Skips already-processed files
+#
+# USE CASES:
+#   - Automation pipeline
+#   - Batch processing as files arrive
+#   - Integration with recording software
+#
+# HOW TO USE:
+#   1. Set enabled = true
+#   2. Set input_dir and output_dir
+#   3. Run: ai-vid-editor --config config.toml
+#   4. Drop videos into input_dir
+#
+# CLI equivalent: -w, --watch <directory>
 enabled = false
 
 # Polling interval in seconds
+#
+# HOW IT WORKS:
+#   How often to check for new files
+#
+# RECOMMENDED:
+#   5 seconds = Good balance (default)
+#   1-2 seconds = More responsive, more CPU
+#   10+ seconds = Less responsive, less CPU
 interval = 5
 
 # =============================================================================
-# PRESETS (quick start)
+# PRESETS - Quick Configuration Templates
 # =============================================================================
-# Uncomment ONE preset below to use instead of manual config:
-
-# --- YouTube Long-form ---
-# [silence]
-# mode = "cut"
-# padding = 0.15
-# [audio]
-# enhance = true
-# target_lufs = -14.0
-# [export]
-# chapters = true
-# fcpxml = true
-
-# --- YouTube Shorts / TikTok ---
-# [silence]
-# mode = "speedup"
-# speedup_factor = 3.0
-# padding = 0.05
-# [audio]
-# enhance = true
-
-# --- Podcast ---
-# [silence]
-# mode = "cut"
-# padding = 0.2
-# [audio]
-# enhance = true
-# target_lufs = -16.0
-# noise_reduction = true
-# [export]
-# subtitles = true
+# Instead of configuring everything manually, use a preset
+# Presets override settings in this file
+#
+# USAGE:
+#   ai-vid-editor --preset youtube
+#   ai-vid-editor --preset shorts
+#   ai-vid-editor --preset podcast
+#   ai-vid-editor --preset minimal
+#
+# PRESET DETAILS:
+#
+# ┌─────────┬──────────────────────────────────────────────────────┐
+# │ youtube │ - Cut silences                                       │
+# │         │ - Audio enhancement (-14 LUFS)                       │
+# │         │ - Export chapters + FCPXML                           │
+# │         │ - Padding: 0.15s (comfortable)                        │
+# │         │ - Best for: Long-form YouTube videos                  │
+# └─────────┴──────────────────────────────────────────────────────┘
+#
+# ┌─────────┬──────────────────────────────────────────────────────┐
+# │ shorts  │ - Speedup silences (3x)                              │
+# │         │ - Audio enhancement (-14 LUFS)                       │
+# │         │ - Padding: 0.05s (tight)                              │
+# │         │ - Best for: YouTube Shorts, TikTok, Reels            │
+# └─────────┴──────────────────────────────────────────────────────┘
+#
+# ┌─────────┬──────────────────────────────────────────────────────┐
+# │ podcast │ - Cut silences                                       │
+# │         │ - Audio enhancement (-16 LUFS, podcast standard)     │
+# │         │ - Export SRT subtitles                               │
+# │         │ - Padding: 0.2s (relaxed, conversational)            │
+# │         │ - Best for: Podcasts, interviews                      │
+# └─────────┴──────────────────────────────────────────────────────┘
+#
+# ┌─────────┬──────────────────────────────────────────────────────┐
+# │ minimal │ - Just silence detection                             │
+# │         │ - No audio enhancement                               │
+# │         │ - No exports                                         │
+# │         │ - Best for: Quick processing, custom pipeline        │
+# └─────────┴──────────────────────────────────────────────────────┘
 
 # =============================================================================
-# EXAMPLE PROJECT SETUP
+# EXAMPLE PROJECT STRUCTURE
 # =============================================================================
 #
-# Create a project folder:
+# Create a folder for your project:
 #
 #   my-youtube-channel/
-#   ├── config.toml        # This file
-#   ├── watch/             # Drop raw videos here
-#   ├── output/            # Processed videos appear here
-#   ├── music/             # Background music library
-#   │   ├── track1.mp3
-#   │   └── track2.mp3
-#   ├── intro.mp4          # Your channel intro
-#   └── outro.mp4          # Your channel outro
+#   ├── config.toml        ← This file (rename from ai-vid-editor.example.toml)
+#   ├── watch/             ← Drop raw videos here
+#   │   ├── video1.mp4
+#   │   └── video2.mp4
+#   ├── output/            ← Processed videos appear here
+#   │   ├── video1.mp4
+#   │   └── video2.mp4
+#   ├── music/             ← Background music library
+#   │   ├── upbeat.mp3
+#   │   └── chill.mp3
+#   ├── intro.mp4          ← Your channel intro
+#   └── outro.mp4          ← Your channel outro
 #
-# config.toml:
+# MINIMAL CONFIG FOR THIS STRUCTURE:
+#
 #   [paths]
 #   input_dir = "watch"
 #   output_dir = "output"
@@ -198,15 +566,54 @@ interval = 5
 #   [audio]
 #   enhance = true
 #
-# Run:
-#   ai-vid-editor --project ./my-youtube-channel
-#
-# Or with watch mode:
 #   [watch]
 #   enabled = true
 #   interval = 5
 #
-# Then just run:
+# RUN:
 #   ai-vid-editor --project ./my-youtube-channel
 #
-# Drop videos into watch/ and they're automatically processed!
+# That's it! Drop videos into watch/ and they're automatically processed.
+
+# =============================================================================
+# CLI REFERENCE - All Available Flags
+# =============================================================================
+#
+# Input/Output:
+#   -i, --input-file <FILE>       Input video file
+#   -I, --input-dir <DIRECTORY>   Input directory (batch)
+#   -o, --output-file <FILE>      Output video file
+#   -O, --output-dir <DIRECTORY>  Output directory
+#   --project <DIRECTORY>         Project folder with config.toml
+#
+# Processing:
+#   -P, --preset <PRESET>         youtube, shorts, podcast, minimal
+#   -t, --threshold <dB>          Silence threshold (default: -30)
+#   -d, --duration <SEC>          Min silence duration (default: 0.5)
+#   -p, --padding <SEC>           Padding around cuts (default: 0.1)
+#   -s, --speedup                 Speed up silences instead of cutting
+#   --join                        Join multiple input files
+#
+# Audio:
+#   -E, --enhance                 Audio enhancement (loudnorm + EQ)
+#   --noise-reduction             Remove background noise
+#   -m, --music <FILE>            Background music file
+#   --music-dir <DIRECTORY>       Random music from folder
+#
+# Video:
+#   --intro <FILE>                Video to prepend
+#   --outro <FILE>                Video to append
+#
+# Export:
+#   --export-srt                  Generate SRT subtitles
+#   --export-chapters             Generate YouTube chapters
+#   --export-fcpxml               Generate FCPXML
+#   --export-edl                  Generate EDL
+#   --remove-fillers              Remove filler words
+#
+# Utility:
+#   -n, --dry-run                 Preview without processing
+#   -j, --json                    JSON output
+#   -w, --watch <DIRECTORY>       Watch folder mode
+#   --generate-config             Output sample config
+#   -c, --config <FILE>           Path to config file
