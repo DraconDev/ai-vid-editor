@@ -25,6 +25,11 @@
 - [x] SRT subtitle export - `--export-srt` (placeholder, needs STT)
 - [x] YouTube chapters export - `--export-chapters` (placeholder, needs STT)
 
+### CLI Features
+- [x] **Preset profiles** - `--preset youtube/shorts/podcast/minimal`
+- [x] **Dry run mode** - `--dry-run` to preview without processing
+- [x] **JSON output** - `--json` for scripting/automation
+
 ---
 
 ## 🔧 Partially Implemented (Needs Work)
@@ -114,4 +119,6 @@ ai-vid-editor --generate-config > ai-vid-editor.toml
 
 1. **Complete Whisper STT** - Implement mel spectrogram + decode loop
 2. **Wire filler word removal** - Add `--remove-fillers` flag (needs STT)
-3. **Preset profiles** - Add "youtube-podcast", "tiktok-fast" presets
+3. **Intro/Outro Support** - `--intro` / `--outro` flags
+4. **Music Library** - `--music-dir` to pick random track
+5. **Watch Folder Mode** - `--watch` daemon mode
