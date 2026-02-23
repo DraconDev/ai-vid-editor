@@ -226,12 +226,14 @@ fn main() -> Result<()> {
     if let Some(ref music_path) = music {
         config.audio.music_file = Some(music_path.clone());
     } else if let Some(ref music_dir_path) = music_dir {
-        // Pick a random music file from the directory
-        if let Some(random_music) = pick_random_music_file(music_dir_path)? {
-            if !cli.json {
-                println!("Selected random music: {:?}", random_music);
+        // Only try to pick music if the directory exists
+        if music_dir_path.exists() {
+            if let Some(random_music) = pick_random_music_file(music_dir_path)? {
+                if !cli.json {
+                    println!("Selected random music: {:?}", random_music);
+                }
+                config.audio.music_file = Some(random_music);
             }
-            config.audio.music_file = Some(random_music);
         }
     }
     
