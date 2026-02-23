@@ -351,6 +351,14 @@ mod tests {
         fn reduce_noise(&self, _input: &Path, _output: &Path) -> Result<()> {
             Ok(())
         }
+
+        fn stabilize(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
+
+        fn color_correct(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
     }
 
     // Mock DurationGetter for testing purposes
