@@ -7,7 +7,7 @@
 //! Models are lazy-loaded to minimize memory usage when features aren't used.
 
 use anyhow::Result;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use tract_onnx::prelude::*;
 
