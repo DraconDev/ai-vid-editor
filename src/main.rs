@@ -177,7 +177,7 @@ pub struct Cli {
     /// Project directory containing config.toml and subfolders (watch/, output/, music/)
     /// 
     /// Auto-loads config.toml and sets up paths for the project
-    #[arg(short = 'p', long, value_name = "DIRECTORY")]
+    #[arg(long, value_name = "DIRECTORY")]
     pub project: Option<PathBuf>,
 
     /// Join multiple input files into one output video
