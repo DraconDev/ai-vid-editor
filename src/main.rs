@@ -16,73 +16,118 @@ use crate::editor::FfmpegEditor;
 use crate::config::{Config, Preset};
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author, 
+    version, 
+    about = "AI-powered video editor for automatic silence removal and audio enhancement",
+    long_about = "AI Video Editor - Automatically remove silences, enhance audio, and add intros/outros.\n\n\
+        EXAMPLES:\n\
+          ai-vid-editor -i input.mp4 -o output.mp4                    # Basic silence removal\n\
+          ai-vid-editor -i input.mp4 -o output.mp4 --preset youtube   # YouTube preset\n\
+          ai-vid-editor -i input.mp4 -o output.mp4 --enhance --music bg.mp3  # With music\n\
+          ai-vid-editor -I ./raw -O ./edited --preset youtube         # Batch process\n\
+          ai-vid-editor --watch ./incoming -O ./processed             # Watch mode\n\n\
+        For more info: https://github.com/DraconDev/ai-vid-editor"
+)]
 pub struct Cli {
+    /// Input video file to process
     #[arg(group = "input_group", short, long, value_name = "FILE")]
     pub input_file: Option<PathBuf>,
 
+    /// Input directory for batch processing (processes all videos in folder)
     #[arg(group = "input_group", short = 'I', long, value_name = "DIRECTORY")]
     pub input_dir: Option<PathBuf>,
 
+    /// Output video file path
     #[arg(group = "output_group", short, long, value_name = "FILE")]
     pub output_file: Option<PathBuf>,
 
+    /// Output directory for batch processing
     #[arg(group = "output_group", short = 'O', long, value_name = "DIRECTORY")]
     pub output_dir: Option<PathBuf>,
 
-    /// Use a preset profile: youtube, shorts, podcast, minimal
+    /// Use a preset profile (youtube, shorts, podcast, minimal)
+    /// 
+    /// Presets configure optimal settings for common use cases:
+    ///   youtube  - Cut silences, enhance audio, export chapters + FCPXML
+    ///   shorts   - Speedup silences (3x), enhance audio, tight padding
+    ///   podcast  - Cut silences, enhance audio (-16 LUFS), export SRT
+    ///   minimal  - Just silence detection, no enhancement
     #[arg(short = 'P', long, value_name = "PRESET")]
     pub preset: Option<String>,
 
-    /// Path to config file (TOML)
+    /// Path to TOML configuration file
+    /// 
+    /// Config files can be placed at:
+    ///   - ./ai-vid-editor.toml (project-local)
+    ///   - ~/.config/ai-vid-editor/config.toml (user-global)
     #[arg(short = 'c', long, value_name = "FILE")]
     pub config: Option<PathBuf>,
 
-    /// Silence threshold in decibels (e.g., -30.0)
+    /// Silence detection threshold in decibels (e.g., -30.0)
+    /// 
+    /// Lower values = more sensitive (detects quieter silences)
+    /// Common values: -25 (aggressive) to -40 (conservative)
     #[arg(short, long, allow_hyphen_values = true)]
     pub threshold: Option<f32>,
 
-    /// Minimum silence duration in seconds
+    /// Minimum silence duration to detect in seconds
+    /// 
+    /// Silences shorter than this are ignored
     #[arg(short, long)]
     pub duration: Option<f32>,
 
-    /// Padding in seconds to add around cuts
+    /// Padding around cuts in seconds
+    /// 
+    /// Adds a small buffer before and after cuts for natural transitions
     #[arg(short, long)]
     pub padding: Option<f32>,
 
     /// Speed up silences instead of cutting them
+    /// 
+    /// Silences are played at 4x speed (configurable via config) instead of being removed
     #[arg(short = 's', long)]
     pub speedup: bool,
 
     /// Enable audio enhancement (loudness normalization + EQ)
+    /// 
+    /// Normalizes to -14 LUFS (YouTube standard) and applies speech EQ
     #[arg(short = 'E', long)]
     pub enhance: bool,
 
-    /// Path to background music file (enables auto-ducking)
+    /// Background music file to mix with video audio
+    /// 
+    /// Music will be auto-ducked (lowered) during speech segments
     #[arg(short = 'm', long, value_name = "FILE")]
     pub music: Option<PathBuf>,
 
-    /// Path to directory of music files (picks random track)
+    /// Directory containing music files (picks a random track)
+    /// 
+    /// Supports: mp3, wav, m4a, aac, ogg, flac
     #[arg(long, value_name = "DIRECTORY")]
     pub music_dir: Option<PathBuf>,
 
     /// Video file to prepend as intro
+    /// 
+    /// The intro video will be concatenated before the processed content
     #[arg(long, value_name = "FILE")]
     pub intro: Option<PathBuf>,
 
     /// Video file to append as outro
+    /// 
+    /// The outro video will be concatenated after the processed content
     #[arg(long, value_name = "FILE")]
     pub outro: Option<PathBuf>,
 
-    /// Generate SRT subtitles
+    /// Generate SRT subtitle file (requires STT - placeholder)
     #[arg(long)]
     pub export_srt: bool,
 
-    /// Generate YouTube chapters
+    /// Generate YouTube chapters file
     #[arg(long)]
     pub export_chapters: bool,
 
-    /// Generate FCPXML for DaVinci Resolve/Premiere Pro
+    /// Generate FCPXML for DaVinci Resolve / Premiere Pro
     #[arg(long)]
     pub export_fcpxml: bool,
 
@@ -91,18 +136,25 @@ pub struct Cli {
     pub export_edl: bool,
 
     /// Dry run: analyze and show what would be done without processing
+    /// 
+    /// Shows: input duration, silent segments, estimated output duration, time saved
     #[arg(short = 'n', long)]
     pub dry_run: bool,
 
-    /// Output results as JSON (useful for scripting)
+    /// Output results as JSON (useful for scripting and CI/CD)
     #[arg(short = 'j', long)]
     pub json: bool,
 
-    /// Generate a default config file
+    /// Generate a sample configuration file
+    /// 
+    /// Outputs a default TOML config that can be saved to a file
     #[arg(long)]
     pub generate_config: bool,
 
     /// Watch a directory for new videos and process them automatically
+    /// 
+    /// Runs continuously, processing new videos as they appear.
+    /// Existing files are skipped (not reprocessed).
     #[arg(short = 'w', long, value_name = "DIRECTORY")]
     pub watch: Option<PathBuf>,
 
