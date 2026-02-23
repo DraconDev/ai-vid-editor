@@ -7,9 +7,14 @@
 //! Models are lazy-loaded to minimize memory usage when features aren't used.
 
 use anyhow::Result;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tract_onnx::prelude::*;
+
+/// Model IDs on HuggingFace Hub
+const FACE_MODEL_ID: &str = "DraconDev/ai-vid-editor-models";
+const FACE_MODEL_FILE: &str = "face_detection.onnx";
+const SEGMENT_MODEL_FILE: &str = "person_segmentation.onnx";
 
 /// Type alias for the ONNX model
 type OnnxModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
