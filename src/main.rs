@@ -101,6 +101,14 @@ pub struct Cli {
     /// Generate a default config file
     #[arg(long)]
     pub generate_config: bool,
+
+    /// Watch a directory for new videos and process them automatically
+    #[arg(short = 'w', long, value_name = "DIRECTORY")]
+    pub watch: Option<PathBuf>,
+
+    /// Polling interval for watch mode in seconds
+    #[arg(long, default_value = "5")]
+    pub watch_interval: u64,
 }
 
 fn main() -> Result<()> {
@@ -195,6 +203,13 @@ fn main() -> Result<()> {
     // Handle dry-run mode
     if cli.dry_run {
         return handle_dry_run(&cli, &config);
+    }
+
+    // Handle watch mode
+    if let Some(watch_dir) = &cli.watch {
+        let output_dir = cli.output_dir.clone()
+            .ok_or_else(|| anyhow::anyhow!("Output directory (--output-dir) required for watch mode"))?;
+        return run_watch_mode(watch_dir, &output_dir, &config, &cli);
     }
 
     let analyzer = FfmpegAnalyzer;
