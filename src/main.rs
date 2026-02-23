@@ -10,7 +10,7 @@ pub mod stt_analyzer;
 pub mod exporter;
 pub mod config;
 
-use crate::batch_processor::{process_single_file, process_batch_dir, FfmpegDurationGetter};
+use crate::batch_processor::{process_single_file_with_intro_outro, process_batch_dir, FfmpegDurationGetter};
 use crate::analyzer::FfmpegAnalyzer;
 use crate::editor::FfmpegEditor;
 use crate::config::{Config, Preset};
@@ -204,7 +204,16 @@ fn main() -> Result<()> {
     if let Some(input_file) = cli.input_file {
         // Single file processing logic
         let output_file = cli.output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified for single file processing"))?;
-        process_single_file(input_file, output_file, &config, &analyzer, &editor, &duration_getter)?;
+        process_single_file_with_intro_outro(
+            input_file, 
+            output_file, 
+            &config, 
+            &analyzer, 
+            &editor, 
+            &duration_getter,
+            cli.intro.clone(),
+            cli.outro.clone()
+        )?;
     } else if let Some(input_dir) = cli.input_dir {
         // Batch processing logic
         let output_dir = cli.output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified for batch processing"))?;

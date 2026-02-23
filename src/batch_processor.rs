@@ -36,6 +36,65 @@ impl DurationGetter for FfmpegDurationGetter {
 }
 
 
+/// Concatenate intro/outro videos using ffmpeg
+fn concatenate_videos(intro: Option<&Path>, main: &Path, outro: Option<&Path>, output: &Path) -> Result<()> {
+    let has_intro = intro.is_some();
+    let has_outro = outro.is_some();
+    
+    if !has_intro && !has_outro {
+        // No intro/outro, just copy
+        fs::copy(main, output)?;
+        return Ok(());
+    }
+    
+    // Build ffmpeg concat filter
+    let mut inputs: Vec<String> = vec![];
+    let mut concat_inputs = String::new();
+    let mut input_idx = 0;
+    
+    if let Some(intro_path) = intro {
+        inputs.push(format!("-i {}", intro_path.to_str().context("invalid intro path")?));
+        concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
+        input_idx += 1;
+    }
+    
+    inputs.push(format!("-i {}", main.to_str().context("invalid main path")?));
+    concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
+    input_idx += 1;
+    
+    if let Some(outro_path) = outro {
+        inputs.push(format!("-i {}", outro_path.to_str().context("invalid outro path")?));
+        concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
+    }
+    
+    let n = inputs.len();
+    let filter = format!("{}concat=n={}:v=1:a=1[outv][outa]", concat_inputs, n);
+    
+    let mut args = vec![];
+    for input in &inputs {
+        args.push(input.clone());
+    }
+    args.push("-filter_complex".to_string());
+    args.push(filter);
+    args.push("-map".to_string());
+    args.push("[outv]".to_string());
+    args.push("-map".to_string());
+    args.push("[outa]".to_string());
+    args.push("-y".to_string());
+    args.push(output.to_str().context("invalid output path")?.to_string());
+    
+    let status = std::process::Command::new("ffmpeg")
+        .args(&args)
+        .status()
+        .context("failed to execute ffmpeg for concat")?;
+    
+    if !status.success() {
+        anyhow::bail!("ffmpeg concat failed with status: {}", status);
+    }
+    
+    Ok(())
+}
+
 pub fn process_single_file<A, E, D>(
     input_file: PathBuf, 
     output_file: PathBuf, 
@@ -43,6 +102,24 @@ pub fn process_single_file<A, E, D>(
     analyzer: &A, 
     editor: &E, 
     duration_getter: &D
+) -> Result<()>
+where
+    A: VideoAnalyzer,
+    E: VideoEditor,
+    D: DurationGetter,
+{
+    process_single_file_with_intro_outro(input_file, output_file, config, analyzer, editor, duration_getter, None, None)
+}
+
+pub fn process_single_file_with_intro_outro<A, E, D>(
+    input_file: PathBuf, 
+    output_file: PathBuf, 
+    config: &Config,
+    analyzer: &A, 
+    editor: &E, 
+    duration_getter: &D,
+    intro: Option<PathBuf>,
+    outro: Option<PathBuf>,
 ) -> Result<()>
 where
     A: VideoAnalyzer,
@@ -74,8 +151,7 @@ where
     println!("Segments to process: {}", processed_segments.len());
 
     // Step 1: Trim video (silence removal/speedup)
-    let trimmed_file = if config.audio.enhance || config.audio.music_file.is_some() {
-        // Use temp file if we have post-processing
+    let trimmed_file = if config.audio.enhance || config.audio.music_file.is_some() || intro.is_some() || outro.is_some() {
         output_file.with_extension("trimmed.mp4")
     } else {
         output_file.clone()
@@ -92,7 +168,6 @@ where
         editor.enhance_audio(&trimmed_file, &enhanced)
             .context("Failed to enhance audio")?;
         
-        // Clean up trimmed file if it was temp
         if trimmed_file != output_file {
             let _ = fs::remove_file(&trimmed_file);
         }
@@ -102,30 +177,44 @@ where
     };
 
     // Step 3: Music mixing (optional)
-    let final_file = if let Some(ref music_path) = config.audio.music_file {
-        let with_music = output_file.clone();
+    let with_music_file = if let Some(ref music_path) = config.audio.music_file {
+        let with_music = output_file.with_extension("music.mp4");
         println!("Mixing with background music: {:?}", music_path);
         
-        // For now, use empty transcript (no ducking based on speech)
-        // TODO: Integrate with STT for speech-aware ducking
         let empty_transcript = vec![];
         editor.mix_with_music(&enhanced_file, music_path, &with_music, &empty_transcript)
             .context("Failed to mix music")?;
         
-        // Clean up enhanced file if it was temp
         if enhanced_file != output_file {
             let _ = fs::remove_file(&enhanced_file);
         }
         with_music
     } else {
-        // Rename to final output if needed
-        if enhanced_file != output_file {
-            fs::rename(&enhanced_file, &output_file)?;
+        enhanced_file
+    };
+
+    // Step 4: Intro/Outro concatenation (optional)
+    let final_file = if intro.is_some() || outro.is_some() {
+        println!("Adding intro/outro...");
+        concatenate_videos(
+            intro.as_deref(),
+            &with_music_file,
+            outro.as_deref(),
+            &output_file
+        )?;
+        
+        if with_music_file != output_file {
+            let _ = fs::remove_file(&with_music_file);
+        }
+        output_file.clone()
+    } else {
+        if with_music_file != output_file {
+            fs::rename(&with_music_file, &output_file)?;
         }
         output_file.clone()
     };
 
-    // Step 4: Export additional files
+    // Step 5: Export additional files
     export_additional_files(&input_file, &final_file, &processed_segments, config)?;
 
     println!("Successfully saved final video to: {:?}", final_file);
