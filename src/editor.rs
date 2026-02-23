@@ -131,6 +131,8 @@ pub trait VideoEditor {
     fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()>;
     fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()>;
     fn reduce_noise(&self, input: &Path, output: &Path) -> Result<()>;
+    fn stabilize(&self, input: &Path, output: &Path) -> Result<()>;
+    fn color_correct(&self, input: &Path, output: &Path) -> Result<()>;
 }
 
 pub struct FfmpegEditor;
