@@ -62,14 +62,18 @@ impl FaceDetector {
             std::fs::create_dir_all(parent)?;
         }
         
-        // TODO: Download actual model from HuggingFace
-        // For now, create a placeholder
-        anyhow::bail!(
-            "Face detection model not found. Please download the model to: {:?}\n\
-             Recommended model: MediaPipe Face Detection or Ultra-Light-Fast-Generic-Face-Detector\n\
-             This feature is still in development.",
-            path
-        );
+        println!("Downloading face detection model from HuggingFace...");
+        
+        // Use hf-hub to download the model
+        let api = hf_hub::api::sync::Api::new()?;
+        let repo = api.model(FACE_MODEL_ID.to_string());
+        let downloaded = repo.get(FACE_MODEL_FILE)?;
+        
+        // Copy to cache location
+        std::fs::copy(&downloaded, path)?;
+        
+        println!("Model downloaded to: {:?}", path);
+        Ok(())
     }
     
     /// Detect faces in a frame
