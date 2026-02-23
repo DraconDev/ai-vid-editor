@@ -4,15 +4,20 @@ A command-line tool for automated video editing using AI. Designed for content c
 
 ## Features
 
-### ✅ Working Now
+### ✅ Fully Working
 
 - **Silence Detection & Trimming** - Automatically detect and remove silent segments
-- **Speedup Mode** - Speed through silences instead of cutting (4x default)
+- **Speedup Mode** - Speed through silences instead of cutting (configurable speed)
 - **Batch Processing** - Process entire directories of videos
 - **TOML Configuration** - Customizable settings via config files
 - **Audio Enhancement** - Loudness normalization + EQ (`--enhance`)
-- **Music Mixing** - Auto-ducking background music (`--music`)
+- **Music Mixing** - Auto-ducking background music (`--music` or `--music-dir`)
+- **Intro/Outro** - Prepend/append videos (`--intro`, `--outro`)
 - **Export Formats** - FCPXML, EDL, SRT subtitles, YouTube chapters
+- **Preset Profiles** - One-command setups for YouTube, Shorts, Podcasts
+- **Watch Mode** - Daemon that auto-processes new videos
+- **Dry Run** - Preview changes without processing
+- **JSON Output** - For scripting and CI/CD integration
 
 ### 🔧 In Progress
 
@@ -38,20 +43,33 @@ The binary will be at `target/release/ai-vid-editor`.
 
 ## Usage
 
-### Basic Commands
+### Quick Examples
 
 ```bash
-# Trim silences from a single video
+# Basic silence removal
 ai-vid-editor -i input.mp4 -o output.mp4
 
-# Speed through silences instead of cutting
-ai-vid-editor -i input.mp4 -o output.mp4 --speedup
+# YouTube preset (cut silences + enhance + chapters)
+ai-vid-editor -i input.mp4 -o output.mp4 --preset youtube
+
+# Full production pipeline
+ai-vid-editor -i input.mp4 -o output.mp4 \
+  --preset youtube \
+  --intro intro.mp4 \
+  --outro outro.mp4 \
+  --music-dir ./music
 
 # Batch process a directory
-ai-vid-editor -I ./raw_videos -O ./edited
+ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
 
-# Use a config file
-ai-vid-editor -i input.mp4 -o output.mp4 -c config.toml
+# Watch folder (auto-process new videos)
+ai-vid-editor --watch ./incoming -O ./processed
+
+# Preview without processing
+ai-vid-editor -i input.mp4 --dry-run
+
+# JSON output for scripting
+ai-vid-editor -i input.mp4 --dry-run --json
 ```
 
 ### CLI Options
@@ -62,18 +80,35 @@ ai-vid-editor -i input.mp4 -o output.mp4 -c config.toml
 | `-I, --input-dir <DIR>` | Input directory (batch mode) |
 | `-o, --output-file <FILE>` | Output video file |
 | `-O, --output-dir <DIR>` | Output directory (batch mode) |
+| `-P, --preset <PRESET>` | Preset: `youtube`, `shorts`, `podcast`, `minimal` |
 | `-c, --config <FILE>` | Path to TOML config file |
 | `-t, --threshold <dB>` | Silence threshold (default: -30.0) |
 | `-d, --duration <SEC>` | Min silence duration (default: 0.5) |
 | `-p, --padding <SEC>` | Padding around cuts (default: 0.1) |
 | `-s, --speedup` | Speed up silences instead of cutting |
-| `-E, --enhance` | Enable audio enhancement (loudnorm + EQ) |
-| `-m, --music <FILE>` | Background music file (auto-ducking) |
+| `-E, --enhance` | Enable audio enhancement |
+| `-m, --music <FILE>` | Background music file |
+| `--music-dir <DIR>` | Music folder (picks random track) |
+| `--intro <FILE>` | Video to prepend |
+| `--outro <FILE>` | Video to append |
 | `--export-srt` | Generate SRT subtitles |
 | `--export-chapters` | Generate YouTube chapters |
-| `--export-fcpxml` | Generate FCPXML for DaVinci/Premiere |
-| `--export-edl` | Generate EDL (Edit Decision List) |
-| `--generate-config` | Output a sample config file |
+| `--export-fcpxml` | Generate FCPXML |
+| `--export-edl` | Generate EDL |
+| `-n, --dry-run` | Preview without processing |
+| `-j, --json` | JSON output for scripting |
+| `-w, --watch <DIR>` | Watch folder for new videos |
+| `--watch-interval <SEC>` | Polling interval (default: 5) |
+| `--generate-config` | Output sample config |
+
+### Presets
+
+| Preset | Description |
+|--------|-------------|
+| `youtube` | Cut silences, enhance audio, export chapters + FCPXML |
+| `shorts` | Speedup silences (3x), enhance audio, tight padding |
+| `podcast` | Cut silences, enhance audio (-16 LUFS), export SRT |
+| `minimal` | Just silence detection, no enhancement |
 
 ## Configuration
 
@@ -124,17 +159,22 @@ Settings are applied in this order (later overrides earlier):
 | Batch processing | ✅ Done | Recursive directory support |
 | TOML config | ✅ Done | Full configuration support |
 | Audio enhancement | ✅ Done | `--enhance` flag |
-| Music mixing | ✅ Done | `--music <file>` flag |
+| Music mixing | ✅ Done | `--music` / `--music-dir` |
+| Intro/Outro | ✅ Done | `--intro` / `--outro` |
+| Preset profiles | ✅ Done | youtube, shorts, podcast, minimal |
+| Watch mode | ✅ Done | `--watch` daemon |
+| Dry run | ✅ Done | `--dry-run` preview |
+| JSON output | ✅ Done | `--json` for scripting |
+| Export formats | ✅ Done | FCPXML, EDL, SRT, chapters |
 | Whisper STT | 🔧 Partial | Model loads, decode TODO |
 | Filler word removal | 🔧 Partial | Needs STT completion |
-| Export formats | ✅ Done | `--export-srt`, `--export-fcpxml`, etc. |
 
 ## Architecture
 
 ```
 src/
 ├── main.rs           # CLI entry point
-├── config.rs         # TOML configuration
+├── config.rs         # TOML configuration + presets
 ├── analyzer.rs       # Silence detection
 ├── editor.rs         # Video trimming & audio
 ├── batch_processor.rs # Single & batch processing
@@ -157,7 +197,22 @@ cargo build --release
 
 # Generate sample config
 cargo run -- --generate-config
+
+# Run with options
+cargo run -- -i input.mp4 -o output.mp4 --dry-run
 ```
+
+## Future Features
+
+Potential features for future development:
+
+- **Video cropping** - Auto-crop horizontal to vertical for shorts
+- **Scene detection** - Detect scene changes for smarter cuts
+- **Progress bar** - Visual feedback during processing
+- **Thumbnail extraction** - Auto-suggest best thumbnails
+- **Video stabilization** - Stabilize shaky footage
+- **Noise reduction** - Audio noise reduction
+- **GPU acceleration** - Use GPU for faster processing
 
 ## License
 
@@ -168,5 +223,5 @@ MIT
 Contributions welcome! Priority areas:
 1. Complete Whisper STT implementation (mel spectrogram + decode loop)
 2. Wire filler word removal to CLI (needs STT)
-3. Add preset profiles ("youtube-podcast", "tiktok-fast")
-4. Improve error messages
+3. Add progress bar during processing
+4. Video cropping for shorts
