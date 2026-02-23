@@ -225,10 +225,6 @@ pub struct ExportConfig {
     /// Generate EDL
     #[serde(default)]
     pub edl: bool,
-    
-    /// Generate thumbnail guide from transcript
-    #[serde(default)]
-    pub thumbnail_guide: bool,
 }
 
 impl Default for ExportConfig {
@@ -238,7 +234,6 @@ impl Default for ExportConfig {
             chapters: false,
             fcpxml: false,
             edl: false,
-            thumbnail_guide: false,
         }
     }
 }
