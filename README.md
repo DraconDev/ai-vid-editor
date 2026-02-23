@@ -16,6 +16,8 @@ A command-line tool for automated video editing using AI. Designed for content c
 - **Intro/Outro** - Prepend/append videos (`--intro`, `--outro`)
 - **Video Stabilization** - Remove camera shake (`--stabilize`)
 - **Auto Color Correction** - Enhance contrast, brightness, saturation (`--color-correct`)
+- **Auto-Reframe** - Convert horizontal to vertical (9:16) following speaker's face (`--reframe`)
+- **Background Blur** - Blur background while keeping speaker sharp (`--blur-background`)
 - **Export Formats** - FCPXML, EDL, SRT subtitles, YouTube chapters
 - **Preset Profiles** - One-command setups for YouTube, Shorts, Podcasts
 - **Watch Mode** - Daemon that auto-processes new videos
