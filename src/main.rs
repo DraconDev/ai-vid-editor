@@ -265,11 +265,11 @@ fn main() -> Result<()> {
     }
     
     // Handle music selection: --music takes precedence over --music-dir
-    if let Some(ref music_path) = cli.music {
+    if let Some(ref music_path) = music {
         config.audio.music_file = Some(music_path.clone());
-    } else if let Some(ref music_dir) = cli.music_dir {
+    } else if let Some(ref music_dir_path) = music_dir {
         // Pick a random music file from the directory
-        if let Some(random_music) = pick_random_music_file(music_dir)? {
+        if let Some(random_music) = pick_random_music_file(music_dir_path)? {
             if !cli.json {
                 println!("Selected random music: {:?}", random_music);
             }
@@ -313,36 +313,41 @@ fn main() -> Result<()> {
         return handle_dry_run(&cli, &config);
     }
 
-    // Handle watch mode
-    if let Some(watch_dir) = &cli.watch {
-        let output_dir = cli.output_dir.clone()
-            .ok_or_else(|| anyhow::anyhow!("Output directory (--output-dir) required for watch mode"))?;
-        return run_watch_mode(watch_dir, &output_dir, &config, &cli);
+    // Handle watch mode (from config or CLI)
+    let watch_enabled = config.watch.enabled || cli.watch.is_some();
+    let watch_dir = cli.watch.clone().or(input_dir.clone());
+    
+    if watch_enabled {
+        let watch_path = watch_dir.clone()
+            .ok_or_else(|| anyhow::anyhow!("Watch directory required (set input_dir in config or use --watch)"))?;
+        let out_dir = output_dir.clone()
+            .ok_or_else(|| anyhow::anyhow!("Output directory required for watch mode"))?;
+        return run_watch_mode(&watch_path, &out_dir, &config, &intro, &outro);
     }
 
     let analyzer = FfmpegAnalyzer;
     let editor = FfmpegEditor;
     let duration_getter = FfmpegDurationGetter;
 
-    if let Some(input_file) = cli.input_file {
+    if let Some(input) = input_file {
         // Single file processing logic
-        let output_file = cli.output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified for single file processing"))?;
+        let out = output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified"))?;
         process_single_file_with_intro_outro(
-            input_file, 
-            output_file, 
+            input, 
+            out, 
             &config, 
             &analyzer, 
             &editor, 
             &duration_getter,
-            cli.intro.clone(),
-            cli.outro.clone()
+            intro,
+            outro
         )?;
-    } else if let Some(input_dir) = cli.input_dir {
+    } else if let Some(in_dir) = input_dir {
         // Batch processing logic
-        let output_dir = cli.output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified for batch processing"))?;
-        process_batch_dir(input_dir, output_dir, &config, &analyzer, &editor, &duration_getter)?;
+        let out_dir = output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified"))?;
+        process_batch_dir(in_dir, out_dir, &config, &analyzer, &editor, &duration_getter)?;
     } else {
-        anyhow::bail!("Either an input file or an input directory must be specified.");
+        anyhow::bail!("Either an input file or an input directory must be specified (set in config or CLI).");
     }
 
     Ok(())
