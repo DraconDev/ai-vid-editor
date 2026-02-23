@@ -13,7 +13,7 @@ pub mod config;
 use crate::batch_processor::{process_single_file, process_batch_dir, FfmpegDurationGetter};
 use crate::analyzer::FfmpegAnalyzer;
 use crate::editor::FfmpegEditor;
-use crate::config::Config;
+use crate::config::{Config, Preset};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -29,6 +29,10 @@ pub struct Cli {
 
     #[arg(group = "output_group", short = 'O', long, value_name = "DIRECTORY")]
     pub output_dir: Option<PathBuf>,
+
+    /// Use a preset profile: youtube, shorts, podcast, minimal
+    #[arg(short = 'P', long, value_name = "PRESET")]
+    pub preset: Option<String>,
 
     /// Path to config file (TOML)
     #[arg(short = 'c', long, value_name = "FILE")]
@@ -73,6 +77,14 @@ pub struct Cli {
     /// Generate EDL (Edit Decision List)
     #[arg(long)]
     pub export_edl: bool,
+
+    /// Dry run: analyze and show what would be done without processing
+    #[arg(short = 'n', long)]
+    pub dry_run: bool,
+
+    /// Output results as JSON (useful for scripting)
+    #[arg(short = 'j', long)]
+    pub json: bool,
 
     /// Generate a default config file
     #[arg(long)]
