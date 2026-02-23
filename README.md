@@ -11,18 +11,18 @@ A command-line tool for automated video editing using AI. Designed for content c
 - **Batch Processing** - Process entire directories of videos
 - **TOML Configuration** - Customizable settings via config files
 - **Audio Enhancement** - Loudness normalization + EQ (`--enhance`)
+- **Noise Reduction** - Remove background noise (`--noise-reduction`)
 - **Music Mixing** - Auto-ducking background music (`--music` or `--music-dir`)
 - **Intro/Outro** - Prepend/append videos (`--intro`, `--outro`)
+- **Video Stabilization** - Remove camera shake (`--stabilize`)
+- **Auto Color Correction** - Enhance contrast, brightness, saturation (`--color-correct`)
 - **Export Formats** - FCPXML, EDL, SRT subtitles, YouTube chapters
 - **Preset Profiles** - One-command setups for YouTube, Shorts, Podcasts
 - **Watch Mode** - Daemon that auto-processes new videos
 - **Dry Run** - Preview changes without processing
 - **JSON Output** - For scripting and CI/CD integration
-
-### ✅ Now Working
-
 - **Whisper STT** - Speech-to-text using Candle (HuggingFace model)
-- **Filler Word Removal** - `--remove-fillers` flag
+- **Filler Word Removal** - Remove "um", "uh", etc. (`--remove-fillers`)
 
 ## Installation
 
@@ -57,7 +57,9 @@ ai-vid-editor -i input.mp4 -o output.mp4 \
   --preset youtube \
   --intro intro.mp4 \
   --outro outro.mp4 \
-  --music-dir ./music
+  --music-dir ./music \
+  --stabilize \
+  --color-correct
 
 # Batch process a directory
 ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
@@ -84,10 +86,14 @@ ai-vid-editor -i input.mp4 --dry-run
 | `-p, --padding <SEC>` | Padding around cuts (default: 0.1) |
 | `-s, --speedup` | Speed up silences instead of cutting |
 | `-E, --enhance` | Enable audio enhancement |
+| `--noise-reduction` | Enable noise reduction |
 | `-m, --music <FILE>` | Background music file |
 | `--music-dir <DIR>` | Music folder (picks random track) |
 | `--intro <FILE>` | Video to prepend |
 | `--outro <FILE>` | Video to append |
+| `--stabilize` | Enable video stabilization |
+| `--color-correct` | Enable auto color correction |
+| `--remove-fillers` | Remove filler words (um, uh, etc.) |
 | `--export-srt` | Generate SRT subtitles |
 | `--export-chapters` | Generate YouTube chapters |
 | `--export-fcpxml` | Generate FCPXML |
@@ -120,13 +126,18 @@ speedup_factor = 4.0
 
 [filler_words]
 enabled = true
-words = ["um", "uh", "ah", "er", "like"]
+words = ["um", "uh", "ah", "er"]
 padding = 0.05
 
 [audio]
 enhance = true
+noise_reduction = false
 target_lufs = -14.0
 duck_volume = 0.2
+
+[video]
+stabilize = false
+color_correct = false
 
 [export]
 subtitles = false
@@ -145,15 +156,20 @@ edl = false
 | Batch processing | ✅ Done |
 | TOML config | ✅ Done |
 | Audio enhancement | ✅ Done |
+| Noise reduction | ✅ Done |
 | Music mixing | ✅ Done |
 | Intro/Outro | ✅ Done |
+| Video stabilization | ✅ Done |
+| Auto color correction | ✅ Done |
 | Preset profiles | ✅ Done |
 | Watch mode | ✅ Done |
 | Dry run | ✅ Done |
 | JSON output | ✅ Done |
 | Export formats | ✅ Done |
-| Whisper STT | ❌ TODO |
-| Filler word removal | ❌ TODO |
+| Whisper STT | ✅ Done |
+| Filler word removal | ✅ Done |
+| Auto-reframe | 🔜 Planned |
+| Background blur | 🔜 Planned |
 
 ## License
 
