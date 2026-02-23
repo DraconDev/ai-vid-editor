@@ -194,7 +194,7 @@ where
     };
 
     // Step 4: Intro/Outro concatenation (optional)
-    let final_file = if intro.is_some() || outro.is_some() {
+    let concat_file = if intro.is_some() || outro.is_some() {
         println!("Adding intro/outro...");
         concatenate_videos(
             intro.as_deref(),
@@ -214,7 +214,56 @@ where
         output_file.clone()
     };
 
-    // Step 5: Export additional files
+    // Step 5: Video processing (stabilize, color correct, reframe, blur)
+    let mut current_file = concat_file;
+    
+    if config.video.stabilize {
+        let stabilized = output_file.with_extension("stabilized.mp4");
+        println!("Stabilizing video...");
+        editor.stabilize(&current_file, &stabilized)?;
+        if current_file != output_file {
+            let _ = fs::remove_file(&current_file);
+        }
+        current_file = stabilized;
+    }
+    
+    if config.video.color_correct {
+        let corrected = output_file.with_extension("corrected.mp4");
+        println!("Color correcting...");
+        editor.color_correct(&current_file, &corrected)?;
+        if current_file != output_file {
+            let _ = fs::remove_file(&current_file);
+        }
+        current_file = corrected;
+    }
+    
+    if config.video.reframe {
+        let reframed = output_file.with_extension("reframed.mp4");
+        println!("Auto-reframing to vertical (9:16)...");
+        editor.reframe(&current_file, &reframed)?;
+        if current_file != output_file {
+            let _ = fs::remove_file(&current_file);
+        }
+        current_file = reframed;
+    }
+    
+    if config.video.blur_background {
+        let blurred = output_file.with_extension("blurred.mp4");
+        println!("Blurring background...");
+        editor.blur_background(&current_file, &blurred)?;
+        if current_file != output_file {
+            let _ = fs::remove_file(&current_file);
+        }
+        current_file = blurred;
+    }
+    
+    // Rename final file to output
+    let final_file = output_file.clone();
+    if current_file != final_file {
+        fs::rename(&current_file, &final_file)?;
+    }
+
+    // Step 6: Export additional files
     export_additional_files(&input_file, &final_file, &processed_segments, config)?;
 
     println!("Successfully saved final video to: {:?}", final_file);
