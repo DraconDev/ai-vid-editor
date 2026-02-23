@@ -9,7 +9,85 @@
 use anyhow::Result;
 use std::path::Path;
 use std::sync::Arc;
+use std::process::Command;
 use tract_onnx::prelude::*;
+
+/// Frame extraction utilities
+pub struct FrameExtractor;
+
+impl FrameExtractor {
+    /// Extract frames from video at specified intervals
+    /// Returns paths to extracted frame images
+    pub fn extract_frames(video_path: &Path, output_dir: &Path, interval_fps: f32) -> Result<Vec<std::path::PathBuf>> {
+        std::fs::create_dir_all(output_dir)?;
+        
+        // Extract frames at specified rate (e.g., 1 fps = 1 frame per second)
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", video_path.to_str().unwrap_or(""),
+                "-vf", &format!("fps={}", interval_fps),
+                "-y",
+                &format!("{}/frame_%04d.png", output_dir.to_str().unwrap_or("")),
+            ])
+            .status()?;
+        
+        if !status.success() {
+            anyhow::bail!("Failed to extract frames from video");
+        }
+        
+        // Collect extracted frame paths
+        let mut frames = vec![];
+        for entry in std::fs::read_dir(output_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().map(|e| e == "png").unwrap_or(false) {
+                frames.push(path);
+            }
+        }
+        
+        frames.sort();
+        Ok(frames)
+    }
+    
+    /// Get video dimensions (width, height)
+    pub fn get_video_dimensions(video_path: &Path) -> Result<(u32, u32)> {
+        let output = Command::new("ffprobe")
+            .args([
+                "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "stream=width,height",
+                "-of", "csv=p=0",
+                video_path.to_str().unwrap_or(""),
+            ])
+            .output()?;
+        
+        let dims = String::from_utf8_lossy(&output.stdout);
+        let parts: Vec<&str> = dims.trim().split(',').collect();
+        
+        if parts.len() == 2 {
+            let width: u32 = parts[0].parse()?;
+            let height: u32 = parts[1].parse()?;
+            Ok((width, height))
+        } else {
+            anyhow::bail!("Failed to parse video dimensions");
+        }
+    }
+    
+    /// Get video duration in seconds
+    pub fn get_video_duration(video_path: &Path) -> Result<f32> {
+        let output = Command::new("ffprobe")
+            .args([
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                video_path.to_str().unwrap_or(""),
+            ])
+            .output()?;
+        
+        let duration = String::from_utf8_lossy(&output.stdout);
+        duration.trim().parse::<f32>().map_err(|e| anyhow::anyhow!("Failed to parse duration: {}", e))
+    }
+}
 
 /// Model IDs on HuggingFace Hub
 /// Using existing public models instead of custom uploads
