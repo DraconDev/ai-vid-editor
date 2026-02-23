@@ -219,7 +219,7 @@ fn main() -> Result<()> {
 /// Pick a random music file from a directory
 fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
     use std::fs;
-    use rand::seq::SliceRandom;
+    use rand::prelude::*;
     
     if !music_dir.exists() {
         anyhow::bail!("Music directory does not exist: {:?}", music_dir);
@@ -243,7 +243,7 @@ fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
         return Ok(None);
     }
     
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     Ok(music_files.choose(&mut rng).cloned())
 }
 
