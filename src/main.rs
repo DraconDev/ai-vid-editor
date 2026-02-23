@@ -242,6 +242,9 @@ fn main() -> Result<()> {
     if cli.export_edl {
         config.export.edl = true;
     }
+    if cli.export_thumbnail_guide {
+        config.export.thumbnail_guide = true;
+    }
     if cli.remove_fillers {
         config.filler_words.enabled = true;
     }
