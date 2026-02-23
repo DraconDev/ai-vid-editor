@@ -390,7 +390,7 @@ fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, in
     let duration_getter = FfmpegDurationGetter;
     
     loop {
-        std::thread::sleep(Duration::from_secs(cli.watch_interval));
+        std::thread::sleep(Duration::from_secs(config.watch.interval));
         
         // Check for new files
         if let Ok(entries) = std::fs::read_dir(watch_dir) {
@@ -414,8 +414,8 @@ fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, in
                             &analyzer,
                             &editor,
                             &duration_getter,
-                            cli.intro.clone(),
-                            cli.outro.clone()
+                            intro.clone(),
+                            outro.clone()
                         ) {
                             Ok(_) => {
                                 println!("[DONE] Processed: {:?}", path);
