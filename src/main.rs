@@ -95,6 +95,12 @@ pub struct Cli {
     #[arg(short = 'E', long)]
     pub enhance: bool,
 
+    /// Enable audio noise reduction
+    /// 
+    /// Removes background noise (fans, AC, hiss) using ffmpeg afftdn filter
+    #[arg(long)]
+    pub noise_reduction: bool,
+
     /// Background music file to mix with video audio
     /// 
     /// Music will be auto-ducked (lowered) during speech segments
