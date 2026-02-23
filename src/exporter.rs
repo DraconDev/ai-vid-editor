@@ -268,4 +268,55 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_generate_thumbnail_guide() {
+        let transcript = vec![
+            TranscriptSegment { start: 0.0, end: 5.0, text: "Welcome to the video".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 5.0, end: 10.0, text: "How to edit videos like a pro".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 10.0, end: 15.0, text: "The secret is practice".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 15.0, end: 20.0, text: "Step 1: Import your footage".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 20.0, end: 25.0, text: "What is the best way to learn?".to_string(), confidence: 1.0 },
+        ];
+
+        let guide = generate_thumbnail_guide(&transcript);
+
+        // Should detect hooks (questions, "how to", "secret", "step")
+        assert!(!guide.thumbnail_moments.is_empty(), "Should detect thumbnail moments");
+
+        // Should have detected "How to" as a hook
+        assert!(guide.thumbnail_moments.iter().any(|m| m.text.contains("How to")));
+
+        // Should have detected "secret" as a hook
+        assert!(guide.thumbnail_moments.iter().any(|m| m.text.to_lowercase().contains("secret")));
+
+        // Should have detected "Step 1" as a chapter
+        assert!(guide.thumbnail_moments.iter().any(|m| m.moment_type == "chapter"));
+
+        // Should have title suggestions
+        assert!(!guide.title_suggestions.is_empty());
+    }
+
+    #[test]
+    fn test_export_thumbnail_guide() -> Result<()> {
+        let dir = tempdir()?;
+        let output_path = dir.path().join("thumbnail-guide.json");
+
+        let transcript = vec![
+            TranscriptSegment { start: 0.0, end: 5.0, text: "How to make great videos".to_string(), confidence: 1.0 },
+            TranscriptSegment { start: 5.0, end: 10.0, text: "The secret is consistency".to_string(), confidence: 1.0 },
+        ];
+
+        export_thumbnail_guide(&transcript, &output_path)?;
+
+        let content = fs::read_to_string(&output_path)?;
+        let json: serde_json::Value = serde_json::from_str(&content)?;
+
+        assert!(json.is_object());
+        assert!(json["title_suggestions"].is_array());
+        assert!(json["thumbnail_moments"].is_array());
+        assert!(json["key_quotes"].is_array());
+
+        Ok(())
+    }
 }
