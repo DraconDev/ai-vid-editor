@@ -12,9 +12,11 @@ use std::sync::Arc;
 use tract_onnx::prelude::*;
 
 /// Model IDs on HuggingFace Hub
-const FACE_MODEL_ID: &str = "DraconDev/ai-vid-editor-models";
-const FACE_MODEL_FILE: &str = "face_detection.onnx";
-const SEGMENT_MODEL_FILE: &str = "person_segmentation.onnx";
+/// Using existing public models instead of custom uploads
+const FACE_MODEL_ID: &str = "onnx-models/ultra-light-face-detector";
+const FACE_MODEL_FILE: &str = "version-RFB-320.onnx";
+const SEGMENT_MODEL_ID: &str = "dhkim2810/MODNet";
+const SEGMENT_MODEL_FILE: &str = "modnet.onnx";
 
 /// Type alias for the ONNX model
 type OnnxModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
