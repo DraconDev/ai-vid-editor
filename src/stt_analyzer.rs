@@ -85,7 +85,7 @@ fn load_audio_as_f32(path: &Path) -> Result<Vec<f32>> {
 fn pcm_to_mel(config: &Config, pcm: &[f32], device: &Device) -> Result<Tensor> {
     // Whisper expects 16kHz audio
     // Mel spectrogram: 80 mel bins, 25ms window, 10ms hop
-    let sample_rate = 16000.0;
+    let _sample_rate = 16000.0; // Used for reference, actual rate from ffmpeg
     let n_fft = 400; // 25ms at 16kHz
     let hop_length = 160; // 10ms at 16kHz
     let n_mels = config.num_mel_bins;

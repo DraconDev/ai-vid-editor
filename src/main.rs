@@ -172,6 +172,18 @@ pub struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    // If no input specified and not a special command, show help
+    if cli.input_file.is_none() 
+        && cli.input_dir.is_none() 
+        && cli.watch.is_none()
+        && !cli.generate_config
+        && !cli.dry_run
+    {
+        // Let clap show the help message
+        let _ = Cli::try_parse_from(vec!["ai-vid-editor", "--help"]);
+        return Ok(());
+    }
+
     // Handle --generate-config
     if cli.generate_config {
         let config_content = Config::generate_default_toml()?;
