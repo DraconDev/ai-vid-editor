@@ -334,6 +334,14 @@ mod tests {
 
     struct MockFfmpegEditor;
     impl VideoEditor for MockFfmpegEditor {
+        fn reframe(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
+        
+        fn blur_background(&self, _input: &Path, _output: &Path) -> Result<()> {
+            Ok(())
+        }
+        
         fn trim_video(&self, _input: &Path, output: &Path, _segments: &[crate::analyzer::ProcessedSegment]) -> Result<()> {
             // Simulate successful trimming by creating an empty output file
             fs::File::create(output)?;
