@@ -180,7 +180,7 @@ impl PersonSegmenter {
         
         // Use hf-hub to download the model
         let api = hf_hub::api::sync::Api::new()?;
-        let repo = api.model(FACE_MODEL_ID.to_string());
+        let repo = api.model(SEGMENT_MODEL_ID.to_string());
         let downloaded = repo.get(SEGMENT_MODEL_FILE)?;
         
         // Copy to cache location
