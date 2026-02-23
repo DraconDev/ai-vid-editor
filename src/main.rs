@@ -134,10 +134,6 @@ pub struct Cli {
     /// Enable auto color correction
     #[arg(long)]
     pub color_correct: bool,
-    
-    /// Export thumbnail guide from transcript (requires STT)
-    #[arg(long)]
-    pub export_thumbnail_guide: bool,
 }
 
 fn main() -> Result<()> {
@@ -241,9 +237,6 @@ fn main() -> Result<()> {
     }
     if cli.export_edl {
         config.export.edl = true;
-    }
-    if cli.export_thumbnail_guide {
-        config.export.thumbnail_guide = true;
     }
     if cli.remove_fillers {
         config.filler_words.enabled = true;
