@@ -241,6 +241,14 @@ fn main() -> Result<()> {
     if cli.remove_fillers {
         config.filler_words.enabled = true;
     }
+    
+    // Video processing overrides
+    if cli.stabilize {
+        config.video.stabilize = true;
+    }
+    if cli.color_correct {
+        config.video.color_correct = true;
+    }
 
     // Print config (unless JSON mode)
     if !cli.json {
