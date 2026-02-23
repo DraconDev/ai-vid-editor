@@ -1,7 +1,7 @@
 use std::path::Path;
 use anyhow::{Result, Context};
 use candle_core::{Device, Tensor, DType};
-use candle_transformers::models::whisper::{Config, model::Whisper, audio};
+use candle_transformers::models::whisper::{Config, model::Whisper};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
 
@@ -44,18 +44,17 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
             )?
         };
         
-        let model = Whisper::load(&vb, config.clone()).context("failed to load model")?;
+        let mut model = Whisper::load(&vb, config.clone()).context("failed to load model")?;
 
         // Load audio using ffmpeg
         let audio_data = load_audio_as_f32(audio_path)?;
         
-        // Convert to mel spectrogram using candle's audio module
-        let mel = audio::pcm_to_mel(&config, &audio_data, audio::mel_filters(&config))?;
-        let mel_len = mel.len();
-        let mel = Tensor::from_vec(mel, (1, config.num_mel_bins, mel_len / config.num_mel_bins), &device)?;
+        // Convert to mel spectrogram
+        let mel = pcm_to_mel(&config, &audio_data, &device)?;
+        let mel_len = mel.dims()[2];
 
         // Decode using greedy search
-        let segments = decode_greedy(&model, &tokenizer, &mel, &config)?;
+        let segments = decode_greedy(&mut model, &tokenizer, &mel, &config, mel_len)?;
 
         Ok(segments)
     }
@@ -82,12 +81,58 @@ fn load_audio_as_f32(path: &Path) -> Result<Vec<f32>> {
     Ok(samples)
 }
 
+/// Convert PCM audio to mel spectrogram
+fn pcm_to_mel(config: &Config, pcm: &[f32], device: &Device) -> Result<Tensor> {
+    // Whisper expects 16kHz audio
+    // Mel spectrogram: 80 mel bins, 25ms window, 10ms hop
+    let sample_rate = 16000.0;
+    let n_fft = 400; // 25ms at 16kHz
+    let hop_length = 160; // 10ms at 16kHz
+    let n_mels = config.num_mel_bins;
+    
+    // Pad audio
+    let padded_len = pcm.len() + n_fft / 2 * 2;
+    let mut padded = vec![0.0f32; padded_len];
+    padded[n_fft/2..n_fft/2 + pcm.len()].copy_from_slice(pcm);
+    
+    // Calculate number of frames
+    let n_frames = (padded_len - n_fft) / hop_length + 1;
+    
+    // Create mel spectrogram (simplified - using Hann window)
+    let mut mel_spec = vec![0.0f32; n_mels * n_frames];
+    
+    for frame in 0..n_frames {
+        let start = frame * hop_length;
+        
+        // Simple energy calculation per mel band (simplified)
+        for mel_bin in 0..n_mels {
+            let freq_low = mel_bin * 8000 / n_mels; // Simplified mel scale
+            let freq_high = (mel_bin + 1) * 8000 / n_mels;
+            let bin_low = (freq_low * n_fft as usize / 16000) as usize;
+            let bin_high = ((freq_high * n_fft as usize / 16000) as usize).min(n_fft);
+            
+            let mut energy = 0.0f32;
+            for i in bin_low..bin_high {
+                if start + i < padded.len() {
+                    let window = 0.5 * (1.0 - (2.0 * std::f32::consts::PI * i as f32 / n_fft as f32).cos());
+                    energy += padded[start + i] * window;
+                }
+            }
+            mel_spec[mel_bin * n_frames + frame] = energy.abs().ln_1p();
+        }
+    }
+    
+    Tensor::from_vec(mel_spec, (1, n_mels, n_frames), device)
+        .map_err(anyhow::Error::msg)
+}
+
 /// Greedy decoding - simple but effective for transcription
 fn decode_greedy(
-    model: &Whisper,
+    model: &mut Whisper,
     tokenizer: &Tokenizer,
     mel: &Tensor,
     config: &Config,
+    mel_len: usize,
 ) -> Result<Vec<TranscriptSegment>> {
     // Token IDs
     let sot_token = tokenizer.token_to_id("<|startoftranscript|>")
@@ -96,35 +141,42 @@ fn decode_greedy(
         .context("missing eot token")?;
     let transcribe_token = tokenizer.token_to_id("<|transcribe|>")
         .context("missing transcribe token")?;
+    let no_speech_token = tokenizer.token_to_id("<|nospeech|>")
+        .unwrap_or(eot_token);
     
     // Process in 30-second chunks
-    let mel_len = mel.dims()[2];
     let chunk_size = 3000; // 30 seconds at 100 frames/sec
     let mut segments = Vec::new();
     
     for chunk_start in (0..mel_len).step_by(chunk_size) {
         let chunk_end = (chunk_start + chunk_size).min(mel_len);
-        let chunk_mel = mel.narrow(2, chunk_start, chunk_end - chunk_start)?;
+        let chunk_len = chunk_end - chunk_start;
+        if chunk_len < 100 {
+            continue;
+        }
+        
+        let chunk_mel = mel.narrow(2, chunk_start, chunk_len)?;
         
         // Encode this chunk
-        let chunk_encoder_output = model.encoder.forward(&chunk_mel)?;
+        let chunk_encoder_output = model.encoder.forward(&chunk_mel, true)?;
         
         // Initialize with start tokens
         let mut tokens = vec![sot_token, transcribe_token];
         let mut token_probs = Vec::new();
         
         // Greedy decode up to max tokens
-        for _ in 0..config.max_target_positions {
+        for _ in 0..config.max_target_positions.min(448) {
             let input = Tensor::new(tokens.clone(), mel.device())?
                 .unsqueeze(0)?;
             
-            let logits = model.decoder.forward(&input, &chunk_encoder_output)?;
-            let next_token_logits = logits.get((0, tokens.len() - 1))?;
+            let logits = model.decoder.forward(&input, &chunk_encoder_output, true)?;
+            let seq_len = logits.dims()[1];
+            let next_token_logits = logits.get(seq_len - 1)?;
             
             // Greedy: pick highest probability token
             let next_token = next_token_logits.argmax(0)?.to_scalar::<u32>()?;
             
-            if next_token == eot_token {
+            if next_token == eot_token || next_token == no_speech_token {
                 break;
             }
             
@@ -134,6 +186,11 @@ fn decode_greedy(
             token_probs.push(prob);
             
             tokens.push(next_token);
+            
+            // Safety limit
+            if tokens.len() > 400 {
+                break;
+            }
         }
         
         // Decode tokens to text
