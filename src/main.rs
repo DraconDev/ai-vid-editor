@@ -232,7 +232,19 @@ fn main() -> Result<()> {
         }
     }
 
-    // Apply CLI overrides
+    // Apply paths from config if not specified on CLI
+    let input_file = cli.input_file.clone().or(config.paths.input.clone());
+    let input_dir = cli.input_dir.clone().or(config.paths.input_dir.clone());
+    let output_file = cli.output_file.clone().or(config.paths.output.clone());
+    let output_dir = cli.output_dir.clone().or(config.paths.output_dir.clone());
+    let intro = cli.intro.clone().or(config.paths.intro.clone());
+    let outro = cli.outro.clone().or(config.paths.outro.clone());
+    
+    // Music: CLI takes precedence, then config
+    let music = cli.music.clone().or(config.paths.music.clone());
+    let music_dir = cli.music_dir.clone().or(config.paths.music_dir.clone());
+
+    // Apply CLI overrides for processing settings
     if let Some(threshold) = cli.threshold {
         config.silence.threshold_db = threshold;
     }
