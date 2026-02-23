@@ -13,6 +13,8 @@
 - [x] Single file processing
 - [x] Batch directory processing
 - [x] Support for MP4, MOV, AVI, MKV, WebM formats
+- [x] **Video stabilization** - `--stabilize` (ffmpeg vidstab, two-pass)
+- [x] **Auto color correction** - `--color-correct` (contrast, brightness, saturation, sharpening)
 
 ### Audio
 - [x] Audio enhancement (loudnorm + EQ) - `--enhance`
@@ -60,78 +62,37 @@
 
 ---
 
-## 🚧 Phase 1: Easy Wins (ffmpeg-native)
+## 📋 Phase 3: ML Features (Future)
 
-### Video Stabilization
-- [ ] Add `--stabilize` flag
-- [ ] Use ffmpeg `vidstab` filter (two-pass)
-- [ ] Add to config: `[video] stabilize = true`
+### Cost Analysis
 
-### Auto-Color Correction
-- [ ] Add `--color-correct` flag
-- [ ] Use ffmpeg `eq` filter for auto-levels
-- [ ] Add to config: `[video] color_correct = true`
+| Feature | Model | Disk Size | Memory (when used) | Quality |
+|---------|-------|-----------|-------------------|---------|
+| Face detection | MediaPipe | ~10MB | ~100MB | ⭐⭐⭐⭐⭐ |
+| Auto-reframe | Uses face detection | ~10MB | ~100MB | ⭐⭐⭐⭐ |
+| Background blur | MODNet/U²-Net | ~25MB | ~200MB | ⭐⭐⭐⭐ |
 
-### Tests
-- [ ] Integration tests for silence detection
-- [ ] Integration tests for audio enhancement
-- [ ] Integration tests for batch processing
-- [ ] Performance benchmarks
-
----
-
-## 📋 Phase 2: Thumbnail Guide from Transcript
-
-### Thumbnail Guide Export
-- [ ] Add `--export-thumbnail-guide` flag
-- [ ] Analyze transcript for highlight moments
-- [ ] Detect hooks (questions, bold statements)
-- [ ] Detect chapter starts
-- [ ] Extract key quotes for overlay text
-- [ ] Generate title suggestions
-- [ ] Output as JSON
-
-Example output (`thumbnail-guide.json`):
-```json
-{
-  "title_suggestions": [
-    "How to Edit Videos Like a Pro",
-    "3 Secrets to Viral Content"
-  ],
-  "thumbnail_moments": [
-    {"time": 12.5, "text": "The secret is...", "type": "hook"},
-    {"time": 45.0, "text": "Watch this!", "type": "action"},
-    {"time": 120.0, "text": "The results were amazing", "type": "climax"}
-  ],
-  "key_quotes": [
-    "This one trick changed everything",
-    "Most people don't know this"
-  ]
-}
-```
-
----
-
-## 📋 Phase 3: ML Features (Model Size Aware)
-
-### Face Detection (Required for reframe/blur)
-- [ ] Research MediaPipe vs tract+ONNX
-- [ ] Add face detection dependency (~10MB)
-- [ ] Implement face detection in video frames
+**Key points:**
+- Models are **lazy loaded** - memory only used when feature is enabled
+- If user doesn't use `--reframe` or `--blur-background`, no extra memory
+- Total disk impact: ~35MB for all ML models
+- Uses `tract` (pure Rust ONNX runtime) - no external dependencies
 
 ### Auto-Reframe (Horizontal → Vertical)
+- [ ] Add face detection dependency (`tract`)
+- [ ] Download MediaPipe face model
 - [ ] Crop 16:9 to 9:16 following speaker's face
 - [ ] Smooth camera movement between faces
 - [ ] Add `--reframe` flag
 
 ### Background Blur
-- [ ] Person segmentation (MODNet ~25MB)
+- [ ] Add person segmentation model (MODNet ~25MB)
 - [ ] Blur background while keeping speaker sharp
 - [ ] Add `--blur-background` flag
 
 ---
 
-## ❌ Not Doing (Too Heavy)
+## ❌ Not Doing
 
 ### Eye Contact Correction
 - Requires ~100MB+ model
@@ -141,10 +102,11 @@ Example output (`thumbnail-guide.json`):
 ### Large Language Models
 - GB-sized models
 - Out of scope for this tool
+- Note: Whisper is NOT an LLM (it's speech-to-text, ~75MB)
 
 ### Thumbnail Generation
 - Not our arena
-- We provide the guide, user creates the thumbnail
+- We provide transcript via SRT, user creates thumbnail
 
 ### Parallel Processing
 - FFmpeg already uses multiple threads internally
@@ -169,9 +131,8 @@ Example output (`thumbnail-guide.json`):
 | Filler removal | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Audio enhancement | ✅ | ❌ | ✅ | ✅ | ✅ |
 | Noise reduction | ✅ | ❌ | ✅ | ✅ | ✅ |
-| Video stabilization | ✅ | ❌ | ❌ | ❌ | TODO |
-| Auto-color correction | ✅ | ❌ | ❌ | ❌ | TODO |
-| Thumbnail guide | ❌ | ✅ | ❌ | ❌ | TODO |
+| Video stabilization | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Auto-color correction | ✅ | ❌ | ❌ | ❌ | ✅ |
 | Auto-reframe | ✅ | ✅ | ❌ | ❌ | LATER |
 | Background blur | ✅ | ❌ | ❌ | ❌ | LATER |
 | Eye contact correction | ✅ | ✅ | ❌ | ❌ | NO |
@@ -229,7 +190,6 @@ subtitles = false
 chapters = false
 fcpxml = false
 edl = false
-thumbnail_guide = false
 
 [watch]
 enabled = false
@@ -264,6 +224,3 @@ ai-vid-editor --watch ./incoming -O ./processed --preset youtube
 
 # Preview
 ai-vid-editor -i input.mp4 --dry-run
-
-# Generate thumbnail guide
-ai-vid-editor -i input.mp4 -o output.mp4 --export-thumbnail-guide
