@@ -14,6 +14,81 @@ pub enum SilenceMode {
     Speedup,
 }
 
+/// Preset profiles for common use cases
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Preset {
+    /// YouTube long-form: silence cut + audio enhance + chapters
+    Youtube,
+    /// YouTube Shorts/TikTok: speedup mode + audio enhance
+    Shorts,
+    /// Podcast: silence cut + audio enhance + SRT subtitles
+    Podcast,
+    /// Minimal: just silence detection, no enhancement
+    Minimal,
+}
+
+impl Preset {
+    /// Apply preset to create a config
+    pub fn to_config(&self) -> Config {
+        let mut config = Config::default();
+        
+        match self {
+            Preset::Youtube => {
+                // Long-form YouTube: cut silences, enhance audio, generate chapters
+                config.silence.mode = SilenceMode::Cut;
+                config.silence.padding = 0.15; // Slightly more padding for natural flow
+                config.audio.enhance = true;
+                config.export.chapters = true;
+                config.export.fcpxml = true;
+            }
+            Preset::Shorts => {
+                // Short-form: speedup silences, enhance audio, tighter cuts
+                config.silence.mode = SilenceMode::Speedup;
+                config.silence.speedup_factor = 3.0;
+                config.silence.padding = 0.05; // Tighter for fast-paced content
+                config.audio.enhance = true;
+            }
+            Preset::Podcast => {
+                // Podcast: cut silences, enhance audio, generate subtitles
+                config.silence.mode = SilenceMode::Cut;
+                config.silence.padding = 0.2; // More padding for conversational flow
+                config.audio.enhance = true;
+                config.audio.target_lufs = -16.0; // Podcast standard
+                config.export.subtitles = true;
+            }
+            Preset::Minimal => {
+                // Just silence detection, nothing else
+                config.silence.mode = SilenceMode::Cut;
+                config.audio.enhance = false;
+            }
+        }
+        
+        config
+    }
+    
+    /// Get preset name as string
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Preset::Youtube => "youtube",
+            Preset::Shorts => "shorts",
+            Preset::Podcast => "podcast",
+            Preset::Minimal => "minimal",
+        }
+    }
+    
+    /// Parse preset from string
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "youtube" => Some(Preset::Youtube),
+            "shorts" | "tiktok" | "reels" => Some(Preset::Shorts),
+            "podcast" => Some(Preset::Podcast),
+            "minimal" => Some(Preset::Minimal),
+            _ => None,
+        }
+    }
+}
+
 /// Configuration for silence detection and handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SilenceConfig {
@@ -434,5 +509,52 @@ enhance = false
         let serialized = toml::to_string_pretty(&config).unwrap();
         let deserialized: Config = toml::from_str(&serialized).unwrap();
         assert_eq!(deserialized.silence.mode, SilenceMode::Cut);
+    }
+
+    #[test]
+    fn test_preset_youtube() {
+        let config = Preset::Youtube.to_config();
+        assert_eq!(config.silence.mode, SilenceMode::Cut);
+        assert_eq!(config.silence.padding, 0.15);
+        assert!(config.audio.enhance);
+        assert!(config.export.chapters);
+        assert!(config.export.fcpxml);
+    }
+
+    #[test]
+    fn test_preset_shorts() {
+        let config = Preset::Shorts.to_config();
+        assert_eq!(config.silence.mode, SilenceMode::Speedup);
+        assert_eq!(config.silence.speedup_factor, 3.0);
+        assert_eq!(config.silence.padding, 0.05);
+        assert!(config.audio.enhance);
+    }
+
+    #[test]
+    fn test_preset_podcast() {
+        let config = Preset::Podcast.to_config();
+        assert_eq!(config.silence.mode, SilenceMode::Cut);
+        assert_eq!(config.silence.padding, 0.2);
+        assert!(config.audio.enhance);
+        assert_eq!(config.audio.target_lufs, -16.0);
+        assert!(config.export.subtitles);
+    }
+
+    #[test]
+    fn test_preset_minimal() {
+        let config = Preset::Minimal.to_config();
+        assert_eq!(config.silence.mode, SilenceMode::Cut);
+        assert!(!config.audio.enhance);
+    }
+
+    #[test]
+    fn test_preset_from_str() {
+        assert_eq!(Preset::from_str("youtube"), Some(Preset::Youtube));
+        assert_eq!(Preset::from_str("SHORTS"), Some(Preset::Shorts));
+        assert_eq!(Preset::from_str("tiktok"), Some(Preset::Shorts));
+        assert_eq!(Preset::from_str("reels"), Some(Preset::Shorts));
+        assert_eq!(Preset::from_str("podcast"), Some(Preset::Podcast));
+        assert_eq!(Preset::from_str("minimal"), Some(Preset::Minimal));
+        assert_eq!(Preset::from_str("invalid"), None);
     }
 }
