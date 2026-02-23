@@ -95,6 +95,8 @@ ai-vid-editor -i input.mp4 --dry-run
 | `--outro <FILE>` | Video to append |
 | `--stabilize` | Enable video stabilization |
 | `--color-correct` | Enable auto color correction |
+| `--reframe` | Auto-reframe to vertical (9:16) |
+| `--blur-background` | Blur background behind speaker |
 | `--remove-fillers` | Remove filler words (um, uh, etc.) |
 | `--export-srt` | Generate SRT subtitles |
 | `--export-chapters` | Generate YouTube chapters |
