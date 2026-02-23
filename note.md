@@ -1,6 +1,6 @@
 # AI Video Editor - Feature Status
 
-## ✅ Implemented
+## ✅ Fully Implemented
 
 ### Silence Detection & Trimming
 - [x] Silence detection via ffmpeg `silencedetect`
@@ -12,23 +12,30 @@
 ### Video Processing
 - [x] Single file processing
 - [x] Batch directory processing
-- [x] Support for MP4, MOV, AVI formats
+- [x] Support for MP4, MOV, AVI, MKV, WebM formats
 
 ### Audio
-- [x] Audio enhancement (loudnorm + EQ) - `--enhance` flag
+- [x] Audio enhancement (loudnorm + EQ) - `--enhance`
 - [x] Loudness normalization targeting -14 LUFS (YouTube standard)
-- [x] Music mixing with auto-ducking - `--music <file>` flag
+- [x] Music mixing with auto-ducking - `--music <file>`
+- [x] Music library folder - `--music-dir <dir>` (picks random track)
+
+### Video Concatenation
+- [x] Intro video support - `--intro <file>`
+- [x] Outro video support - `--outro <file>`
 
 ### Export
 - [x] FCPXML export for DaVinci Resolve / Premiere Pro - `--export-fcpxml`
 - [x] EDL (Edit Decision List) export - `--export-edl`
 - [x] SRT subtitle export - `--export-srt` (placeholder, needs STT)
-- [x] YouTube chapters export - `--export-chapters` (placeholder, needs STT)
+- [x] YouTube chapters export - `--export-chapters`
 
 ### CLI Features
-- [x] **Preset profiles** - `--preset youtube/shorts/podcast/minimal`
-- [x] **Dry run mode** - `--dry-run` to preview without processing
-- [x] **JSON output** - `--json` for scripting/automation
+- [x] Preset profiles - `--preset youtube/shorts/podcast/minimal`
+- [x] Dry run mode - `--dry-run` to preview without processing
+- [x] JSON output - `--json` for scripting/automation
+- [x] Watch folder mode - `--watch <dir>` daemon mode
+- [x] Config file support - `--config <file>`
 
 ---
 
@@ -49,12 +56,21 @@
 
 ## ❌ Not Yet Implemented
 
-### CLI Flags Needed
+### CLI Flags
 - [ ] `--remove-fillers` - Enable filler word removal (needs STT)
 
-### Pipeline Composition
-- [ ] "Full auto" mode that chains all operations
-- [ ] Preset profiles (e.g., "youtube-podcast", "tiktok-fast")
+### Potential Future Features
+- [ ] **Video cropping/resize** - For vertical shorts from horizontal content
+- [ ] **Scene detection** - Detect scene changes for smarter cuts
+- [ ] **Auto-caption styling** - Burned-in captions with custom styling
+- [ ] **Multi-language support** - Detect and handle multiple languages
+- [ ] **Progress bar** - Visual progress during processing
+- [ ] **Thumbnail extraction** - Auto-suggest best thumbnails
+- [ ] **Video stabilization** - Stabilize shaky footage
+- [ ] **Noise reduction** - Audio noise reduction before enhancement
+- [ ] **Custom filter chains** - User-defined ffmpeg filter chains
+- [ ] **Remote processing** - Process videos on remote server
+- [ ] **GPU acceleration** - Use GPU for faster processing
 
 ---
 
@@ -97,17 +113,30 @@ edl = false
 # Basic usage (cut silences)
 ai-vid-editor -i input.mp4 -o output.mp4
 
+# Use preset
+ai-vid-editor -i input.mp4 -o output.mp4 --preset youtube
+
 # Speedup silences instead of cutting
 ai-vid-editor -i input.mp4 -o output.mp4 --speedup
 
-# Use config file
-ai-vid-editor -i input.mp4 -o output.mp4 -c config.toml
-
-# Override settings via CLI
-ai-vid-editor -i input.mp4 -o output.mp4 --threshold -35 --padding 0.2
+# Full production pipeline
+ai-vid-editor -i input.mp4 -o output.mp4 \
+  --preset youtube \
+  --intro intro.mp4 \
+  --outro outro.mp4 \
+  --music-dir ./music
 
 # Batch processing
-ai-vid-editor -I ./raw_videos -O ./edited
+ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
+
+# Watch mode (daemon)
+ai-vid-editor --watch ./incoming -O ./processed --preset youtube
+
+# Dry run (preview)
+ai-vid-editor -i input.mp4 --dry-run
+
+# JSON output for scripting
+ai-vid-editor -i input.mp4 --dry-run --json
 
 # Generate sample config
 ai-vid-editor --generate-config > ai-vid-editor.toml
@@ -119,6 +148,5 @@ ai-vid-editor --generate-config > ai-vid-editor.toml
 
 1. **Complete Whisper STT** - Implement mel spectrogram + decode loop
 2. **Wire filler word removal** - Add `--remove-fillers` flag (needs STT)
-3. **Intro/Outro Support** - `--intro` / `--outro` flags
-4. **Music Library** - `--music-dir` to pick random track
-5. **Watch Folder Mode** - `--watch` daemon mode
+3. **Progress bar** - Visual feedback during processing
+4. **Video cropping for shorts** - Auto-crop horizontal to vertical
