@@ -231,6 +231,75 @@ impl VideoEditor for FfmpegEditor {
 
         Ok(())
     }
+
+    fn stabilize(&self, input: &Path, output: &Path) -> Result<()> {
+        // Video stabilization using vidstab filter (two-pass)
+        // Pass 1: Analyze video motion
+        // Pass 2: Apply stabilization
+        
+        let input_str = input.to_str().context("invalid input path")?;
+        let output_str = output.to_str().context("invalid output path")?;
+        let trf_file = "/tmp/transforms.trf";
+        
+        // Pass 1: Detect motion and generate transforms
+        let status1 = Command::new("ffmpeg")
+            .args([
+                "-i", input_str,
+                "-vf", &format!("vidstabdetect=stepsize=6:shakiness=5:accuracy=15:result={}", trf_file),
+                "-f", "null",
+                "-",
+            ])
+            .status()
+            .context("failed to execute ffmpeg (stabilize pass 1)")?;
+
+        if !status1.success() {
+            anyhow::bail!("ffmpeg stabilize pass 1 failed with status: {}", status1);
+        }
+
+        // Pass 2: Apply stabilization
+        let status2 = Command::new("ffmpeg")
+            .args([
+                "-i", input_str,
+                "-vf", &format!("vidstabtransform=input={}:smoothing=10:optzoom=1:interpol=bicubic", trf_file),
+                "-c:a", "copy",
+                "-y", output_str,
+            ])
+            .status()
+            .context("failed to execute ffmpeg (stabilize pass 2)")?;
+
+        // Cleanup temp file
+        let _ = std::fs::remove_file(trf_file);
+
+        if !status2.success() {
+            anyhow::bail!("ffmpeg stabilize pass 2 failed with status: {}", status2);
+        }
+
+        Ok(())
+    }
+
+    fn color_correct(&self, input: &Path, output: &Path) -> Result<()> {
+        // Auto color correction using eq filter
+        // Adjusts brightness, contrast, saturation for a more balanced look
+        // Also applies slight sharpening for clarity
+        let filter = "eq=contrast=1.1:brightness=0.05:saturation=1.1,unsharp=5:5:0.5:5:5:0.0";
+        
+        let status = Command::new("ffmpeg")
+            .args([
+                "-i", input.to_str().context("invalid input path")?,
+                "-vf", filter,
+                "-c:a", "copy",
+                "-y",
+                output.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to execute ffmpeg")?;
+
+        if !status.success() {
+            anyhow::bail!("ffmpeg failed with status: {}", status);
+        }
+
+        Ok(())
+    }
 }
 
 fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
