@@ -62,6 +62,18 @@ pub struct Cli {
     #[arg(short = 'm', long, value_name = "FILE")]
     pub music: Option<PathBuf>,
 
+    /// Path to directory of music files (picks random track)
+    #[arg(long, value_name = "DIRECTORY")]
+    pub music_dir: Option<PathBuf>,
+
+    /// Video file to prepend as intro
+    #[arg(long, value_name = "FILE")]
+    pub intro: Option<PathBuf>,
+
+    /// Video file to append as outro
+    #[arg(long, value_name = "FILE")]
+    pub outro: Option<PathBuf>,
+
     /// Generate SRT subtitles
     #[arg(long)]
     pub export_srt: bool,
@@ -138,9 +150,20 @@ fn main() -> Result<()> {
     if cli.enhance {
         config.audio.enhance = true;
     }
+    
+    // Handle music selection: --music takes precedence over --music-dir
     if let Some(ref music_path) = cli.music {
         config.audio.music_file = Some(music_path.clone());
+    } else if let Some(ref music_dir) = cli.music_dir {
+        // Pick a random music file from the directory
+        if let Some(random_music) = pick_random_music_file(music_dir)? {
+            if !cli.json {
+                println!("Selected random music: {:?}", random_music);
+            }
+            config.audio.music_file = Some(random_music);
+        }
     }
+    
     if cli.export_srt {
         config.export.subtitles = true;
     }
@@ -191,6 +214,37 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Pick a random music file from a directory
+fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
+    use std::fs;
+    use rand::seq::SliceRandom;
+    
+    if !music_dir.exists() {
+        anyhow::bail!("Music directory does not exist: {:?}", music_dir);
+    }
+    
+    let music_extensions = ["mp3", "wav", "m4a", "aac", "ogg", "flac"];
+    
+    let music_files: Vec<PathBuf> = fs::read_dir(music_dir)?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| music_extensions.contains(&ext.to_lowercase().as_str()))
+                .unwrap_or(false)
+        })
+        .collect();
+    
+    if music_files.is_empty() {
+        eprintln!("Warning: No music files found in {:?}", music_dir);
+        return Ok(None);
+    }
+    
+    let mut rng = rand::thread_rng();
+    Ok(music_files.choose(&mut rng).cloned())
 }
 
 /// Handle dry-run mode: analyze and show what would be done
