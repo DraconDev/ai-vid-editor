@@ -1,11 +1,9 @@
 use std::path::Path;
 use anyhow::{Result, Context};
 use candle_core::{Device, Tensor, DType};
-use candle_transformers::models::whisper::{Config, model::Whisper};
+use candle_transformers::models::whisper::{Config, model::Whisper, audio};
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
-// Note: rand is currently unused but will be needed for beam search sampling
-// use rand::{rngs::StdRng, SeedableRng, distr::Distribution};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TranscriptSegment {
@@ -48,15 +46,16 @@ impl VideoSttAnalyzer for CandleSttAnalyzer {
         
         let model = Whisper::load(&vb, config.clone()).context("failed to load model")?;
 
-        // Load and decode audio using ffmpeg
+        // Load audio using ffmpeg
         let audio_data = load_audio_as_f32(audio_path)?;
         
-        // Convert to Mel Spectrogram (Placeholder for full DSP logic)
-        let mel = process_audio(&audio_data, &config, &device)?;
+        // Convert to mel spectrogram using candle's audio module
+        let mel = audio::pcm_to_mel(&config, &audio_data, audio::mel_filters(&config))?;
+        let mel_len = mel.len();
+        let mel = Tensor::from_vec(mel, (1, config.num_mel_bins, mel_len / config.num_mel_bins), &device)?;
 
-        // Decode
-        let mut dc = Decoder::new(model, tokenizer, 0, &device)?;
-        let segments = dc.decode(&mel)?;
+        // Decode using greedy search
+        let segments = decode_greedy(&model, &tokenizer, &mel, &config)?;
 
         Ok(segments)
     }
@@ -83,38 +82,110 @@ fn load_audio_as_f32(path: &Path) -> Result<Vec<f32>> {
     Ok(samples)
 }
 
-fn process_audio(_pcm: &[f32], config: &Config, device: &Device) -> Result<Tensor> {
-    // TODO: Implement actual Mel Spectrogram calculation (FFT + Filters).
-    // This is a complex DSP step. For the structural implementation, we return a dummy tensor
-    // matching the expected input shape of the Whisper model to verify the pipeline.
-    let n_mels = config.num_mel_bins;
-    let dummy_mel = Tensor::zeros((1, n_mels, 3000), DType::F32, device)?;
-    Ok(dummy_mel)
-}
-
-#[allow(dead_code)]
-struct Decoder {
-    model: Whisper,
-    tokenizer: Tokenizer,
-    seed: u64,
-    device: Device,
-}
-
-impl Decoder {
-    fn new(model: Whisper, tokenizer: Tokenizer, seed: u64, device: &Device) -> Result<Self> {
-        Ok(Self { model, tokenizer, seed, device: device.clone() })
+/// Greedy decoding - simple but effective for transcription
+fn decode_greedy(
+    model: &Whisper,
+    tokenizer: &Tokenizer,
+    mel: &Tensor,
+    config: &Config,
+) -> Result<Vec<TranscriptSegment>> {
+    use candle_transformers::models::whisper::encoder;
+    
+    // Encode the mel spectrogram
+    let encoder_output = model.encoder.forward(mel)?;
+    
+    // Token IDs
+    let sot_token = tokenizer.token_to_id("<|startoftranscript|>")
+        .context("missing sot token")?;
+    let eot_token = tokenizer.token_to_id("<|endoftext|>")
+        .context("missing eot token")?;
+    let transcribe_token = tokenizer.token_to_id("<|transcribe|>")
+        .context("missing transcribe token")?;
+    let no_speech_token = tokenizer.token_to_id("<|nospeech|>")
+        .context("missing nospeech token")?;
+    
+    // Process in 30-second chunks
+    let mel_len = mel.dims()[2];
+    let chunk_size = 3000; // 30 seconds at 100 frames/sec
+    let mut segments = Vec::new();
+    
+    for chunk_start in (0..mel_len).step_by(chunk_size) {
+        let chunk_end = (chunk_start + chunk_size).min(mel_len);
+        let chunk_mel = mel.narrow(2, chunk_start, chunk_end - chunk_start)?;
+        
+        // Re-encode this chunk
+        let chunk_encoder_output = model.encoder.forward(&chunk_mel)?;
+        
+        // Initialize with start tokens
+        let mut tokens = vec![sot_token, transcribe_token];
+        let mut token_probs = Vec::new();
+        
+        // Greedy decode up to max tokens
+        for _ in 0..config.max_target_positions {
+            let input = Tensor::new(tokens.clone(), mel.device())?
+                .unsqueeze(0)?;
+            
+            let logits = model.decoder.forward(&input, &chunk_encoder_output)?;
+            let next_token_logits = logits.get((0, tokens.len() - 1))?;
+            
+            // Greedy: pick highest probability token
+            let next_token = next_token_logits.argmax(0)?.to_scalar::<u32>()?;
+            
+            if next_token == eot_token {
+                break;
+            }
+            
+            // Get probability for confidence
+            let probs = candle_nn::ops::softmax(&next_token_logits, 0)?;
+            let prob = probs.get(next_token as usize)?.to_scalar::<f32>()?;
+            token_probs.push(prob);
+            
+            tokens.push(next_token);
+        }
+        
+        // Decode tokens to text
+        let text_tokens: Vec<u32> = tokens[2..].to_vec(); // Skip sot and transcribe tokens
+        if text_tokens.is_empty() {
+            continue;
+        }
+        
+        let text = tokenizer.decode(&text_tokens, true)
+            .map_err(anyhow::Error::msg)?;
+        
+        if text.is_empty() || text.trim().is_empty() {
+            continue;
+        }
+        
+        // Calculate time bounds
+        let time_start = (chunk_start as f32 / 100.0) as f32;
+        let time_end = (chunk_end as f32 / 100.0) as f32;
+        
+        // Average confidence
+        let confidence = if token_probs.is_empty() {
+            0.5
+        } else {
+            token_probs.iter().sum::<f32>() / token_probs.len() as f32
+        };
+        
+        segments.push(TranscriptSegment {
+            start: time_start,
+            end: time_end,
+            text: text.trim().to_string(),
+            confidence,
+        });
     }
-
-    fn decode(&mut self, _mel: &Tensor) -> Result<Vec<TranscriptSegment>> {
-        // TODO: Implement Greedy/Beam search loop.
-        // Return dummy segment to verify pipeline integration.
-        Ok(vec![TranscriptSegment {
+    
+    // If no segments were produced, return a placeholder
+    if segments.is_empty() {
+        segments.push(TranscriptSegment {
             start: 0.0,
-            end: 5.0,
-            text: "This is a dummy transcription from Candle.".to_string(),
-            confidence: 0.9,
-        }])
+            end: 30.0,
+            text: "[No speech detected]".to_string(),
+            confidence: 0.0,
+        });
     }
+    
+    Ok(segments)
 }
 
 #[cfg(test)]
