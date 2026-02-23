@@ -89,11 +89,6 @@ fn decode_greedy(
     mel: &Tensor,
     config: &Config,
 ) -> Result<Vec<TranscriptSegment>> {
-    use candle_transformers::models::whisper::encoder;
-    
-    // Encode the mel spectrogram
-    let encoder_output = model.encoder.forward(mel)?;
-    
     // Token IDs
     let sot_token = tokenizer.token_to_id("<|startoftranscript|>")
         .context("missing sot token")?;
@@ -101,8 +96,6 @@ fn decode_greedy(
         .context("missing eot token")?;
     let transcribe_token = tokenizer.token_to_id("<|transcribe|>")
         .context("missing transcribe token")?;
-    let no_speech_token = tokenizer.token_to_id("<|nospeech|>")
-        .context("missing nospeech token")?;
     
     // Process in 30-second chunks
     let mel_len = mel.dims()[2];
@@ -113,7 +106,7 @@ fn decode_greedy(
         let chunk_end = (chunk_start + chunk_size).min(mel_len);
         let chunk_mel = mel.narrow(2, chunk_start, chunk_end - chunk_start)?;
         
-        // Re-encode this chunk
+        // Encode this chunk
         let chunk_encoder_output = model.encoder.forward(&chunk_mel)?;
         
         // Initialize with start tokens
