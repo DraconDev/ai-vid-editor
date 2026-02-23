@@ -135,6 +135,12 @@ pub struct Cli {
     #[arg(long)]
     pub export_edl: bool,
 
+    /// Remove filler words (um, uh, like, etc.) using Whisper STT
+    /// 
+    /// Requires downloading Whisper model from HuggingFace on first use
+    #[arg(long)]
+    pub remove_fillers: bool,
+
     /// Dry run: analyze and show what would be done without processing
     /// 
     /// Shows: input duration, silent segments, estimated output duration, time saved
@@ -235,6 +241,9 @@ fn main() -> Result<()> {
     }
     if cli.export_edl {
         config.export.edl = true;
+    }
+    if cli.remove_fillers {
+        config.filler_words.enabled = true;
     }
 
     // Print config (unless JSON mode)
