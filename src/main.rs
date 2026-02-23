@@ -236,6 +236,9 @@ fn main() -> Result<()> {
     if cli.enhance {
         config.audio.enhance = true;
     }
+    if cli.noise_reduction {
+        config.audio.noise_reduction = true;
+    }
     
     // Handle music selection: --music takes precedence over --music-dir
     if let Some(ref music_path) = cli.music {

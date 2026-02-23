@@ -175,6 +175,10 @@ pub struct AudioConfig {
     #[serde(default = "default_true")]
     pub enhance: bool,
     
+    /// Enable noise reduction
+    #[serde(default)]
+    pub noise_reduction: bool,
+    
     /// Target loudness (LUFS) - YouTube standard is -14
     #[serde(default = "default_target_lufs")]
     pub target_lufs: f32,
@@ -195,6 +199,7 @@ impl Default for AudioConfig {
     fn default() -> Self {
         Self {
             enhance: default_true(),
+            noise_reduction: false,
             target_lufs: default_target_lufs(),
             music_file: None,
             duck_volume: default_duck_volume(),
