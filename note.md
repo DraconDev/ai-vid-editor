@@ -1,6 +1,6 @@
 # AI Video Editor - Feature Status
 
-## ✅ Fully Implemented
+## ✅ Fully Working (Automated End-to-End)
 
 ### Silence Detection & Trimming
 - [x] Silence detection via ffmpeg `silencedetect`
@@ -39,38 +39,29 @@
 
 ---
 
-## 🔧 Partially Implemented (Needs Work)
+## ❌ Not Working (Needs Implementation)
 
-### STT / Whisper Integration
-- [x] Model loading from HuggingFace Hub
-- [x] Audio extraction via ffmpeg
-- [ ] **TODO: Mel spectrogram calculation** (placeholder exists)
-- [ ] **TODO: Decode loop (greedy/beam search)** (returns dummy text)
+### Whisper STT
+- [x] Model loading from HuggingFace Hub (done)
+- [x] Audio extraction via ffmpeg (done)
+- [ ] **Mel spectrogram calculation** (placeholder only)
+- [ ] **Decode loop** (returns dummy text, not usable)
 
 ### Filler Word Removal
-- [x] Config structure with filler words list
-- [x] `calculate_keep_segments_from_transcript()` implemented
-- [ ] **TODO: Wire to CLI** (needs STT to work first)
+- [x] Config structure with filler words list (done)
+- [x] `calculate_keep_segments_from_transcript()` (done)
+- [ ] **Needs Whisper STT to work**
 
 ---
 
-## ❌ Not Yet Implemented
+## Future Features (Automatable)
 
-### CLI Flags
-- [ ] `--remove-fillers` - Enable filler word removal (needs STT)
-
-### Potential Future Features
-- [ ] **Video cropping/resize** - For vertical shorts from horizontal content
-- [ ] **Scene detection** - Detect scene changes for smarter cuts
-- [ ] **Auto-caption styling** - Burned-in captions with custom styling
-- [ ] **Multi-language support** - Detect and handle multiple languages
-- [ ] **Progress bar** - Visual progress during processing
-- [ ] **Thumbnail extraction** - Auto-suggest best thumbnails
-- [ ] **Video stabilization** - Stabilize shaky footage
-- [ ] **Noise reduction** - Audio noise reduction before enhancement
-- [ ] **Custom filter chains** - User-defined ffmpeg filter chains
-- [ ] **Remote processing** - Process videos on remote server
-- [ ] **GPU acceleration** - Use GPU for faster processing
+| Feature | Priority | Notes |
+|---------|----------|-------|
+| **Whisper STT** | HIGH | Unlocks subtitles + filler removal |
+| **Filler word removal** | HIGH | Depends on STT |
+| **Progress bar** | LOW | UX improvement |
+| **GPU acceleration** | LOW | Speed improvement |
 
 ---
 
@@ -80,11 +71,11 @@ Save as `ai-vid-editor.toml` in project root or `~/.config/ai-vid-editor/config.
 
 ```toml
 [silence]
-threshold_db = -30.0        # Silence detection threshold
-min_duration = 0.5          # Min silence to detect (seconds)
-padding = 0.1               # Padding around cuts (seconds)
-mode = "cut"                # "cut" or "speedup"
-speedup_factor = 4.0        # Speed multiplier for speedup mode
+threshold_db = -30.0
+min_duration = 0.5
+padding = 0.1
+mode = "cut"
+speedup_factor = 4.0
 min_silence_for_speedup = 0.5
 
 [filler_words]
@@ -95,7 +86,6 @@ padding = 0.05
 [audio]
 enhance = true
 target_lufs = -14.0
-# music_file = "/path/to/music.mp3"
 duck_volume = 0.2
 
 [export]
@@ -110,16 +100,13 @@ edl = false
 ## CLI Usage
 
 ```bash
-# Basic usage (cut silences)
+# Basic usage
 ai-vid-editor -i input.mp4 -o output.mp4
 
-# Use preset
+# With preset
 ai-vid-editor -i input.mp4 -o output.mp4 --preset youtube
 
-# Speedup silences instead of cutting
-ai-vid-editor -i input.mp4 -o output.mp4 --speedup
-
-# Full production pipeline
+# Full pipeline
 ai-vid-editor -i input.mp4 -o output.mp4 \
   --preset youtube \
   --intro intro.mp4 \
@@ -129,17 +116,11 @@ ai-vid-editor -i input.mp4 -o output.mp4 \
 # Batch processing
 ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
 
-# Watch mode (daemon)
+# Watch mode
 ai-vid-editor --watch ./incoming -O ./processed --preset youtube
 
-# Dry run (preview)
+# Preview
 ai-vid-editor -i input.mp4 --dry-run
-
-# JSON output for scripting
-ai-vid-editor -i input.mp4 --dry-run --json
-
-# Generate sample config
-ai-vid-editor --generate-config > ai-vid-editor.toml
 ```
 
 ---
@@ -147,6 +128,4 @@ ai-vid-editor --generate-config > ai-vid-editor.toml
 ## Priority TODO
 
 1. **Complete Whisper STT** - Implement mel spectrogram + decode loop
-2. **Wire filler word removal** - Add `--remove-fillers` flag (needs STT)
-3. **Progress bar** - Visual feedback during processing
-4. **Video cropping for shorts** - Auto-crop horizontal to vertical
+2. **Wire filler word removal** - Add `--remove-fillers` flag
