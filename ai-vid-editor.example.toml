@@ -451,6 +451,82 @@ fcpxml = false
 # CLI equivalent: --export-edl
 edl = false
 
+# Generate thumbnail guide from transcript
+#
+# OUTPUT: <video_name>.thumbnail-guide.json
+#
+# WHAT IT IS:
+#   JSON file with thumbnail suggestions based on transcript analysis
+#   Helps you choose the best moments for thumbnails
+#
+# OUTPUT FORMAT:
+#   {
+#     "title_suggestions": ["How to Edit Videos Like a Pro", ...],
+#     "thumbnail_moments": [
+#       {"time": 12.5, "text": "The secret is...", "type": "hook"},
+#       {"time": 45.0, "text": "Step 1: Import", "type": "chapter"}
+#     ],
+#     "key_quotes": ["This one trick changed everything", ...]
+#   }
+#
+# MOMENT TYPES:
+#   - hook: Questions, bold statements, "how to", "secret"
+#   - chapter: Section starts, "step 1", "first", "next"
+#
+# USE CASES:
+#   - Find best thumbnail moments
+#   - Get title ideas
+#   - Extract key quotes for overlay text
+#
+# NOTE: Requires Whisper STT for transcript
+# CLI equivalent: --export-thumbnail-guide
+thumbnail_guide = false
+
+# =============================================================================
+# VIDEO PROCESSING - Visual Enhancements
+# =============================================================================
+
+[video]
+# Enable video stabilization
+#
+# WHAT IT DOES:
+#   Removes camera shake and jitter
+#   Uses ffmpeg vidstab filter (two-pass)
+#
+# WHEN TO USE:
+#   - Handheld footage
+#   - Walking/moving shots
+#   - Action footage
+#
+# WHEN NOT TO USE:
+#   - Tripod shots (already stable)
+#   - Intentional camera movement
+#   - Very shaky footage (may crop heavily)
+#
+# NOTE: Processing is slower (two-pass)
+# CLI equivalent: --stabilize
+stabilize = false
+
+# Enable auto color correction
+#
+# WHAT IT DOES:
+#   - Boosts contrast (1.1x)
+#   - Slight brightness increase
+#   - Boosts saturation (1.1x)
+#   - Applies mild sharpening
+#
+# WHEN TO USE:
+#   - Flat/log footage
+#   - Dull colors
+#   - Quick enhancement without manual grading
+#
+# WHEN NOT TO USE:
+#   - Already color-graded footage
+#   - Specific color style you want to preserve
+#
+# CLI equivalent: --color-correct
+color_correct = false
+
 # =============================================================================
 # WATCH MODE - Automatic Processing
 # =============================================================================
