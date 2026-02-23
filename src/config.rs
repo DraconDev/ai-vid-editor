@@ -322,6 +322,14 @@ pub struct VideoConfig {
     /// Enable auto color correction
     #[serde(default)]
     pub color_correct: bool,
+    
+    /// Enable auto-reframe (horizontal to vertical, follows face)
+    #[serde(default)]
+    pub reframe: bool,
+    
+    /// Enable background blur (person segmentation)
+    #[serde(default)]
+    pub blur_background: bool,
 }
 
 impl Default for VideoConfig {
@@ -329,6 +337,8 @@ impl Default for VideoConfig {
         Self {
             stabilize: false,
             color_correct: false,
+            reframe: false,
+            blur_background: false,
         }
     }
 }
