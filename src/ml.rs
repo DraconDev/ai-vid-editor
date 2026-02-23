@@ -174,12 +174,18 @@ impl PersonSegmenter {
             std::fs::create_dir_all(parent)?;
         }
         
-        anyhow::bail!(
-            "Person segmentation model not found. Please download the model to: {:?}\n\
-             Recommended model: MODNet or U²-Net\n\
-             This feature is still in development.",
-            path
-        );
+        println!("Downloading person segmentation model from HuggingFace...");
+        
+        // Use hf-hub to download the model
+        let api = hf_hub::api::sync::Api::new()?;
+        let repo = api.model(FACE_MODEL_ID.to_string());
+        let downloaded = repo.get(SEGMENT_MODEL_FILE)?;
+        
+        // Copy to cache location
+        std::fs::copy(&downloaded, path)?;
+        
+        println!("Model downloaded to: {:?}", path);
+        Ok(())
     }
     
     /// Segment person from background
