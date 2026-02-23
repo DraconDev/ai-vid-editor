@@ -240,6 +240,87 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// Run in watch mode - monitor a directory and process new videos
+fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, cli: &Cli) -> Result<()> {
+    use std::collections::HashSet;
+    use std::time::Duration;
+    
+    println!("=== WATCH MODE ===");
+    println!("Watching: {:?}", watch_dir);
+    println!("Output to: {:?}", output_dir);
+    println!("Polling interval: {}s", cli.watch_interval);
+    println!("Press Ctrl+C to stop\n");
+    
+    // Create output directory if it doesn't exist
+    std::fs::create_dir_all(output_dir)?;
+    
+    // Track processed files
+    let mut processed: HashSet<PathBuf> = HashSet::new();
+    
+    // Initial scan - process existing files
+    let video_extensions = ["mp4", "mov", "avi", "mkv", "webm"];
+    for entry in std::fs::read_dir(watch_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if video_extensions.contains(&ext.to_lowercase().as_str()) {
+                processed.insert(path.clone());
+            }
+        }
+    }
+    
+    println!("Found {} existing files (will not reprocess)", processed.len());
+    
+    let analyzer = FfmpegAnalyzer;
+    let editor = FfmpegEditor;
+    let duration_getter = FfmpegDurationGetter;
+    
+    loop {
+        std::thread::sleep(Duration::from_secs(cli.watch_interval));
+        
+        // Check for new files
+        if let Ok(entries) = std::fs::read_dir(watch_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if video_extensions.contains(&ext.to_lowercase().as_str()) && !processed.contains(&path) {
+                        println!("\n[NEW FILE] {:?}", path);
+                        
+                        let file_name = path.file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_else(|| "output.mp4".to_string());
+                        let output_path = output_dir.join(&file_name);
+                        
+                        // Process with intro/outro if specified
+                        match process_single_file_with_intro_outro(
+                            path.clone(),
+                            output_path.clone(),
+                            config,
+                            &analyzer,
+                            &editor,
+                            &duration_getter,
+                            cli.intro.clone(),
+                            cli.outro.clone()
+                        ) {
+                            Ok(_) => {
+                                println!("[DONE] Processed: {:?}", path);
+                                processed.insert(path);
+                            }
+                            Err(e) => {
+                                eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                                // Still mark as processed to avoid retrying
+                                processed.insert(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Pick a random music file from a directory
 fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
     use std::fs;
