@@ -149,7 +149,7 @@ impl PersonSegmenter {
             .into_optimized()?
             .into_runnable()?;
         
-        Ok(Self { model })
+        Ok(Self { model: Arc::new(model) })
     }
     
     fn get_model_path() -> Result<std::path::PathBuf> {
