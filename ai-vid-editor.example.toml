@@ -1,211 +1,212 @@
 # AI Video Editor Configuration
 # ==============================
-# Save this file as:
-#   - ./ai-vid-editor.toml (project-local, takes precedence)
+# This is the PRIMARY way to configure the editor.
+# CLI flags are optional overrides.
+#
+# Save as:
+#   - ./ai-vid-editor.toml (project-local)
 #   - ~/.config/ai-vid-editor/config.toml (user-global)
 #
-# Or specify with: ai-vid-editor --config path/to/config.toml
+# Usage:
+#   ai-vid-editor --config config.toml
+#   ai-vid-editor --project ./my-project
+
+# =============================================================================
+# PATHS
+# =============================================================================
+# All paths can be absolute or relative to this config file
+
+[paths]
+# Input video file (for single file processing)
+# Example: input = "raw/my-video.mp4"
+input = ""
+
+# Input directory (for batch processing)
+# Process all videos in this folder
+# Example: input_dir = "raw"
+input_dir = "watch"
+
+# Output video file (for single file processing)
+# Example: output = "edited/my-video.mp4"
+output = ""
+
+# Output directory (for batch/watch mode)
+# Processed videos go here
+output_dir = "output"
+
+# Background music file (single track)
+# Example: music = "music/background.mp3"
+music = ""
+
+# Background music directory (picks random track)
+# Example: music_dir = "music"
+music_dir = "music"
+
+# Intro video (prepended to all processed videos)
+# Example: intro = "branding/intro.mp4"
+intro = ""
+
+# Outro video (appended to all processed videos)
+# Example: outro = "branding/outro.mp4"
+outro = ""
 
 # =============================================================================
 # SILENCE DETECTION
 # =============================================================================
-# Controls how silent segments are detected and handled
 
 [silence]
 # Silence detection threshold in decibels
-# Lower values = more sensitive (detects quieter silences)
-# Common values:
-#   -25 = Aggressive (cuts more, including quiet speech)
-#   -30 = Balanced (recommended for most content)
-#   -35 = Conservative (only cuts obvious silences)
-#   -40 = Very conservative (only cuts long pauses)
+# -25 = Aggressive, -30 = Balanced, -35 = Conservative, -40 = Very conservative
 threshold_db = -30.0
 
 # Minimum silence duration to detect (seconds)
-# Silences shorter than this are ignored
-# Recommended: 0.3-0.5 for snappy edits, 0.5-1.0 for natural flow
+# 0.3-0.5 = snappy, 0.5-1.0 = natural
 min_duration = 0.5
 
 # Padding around cuts (seconds)
-# Adds a small buffer before and after cuts for natural transitions
-# Recommended: 0.05-0.1 for tight edits, 0.15-0.3 for relaxed edits
+# 0.05-0.1 = tight, 0.15-0.3 = relaxed
 padding = 0.1
 
-# How to handle detected silences
-# Options:
-#   "cut"     - Remove silences completely (default)
-#   "speedup" - Speed through silences instead of cutting
+# How to handle silences: "cut" or "speedup"
 mode = "cut"
 
-# Speed multiplier when mode = "speedup"
-# Higher = faster through silences
-# Recommended: 2.0-4.0 (2x to 4x speed)
+# Speed multiplier when mode = "speedup" (2.0-4.0 recommended)
 speedup_factor = 4.0
 
-# Minimum silence duration to apply speedup (seconds)
-# Silences shorter than this are cut instead of sped up
-# Prevents jarring speed changes on short pauses
+# Minimum silence to apply speedup (seconds)
 min_silence_for_speedup = 0.5
 
 # =============================================================================
 # FILLER WORD REMOVAL
 # =============================================================================
-# Removes filler words like "um", "uh" from speech
-# Requires Whisper STT (downloads model on first use)
 
 [filler_words]
-# Enable filler word removal
-# Set to true to activate (requires --remove-fillers flag or this config)
+# Enable filler word removal (requires Whisper STT)
 enabled = false
 
-# Words to remove (case-insensitive)
-# Only include words that are ALWAYS fillers, not context-dependent words
-# Safe defaults: um, uh, ah, er, hmm, uhh, umm
-# NOT recommended: like, so, basically, actually (can be legitimate words)
+# Words to remove (only words that are ALWAYS fillers)
 words = ["um", "uh", "ah", "er", "hmm", "uhh", "umm"]
 
 # Padding around filler cuts (seconds)
-# Small padding to avoid cutting into actual speech
 padding = 0.05
 
 # =============================================================================
 # AUDIO PROCESSING
 # =============================================================================
-# Audio enhancement and music settings
 
 [audio]
-# Enable audio enhancement
-# Applies loudness normalization + speech EQ
-# Recommended for all content
+# Enable audio enhancement (loudnorm + speech EQ)
 enhance = true
 
-# Enable noise reduction
-# Removes background noise (fans, AC, hiss, room tone)
-# Good for recordings in non-studio environments
+# Enable noise reduction (removes fans, AC, hiss)
 noise_reduction = false
 
-# Target loudness in LUFS (Loudness Units Full Scale)
-# Industry standards:
-#   -14 = YouTube, Spotify
-#   -16 = Podcasts, Apple Podcasts
-#   -18 = Broadcast (EBU R128)
-#   -24 = Broadcast (ATSC A/85)
+# Target loudness in LUFS
+# -14 = YouTube/Spotify, -16 = Podcasts, -18 = Broadcast EBU, -24 = Broadcast ATSC
 target_lufs = -14.0
 
-# Background music file path
-# Music will be auto-ducked (lowered) during speech
-# Supports: mp3, wav, m4a, aac, ogg, flac
-# Example: music_file = "/path/to/background.mp3"
-music_file = ""
-
-# OR use a directory to pick random music
-# Example: music_dir = "/path/to/music/library"
-music_dir = ""
-
-# Music volume during speech (0.0 to 1.0)
-# 0.0 = mute during speech
-# 0.2 = 20% volume during speech (recommended)
-# 0.5 = 50% volume during speech
+# Music volume during speech (0.0-1.0)
 duck_volume = 0.2
 
 # =============================================================================
 # EXPORT OPTIONS
 # =============================================================================
-# Generate additional output files alongside the processed video
 
 [export]
 # Generate SRT subtitle file
-# Requires Whisper STT for real subtitles
-# Output: <video_name>.srt
 subtitles = false
 
 # Generate YouTube chapters file
-# Creates timestamped chapters for YouTube description
-# Output: <video_name>.chapters.txt
 chapters = false
 
-# Generate FCPXML for DaVinci Resolve / Adobe Premiere Pro
-# Import the edit timeline into professional NLEs
-# Output: <video_name>.fcpxml
+# Generate FCPXML for DaVinci Resolve / Premiere Pro
 fcpxml = false
 
 # Generate EDL (Edit Decision List)
-# Universal edit format for most video editors
-# Output: <video_name>.edl
 edl = false
 
 # =============================================================================
-# PROJECT STRUCTURE (for --project mode)
+# WATCH MODE
 # =============================================================================
-# When using --project <dir>, the tool looks for:
-#
-# <project_dir>/
-# ├── config.toml        # This file (required)
-# ├── watch/             # Drop videos here for processing
-# ├── output/            # Processed videos appear here
-# ├── music/             # Background music library (optional)
-# ├── intro.mp4          # Video intro (optional)
-# └── outro.mp4          # Video outro (optional)
-#
-# Usage: ai-vid-editor --project /path/to/project
-#
-# The tool will:
-# 1. Load config.toml
-# 2. Watch the watch/ folder for new videos
-# 3. Process and output to output/
-# 4. Use music from music/ if available
-# 5. Add intro/outro if present
+
+[watch]
+# Enable watch mode (monitor input_dir for new videos)
+enabled = false
+
+# Polling interval in seconds
+interval = 5
 
 # =============================================================================
-# PRESETS
+# PRESETS (quick start)
 # =============================================================================
-# Instead of manual config, use a preset:
-#
-# ai-vid-editor --preset youtube
-#   - Cut silences
-#   - Audio enhancement (-14 LUFS)
-#   - Export chapters + FCPXML
-#   - Padding: 0.15s
-#
-# ai-vid-editor --preset shorts
-#   - Speedup silences (3x)
-#   - Audio enhancement (-14 LUFS)
-#   - Tight padding (0.05s)
-#
-# ai-vid-editor --preset podcast
-#   - Cut silences
-#   - Audio enhancement (-16 LUFS)
-#   - Export SRT subtitles
-#   - Padding: 0.2s
-#
-# ai-vid-editor --preset minimal
-#   - Just silence detection
-#   - No audio enhancement
-#   - No exports
+# Uncomment ONE preset below to use instead of manual config:
+
+# --- YouTube Long-form ---
+# [silence]
+# mode = "cut"
+# padding = 0.15
+# [audio]
+# enhance = true
+# target_lufs = -14.0
+# [export]
+# chapters = true
+# fcpxml = true
+
+# --- YouTube Shorts / TikTok ---
+# [silence]
+# mode = "speedup"
+# speedup_factor = 3.0
+# padding = 0.05
+# [audio]
+# enhance = true
+
+# --- Podcast ---
+# [silence]
+# mode = "cut"
+# padding = 0.2
+# [audio]
+# enhance = true
+# target_lufs = -16.0
+# noise_reduction = true
+# [export]
+# subtitles = true
 
 # =============================================================================
-# EXAMPLE WORKFLOWS
+# EXAMPLE PROJECT SETUP
 # =============================================================================
 #
-# 1. YouTube Long-form:
-#    ai-vid-editor -i raw.mp4 -o edited.mp4 --preset youtube --enhance
+# Create a project folder:
 #
-# 2. YouTube Shorts / TikTok:
-#    ai-vid-editor -i raw.mp4 -o short.mp4 --preset shorts
+#   my-youtube-channel/
+#   ├── config.toml        # This file
+#   ├── watch/             # Drop raw videos here
+#   ├── output/            # Processed videos appear here
+#   ├── music/             # Background music library
+#   │   ├── track1.mp3
+#   │   └── track2.mp3
+#   ├── intro.mp4          # Your channel intro
+#   └── outro.mp4          # Your channel outro
 #
-# 3. Podcast:
-#    ai-vid-editor -i recording.mp4 -o podcast.mp4 --preset podcast --noise-reduction
+# config.toml:
+#   [paths]
+#   input_dir = "watch"
+#   output_dir = "output"
+#   music_dir = "music"
+#   intro = "intro.mp4"
+#   outro = "outro.mp4"
 #
-# 4. With intro/outro and music:
-#    ai-vid-editor -i main.mp4 -o final.mp4 \
-#      --intro intro.mp4 --outro outro.mp4 \
-#      --music-dir ./music --enhance
+#   [audio]
+#   enhance = true
 #
-# 5. Batch processing:
-#    ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
+# Run:
+#   ai-vid-editor --project ./my-youtube-channel
 #
-# 6. Watch folder (automation):
-#    ai-vid-editor --watch ./incoming -O ./processed --preset youtube
+# Or with watch mode:
+#   [watch]
+#   enabled = true
+#   interval = 5
 #
-# 7. Project mode:
-#    ai-vid-editor --project ./my-youtube-channel
+# Then just run:
+#   ai-vid-editor --project ./my-youtube-channel
+#
+# Drop videos into watch/ and they're automatically processed!

@@ -238,9 +238,87 @@ impl Default for ExportConfig {
     }
 }
 
+/// Configuration for paths
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PathsConfig {
+    /// Input video file (single file mode)
+    #[serde(default)]
+    pub input: Option<PathBuf>,
+    
+    /// Input directory (batch mode)
+    #[serde(default)]
+    pub input_dir: Option<PathBuf>,
+    
+    /// Output video file (single file mode)
+    #[serde(default)]
+    pub output: Option<PathBuf>,
+    
+    /// Output directory (batch mode)
+    #[serde(default)]
+    pub output_dir: Option<PathBuf>,
+    
+    /// Background music file
+    #[serde(default)]
+    pub music: Option<PathBuf>,
+    
+    /// Background music directory
+    #[serde(default)]
+    pub music_dir: Option<PathBuf>,
+    
+    /// Intro video
+    #[serde(default)]
+    pub intro: Option<PathBuf>,
+    
+    /// Outro video
+    #[serde(default)]
+    pub outro: Option<PathBuf>,
+}
+
+impl Default for PathsConfig {
+    fn default() -> Self {
+        Self {
+            input: None,
+            input_dir: Some(PathBuf::from("watch")),
+            output: None,
+            output_dir: Some(PathBuf::from("output")),
+            music: None,
+            music_dir: Some(PathBuf::from("music")),
+            intro: None,
+            outro: None,
+        }
+    }
+}
+
+/// Configuration for watch mode
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WatchConfig {
+    /// Enable watch mode
+    #[serde(default)]
+    pub enabled: bool,
+    
+    /// Polling interval in seconds
+    #[serde(default = "default_watch_interval")]
+    pub interval: u64,
+}
+
+fn default_watch_interval() -> u64 { 5 }
+
+impl Default for WatchConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            interval: default_watch_interval(),
+        }
+    }
+}
+
 /// Main configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
+    /// Paths for input/output/music/intro/outro
+    #[serde(default)]
+    pub paths: PathsConfig,
+    
     /// Silence detection and handling
     #[serde(default)]
     pub silence: SilenceConfig,
@@ -256,6 +334,10 @@ pub struct Config {
     /// Export options
     #[serde(default)]
     pub export: ExportConfig,
+    
+    /// Watch mode settings
+    #[serde(default)]
+    pub watch: WatchConfig,
 }
 
 impl Config {
