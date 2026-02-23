@@ -92,7 +92,7 @@ fn decode_greedy(
     // Token IDs
     let sot_token = tokenizer.token_to_id("<|startoftranscript|>")
         .context("missing sot token")?;
-    let eot_token = tokenizer.token_to_id("<|endoftext|>")
+    let eot_token = tokenizer.token_to_id("<|endoftranscript|>")
         .context("missing eot token")?;
     let transcribe_token = tokenizer.token_to_id("<|transcribe|>")
         .context("missing transcribe token")?;
