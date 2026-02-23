@@ -126,6 +126,14 @@ pub struct Cli {
     
     #[arg(long, hide = true)]
     pub join: bool,
+    
+    /// Enable video stabilization (removes camera shake)
+    #[arg(long)]
+    pub stabilize: bool,
+    
+    /// Enable auto color correction
+    #[arg(long)]
+    pub color_correct: bool,
 }
 
 fn main() -> Result<()> {
