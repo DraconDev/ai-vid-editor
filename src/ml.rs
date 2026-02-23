@@ -11,6 +11,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::process::Command;
 use tract_onnx::prelude::*;
+use image::GenericImageView;
 
 /// Frame extraction utilities
 pub struct FrameExtractor;
