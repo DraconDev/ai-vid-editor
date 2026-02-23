@@ -390,7 +390,7 @@ impl AutoReframeProcessor {
         let temp_dir = std::env::temp_dir().join("ai-vid-editor-frames");
         let frames = FrameExtractor::extract_frames(video_path, &temp_dir, sample_fps)?;
         
-        let video_duration = FrameExtractor::get_video_duration(video_path)?;
+        let _video_duration = FrameExtractor::get_video_duration(video_path)?;
         let (video_width, video_height) = FrameExtractor::get_video_dimensions(video_path)?;
         let video_aspect = video_width as f32 / video_height as f32;
         
