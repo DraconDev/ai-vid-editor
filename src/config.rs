@@ -256,6 +256,31 @@ impl Default for ExportConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WatchFolder {
+    pub input: PathBuf,
+    pub output: PathBuf,
+    #[serde(default = "default_preset")]
+    pub preset: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+fn default_preset() -> String {
+    "youtube".to_string()
+}
+
+impl Default for WatchFolder {
+    fn default() -> Self {
+        Self {
+            input: PathBuf::from("videos"),
+            output: PathBuf::from("videos/output"),
+            preset: default_preset(),
+            enabled: true,
+        }
+    }
+}
+
 /// Configuration for paths
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PathsConfig {
