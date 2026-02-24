@@ -86,11 +86,28 @@ pub fn text_edit_style(text: &mut String) -> egui::TextEdit<'_> {
 }
 
 pub fn button_secondary(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(13.0))
-        .fill(PANEL_BG_LIGHT)
+    egui::Button::new(egui::RichText::new(text).color(TEXT_PRIMARY).size(13.0))
+        .fill(PANEL_BG_LIGHTER)
         .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(70.0, 32.0))
+        .min_size(egui::vec2(80.0, 34.0))
+}
+
+pub fn button_small(text: impl Into<String>) -> egui::Button<'static> {
+    egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(12.0))
+        .fill(PANEL_BG_LIGHT)
+        .stroke(egui::Stroke::new(1.0, BORDER))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(50.0, 28.0))
+}
+
+pub fn button_icon(icon: &str, tooltip: &str) -> egui::Button<'static> {
+    egui::Button::new(egui::RichText::new(icon).size(14.0))
+        .fill(PANEL_BG_LIGHTER)
+        .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(32.0, 32.0))
+        .sense(egui::Sense::click())
 }
 
 pub fn button_primary(text: impl Into<String>) -> egui::Button<'static> {
