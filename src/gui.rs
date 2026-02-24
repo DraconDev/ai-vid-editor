@@ -5,7 +5,7 @@ use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
 
-use ai_vid_editor::{Config, Preset, SilenceMode};
+use ai_vid_editor::{Config, JoinMode, Preset, SilenceMode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Tab {
@@ -50,25 +50,8 @@ pub struct AppState {
     activity_log: Vec<ActivityEntry>,
     current_tab: Tab,
 
-    join_mode: JoinMode,
-    join_after_count: u32,
-
     manual_input_files: Vec<PathBuf>,
     manual_output_folder: PathBuf,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum JoinMode {
-    Off,
-    ByDate,
-    ByName,
-    AfterCount,
-}
-
-impl Default for JoinMode {
-    fn default() -> Self {
-        Self::Off
-    }
 }
 
 impl std::fmt::Display for JoinMode {
