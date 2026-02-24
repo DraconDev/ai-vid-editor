@@ -54,20 +54,6 @@ pub struct AppState {
     manual_output_folder: PathBuf,
 }
 
-#[derive(Debug, Clone)]
-pub struct AppState {
-    config: Config,
-    selected_preset: String,
-    watch_folder: PathBuf,
-    output_folder: PathBuf,
-    status: ProcessingStatus,
-    activity_log: Vec<ActivityEntry>,
-    current_tab: Tab,
-
-    manual_input_files: Vec<PathBuf>,
-    manual_output_folder: PathBuf,
-}
-
 fn join_mode_display(mode: &JoinMode) -> String {
     match mode {
         JoinMode::Off => "Off".to_string(),
