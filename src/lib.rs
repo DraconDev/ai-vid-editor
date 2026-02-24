@@ -12,5 +12,5 @@ pub use batch_processor::{
     process_batch_dir, process_single_file, process_single_file_with_intro_outro,
     FfmpegDurationGetter,
 };
-pub use config::{Config, JoinMode, Preset, ProcessingConfig, SilenceMode};
+pub use config::{Config, JoinMode, Preset, ProcessingConfig, SilenceMode, WatchFolder};
 pub use editor::FfmpegEditor;

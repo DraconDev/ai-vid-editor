@@ -315,6 +315,14 @@ pub struct PathsConfig {
     /// Outro video
     #[serde(default)]
     pub outro: Option<PathBuf>,
+
+    /// Watch folders for GUI mode
+    #[serde(default = "default_watch_folders")]
+    pub watch_folders: Vec<WatchFolder>,
+}
+
+fn default_watch_folders() -> Vec<WatchFolder> {
+    vec![WatchFolder::default()]
 }
 
 impl Default for PathsConfig {
@@ -328,6 +336,7 @@ impl Default for PathsConfig {
             music_dir: Some(PathBuf::from("music")),
             intro: None,
             outro: None,
+            watch_folders: default_watch_folders(),
         }
     }
 }
