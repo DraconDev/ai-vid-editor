@@ -7,8 +7,8 @@ mod gui;
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([900.0, 700.0])
-            .with_min_inner_size([600.0, 500.0])
+            .with_inner_size([1050.0, 750.0])
+            .with_min_inner_size([900.0, 650.0])
             .with_title("AI Video Processor"),
         ..Default::default()
     };
