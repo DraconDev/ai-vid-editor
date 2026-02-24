@@ -777,8 +777,7 @@ impl App {
                 ui.add(
                     egui::ProgressBar::new(progress)
                         .text(progress_text)
-                        .fill(progress_color)
-                        .background_fill(PANEL_BG_LIGHTER),
+                        .fill(progress_color),
                 );
             }
         });
