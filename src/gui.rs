@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use ai_vid_editor::{Config, JoinMode, SilenceMode, WatchFolder};
 use theme::*;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 enum ProcessingStatus {
     Idle,
@@ -29,6 +30,7 @@ struct ActivityEntry {
     message: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum EntryStatus {
     Success,
