@@ -131,6 +131,41 @@ pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
         .min_size(egui::vec2(180.0, 48.0))
 }
 
+pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
+    if is_active {
+        egui::Button::new(
+            egui::RichText::new(text)
+                .color(TEXT_PRIMARY)
+                .size(12.0)
+                .strong(),
+        )
+        .fill(ACCENT_PRIMARY)
+        .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(60.0, 28.0))
+    } else {
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(12.0))
+            .fill(PANEL_BG_LIGHT)
+            .stroke(egui::Stroke::new(1.0, BORDER))
+            .corner_radius(CORNER_RADIUS_SMALL)
+            .min_size(egui::vec2(60.0, 28.0))
+    }
+}
+
+pub fn folder_card(enabled: bool) -> egui::Frame {
+    let bg = if enabled {
+        PANEL_BG_LIGHTER
+    } else {
+        PANEL_BG_LIGHT
+    };
+    let border = if enabled { BORDER_LIGHT } else { BORDER };
+    egui::Frame::NONE
+        .fill(bg)
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .inner_margin(16.0)
+        .stroke(egui::Stroke::new(1.0, border))
+}
+
 pub fn status_badge_with_bg(
     ui: &mut egui::Ui,
     status: &str,
