@@ -458,7 +458,8 @@ impl App {
                                 ui.label(label_secondary("Output Folder"));
                                 ui.add_space(4.0);
                                 ui.horizontal(|ui| {
-                                    let mut output_str = folder.output.to_string_lossy().to_string();
+                                    let mut output_str =
+                                        folder.output.to_string_lossy().to_string();
                                     ui.add_sized(
                                         egui::vec2(ui.available_width() - 70.0, 28.0),
                                         text_edit_style(&mut output_str),
@@ -513,7 +514,11 @@ impl App {
                 activity_entries.push(ActivityEntry::simple(
                     format!(
                         "Folder {} {}",
-                        if folder.enabled { "enabled" } else { "disabled" },
+                        if folder.enabled {
+                            "enabled"
+                        } else {
+                            "disabled"
+                        },
                         folder.input.display()
                     ),
                     true,
@@ -528,171 +533,6 @@ impl App {
                     true,
                 ));
             }
-            for entry in activity_entries {
-                self.state.activity_log.push(entry);
-            }
-        });
-                });
-            });
-
-            ui.add_space(16.0);
-
-            let (status_text, status_color, bg_color, icon) = match &self.state.status {
-                ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
-                ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG, "●"),
-                ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
-                ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
-            };
-
-            status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
-
-            ui.add_space(20.0);
-
-            let folder_count = self.state.folders.len();
-            let mut to_remove = None;
-            let mut activity_entries: Vec<ActivityEntry> = Vec::new();
-
-            egui::ScrollArea::vertical()
-                .max_height(350.0)
-                .show(ui, |ui| {
-                    for (idx, folder) in self.state.folders.iter_mut().enumerate() {
-                        folder_card(folder.enabled).show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                if ui
-                                    .add(button_toggle(
-                                        folder.enabled,
-                                        if folder.enabled { "ON" } else { "OFF" },
-                                    ))
-                                    .clicked()
-                                {
-                                    folder.enabled = !folder.enabled;
-                                    activity_entries.push(ActivityEntry::simple(
-                                        format!(
-                                            "Folder {} {}",
-                                            if folder.enabled {
-                                                "enabled"
-                                            } else {
-                                                "disabled"
-                                            },
-                                            folder.input.display()
-                                        ),
-                                        true,
-                                    ));
-                                }
-
-                                ui.label(
-                                    RichText::new(folder.input.to_string_lossy().to_string())
-                                        .color(if folder.enabled {
-                                            TEXT_PRIMARY
-                                        } else {
-                                            TEXT_MUTED
-                                        })
-                                        .size(13.0),
-                                );
-
-                                ui.with_layout(
-                                    egui::Layout::right_to_left(egui::Align::Center),
-                                    |ui| {
-                                        if folder_count > 1 {
-                                            if ui.add(button_small("Remove")).clicked() {
-                                                to_remove = Some(idx);
-                                            }
-                                        }
-                                        ui.add_space(4.0);
-                                        if ui.add(button_small("Edit")).clicked() {
-                                            folder.editing = !folder.editing;
-                                        }
-                                    },
-                                );
-                            });
-
-                            if folder.editing {
-                                ui.add_space(12.0);
-                                ui.label(label_muted("--- Edit ---"));
-                                ui.add_space(8.0);
-
-                                ui.label(label_secondary("Input Folder"));
-                                ui.add_space(4.0);
-                                ui.horizontal(|ui| {
-                                    let mut input_str = folder.input.to_string_lossy().to_string();
-                                    ui.add_sized(
-                                        egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(&mut input_str),
-                                    );
-                                    if ui.add(button_small("Browse")).clicked() {
-                                        if let Some(path) = FileDialog::new().pick_folder() {
-                                            folder.input = path;
-                                        }
-                                    }
-                                });
-
-                                ui.add_space(10.0);
-
-                                ui.label(label_secondary("Output Folder"));
-                                ui.add_space(4.0);
-                                ui.horizontal(|ui| {
-                                    let mut output_str =
-                                        folder.output.to_string_lossy().to_string();
-                                    ui.add_sized(
-                                        egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(&mut output_str),
-                                    );
-                                    if ui.add(button_small("Browse")).clicked() {
-                                        if let Some(path) = FileDialog::new().pick_folder() {
-                                            folder.output = path;
-                                        }
-                                    }
-                                });
-
-                                ui.add_space(10.0);
-
-                                ui.label(label_secondary("Preset"));
-                                ui.add_space(4.0);
-                                let folder_idx = idx;
-                                egui::ComboBox::from_id_salt(format!("preset_{}", idx))
-                                    .selected_text(
-                                        RichText::new(&folder.preset)
-                                            .color(TEXT_PRIMARY)
-                                            .size(13.0),
-                                    )
-                                    .width(ui.available_width())
-                                    .show_ui(ui, |ui| {
-                                        let presets = Config::available_presets();
-                                        for preset in presets {
-                                            let mut changed_preset: Option<String> = None;
-                                            if ui
-                                                .selectable_value(
-                                                    &mut folder.preset,
-                                                    preset.clone(),
-                                                    RichText::new(&preset)
-                                                        .color(TEXT_PRIMARY)
-                                                        .size(13.0),
-                                                )
-                                                .changed()
-                                            {
-                                                changed_preset = Some(preset.clone());
-                                            }
-                                            if let Some(p) = changed_preset {
-                                                activity_entries.push(ActivityEntry::simple(
-                                                    format!(
-                                                        "Changed preset to {} for folder {}",
-                                                        p, folder_idx
-                                                    ),
-                                                    true,
-                                                ));
-                                            }
-                                        }
-                                    });
-                            }
-                        });
-                        ui.add_space(8.0);
-                    }
-
-                    if let Some(idx) = to_remove {
-                        self.state.remove_folder(idx);
-                    }
-                });
-
             for entry in activity_entries {
                 self.state.activity_log.push(entry);
             }
