@@ -7,15 +7,8 @@ use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
 
-use ai_vid_editor::{Config, JoinMode, Preset, SilenceMode};
+use ai_vid_editor::{Config, JoinMode, SilenceMode, WatchFolder};
 use theme::*;
-
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-enum Tab {
-    #[default]
-    Watch,
-    Manual,
-}
 
 #[derive(Debug, Clone, PartialEq)]
 enum ProcessingStatus {
@@ -102,36 +95,56 @@ impl ActivityEntry {
 }
 
 #[derive(Debug, Clone)]
-struct FileEntry {
-    path: PathBuf,
-    size: u64,
+struct FolderState {
+    input: PathBuf,
+    output: PathBuf,
+    preset: String,
+    enabled: bool,
+    editing: bool,
 }
 
-impl FileEntry {
-    fn from_path(path: PathBuf) -> Self {
-        let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
-        Self { path, size }
+impl From<WatchFolder> for FolderState {
+    fn from(folder: WatchFolder) -> Self {
+        Self {
+            input: folder.input,
+            output: folder.output,
+            preset: folder.preset,
+            enabled: folder.enabled,
+            editing: false,
+        }
     }
+}
 
-    fn filename(&self) -> &str {
-        self.path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("unknown")
+impl From<FolderState> for WatchFolder {
+    fn from(state: FolderState) -> Self {
+        Self {
+            input: state.input,
+            output: state.output,
+            preset: state.preset,
+            enabled: state.enabled,
+        }
+    }
+}
+
+impl Default for FolderState {
+    fn default() -> Self {
+        Self {
+            input: PathBuf::from("videos"),
+            output: PathBuf::from("videos/output"),
+            preset: "youtube".to_string(),
+            enabled: true,
+            editing: false,
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     config: Config,
-    selected_preset: String,
-    watch_folder: PathBuf,
-    output_folder: PathBuf,
+    folders: Vec<FolderState>,
     status: ProcessingStatus,
     activity_log: Vec<ActivityEntry>,
-    current_tab: Tab,
-    manual_files: Vec<FileEntry>,
-    manual_output_folder: PathBuf,
+    config_path: Option<PathBuf>,
 }
 
 fn join_mode_display(mode: &JoinMode) -> String {
@@ -143,42 +156,66 @@ fn join_mode_display(mode: &JoinMode) -> String {
     }
 }
 
+fn notify_complete(filename: &str) {
+    let _ = notify_rust::Notification::new()
+        .summary("Processing Complete")
+        .body(&format!("{} has been processed", filename))
+        .show();
+}
+
+fn notify_error(filename: &str, error: &str) {
+    let _ = notify_rust::Notification::new()
+        .summary("Processing Error")
+        .body(&format!("Failed to process {}: {}", filename, error))
+        .show();
+}
+
 impl AppState {
     fn new() -> Self {
         let config = Config::default();
-        let watch_folder = config
-            .paths
-            .input_dir
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("watch"));
-        let output_folder = config
-            .paths
-            .output_dir
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("output"));
+        let folders: Vec<FolderState> = if config.paths.watch_folders.is_empty() {
+            vec![FolderState::default()]
+        } else {
+            config
+                .paths
+                .watch_folders
+                .iter()
+                .map(|f| f.clone().into())
+                .collect()
+        };
 
-        Self {
+        let mut state = Self {
             config,
-            selected_preset: "youtube".to_string(),
-            watch_folder,
-            output_folder,
-            status: ProcessingStatus::Idle,
-            activity_log: vec![ActivityEntry::simple(
-                "Welcome! Configure settings and start processing.",
-                true,
-            )],
-            current_tab: Tab::Watch,
-            manual_files: Vec::new(),
-            manual_output_folder: PathBuf::from("output"),
+            folders,
+            status: ProcessingStatus::Watching,
+            activity_log: vec![ActivityEntry::simple("Started watching for videos", true)],
+            config_path: None,
+        };
+
+        if let Some(path) = Config::default_config_path() {
+            if path.exists() {
+                state.load_config(&path);
+            }
         }
+
+        state
     }
 
     fn load_config(&mut self, path: &PathBuf) {
         match Config::from_file(path) {
             Ok(config) => {
-                self.config = config;
-                self.watch_folder = self.config.paths.input_dir.clone().unwrap_or_default();
-                self.output_folder = self.config.paths.output_dir.clone().unwrap_or_default();
+                self.config = config.clone();
+                self.folders = if self.config.paths.watch_folders.is_empty() {
+                    vec![FolderState::default()]
+                } else {
+                    self.config
+                        .paths
+                        .watch_folders
+                        .iter()
+                        .map(|f| f.clone().into())
+                        .collect()
+                };
+                self.config_path = Some(path.clone());
                 self.activity_log.push(ActivityEntry::simple(
                     format!("Loaded config from {}", path.display()),
                     true,
@@ -194,11 +231,11 @@ impl AppState {
     }
 
     fn save_config(&mut self, path: &PathBuf) {
-        self.config.paths.input_dir = Some(self.watch_folder.clone());
-        self.config.paths.output_dir = Some(self.output_folder.clone());
+        self.config.paths.watch_folders = self.folders.iter().map(|f| f.clone().into()).collect();
 
         match self.config.to_file(path) {
             Ok(()) => {
+                self.config_path = Some(path.clone());
                 self.activity_log.push(ActivityEntry::simple(
                     format!("Saved config to {}", path.display()),
                     true,
@@ -213,31 +250,17 @@ impl AppState {
         }
     }
 
-    fn load_preset(&mut self, preset_name: &str) {
-        if let Some(preset) = Preset::from_str(preset_name) {
-            self.config = Config::from(preset.to_config());
-            self.selected_preset = preset_name.to_string();
-            self.activity_log.push(ActivityEntry::simple(
-                format!("Loaded {} preset", preset_name),
-                true,
-            ));
-        } else {
-            match Config::from_preset_file(preset_name) {
-                Ok(config) => {
-                    self.config = config;
-                    self.selected_preset = preset_name.to_string();
-                    self.activity_log.push(ActivityEntry::simple(
-                        format!("Loaded {} preset from file", preset_name),
-                        true,
-                    ));
-                }
-                Err(e) => {
-                    self.activity_log.push(ActivityEntry::simple(
-                        format!("Failed to load preset: {}", e),
-                        false,
-                    ));
-                }
-            }
+    fn add_folder(&mut self) {
+        self.folders.push(FolderState::default());
+        self.activity_log
+            .push(ActivityEntry::simple("Added new watch folder", true));
+    }
+
+    fn remove_folder(&mut self, index: usize) {
+        if self.folders.len() > 1 {
+            self.folders.remove(index);
+            self.activity_log
+                .push(ActivityEntry::simple("Removed watch folder", true));
         }
     }
 }
@@ -259,7 +282,7 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 self.draw_header(ui);
-                ui.add_space(20.0);
+                ui.add_space(16.0);
 
                 ui.horizontal(|ui| {
                     ui.set_min_width(ui.available_width());
@@ -271,7 +294,7 @@ impl eframe::App for App {
                         egui::vec2(left_width, ui.available_height()),
                         egui::Layout::top_down(egui::Align::LEFT),
                         |ui| {
-                            self.draw_main_panel(ui);
+                            self.draw_folders_panel(ui);
                         },
                     );
 
@@ -286,7 +309,7 @@ impl eframe::App for App {
                     );
                 });
 
-                ui.add_space(20.0);
+                ui.add_space(16.0);
                 self.draw_activity_log(ui);
             });
         });
@@ -296,12 +319,12 @@ impl eframe::App for App {
 impl App {
     fn draw_header(&mut self, ui: &mut egui::Ui) {
         accent_bar().show(ui, |ui| {});
-        ui.add_space(20.0);
+        ui.add_space(16.0);
 
         ui.horizontal(|ui| {
             ui.label(
-                RichText::new("⚡ AI Video Processor")
-                    .size(28.0)
+                RichText::new("AI Video Processor")
+                    .size(24.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
@@ -325,276 +348,195 @@ impl App {
                 }
             });
         });
-        ui.add_space(8.0);
-        ui.label(label_secondary("Automated video processing"));
+        ui.add_space(6.0);
+        ui.label(label_secondary(
+            "Drop videos into watch folders for automatic processing",
+        ));
     }
 
-    fn draw_main_panel(&mut self, ui: &mut egui::Ui) {
+    fn draw_folders_panel(&mut self, ui: &mut egui::Ui) {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
-                let watch_text = if self.state.current_tab == Tab::Watch {
-                    RichText::new("👁 Watch")
+                ui.label(
+                    RichText::new("Watch Folders")
+                        .size(18.0)
                         .color(ACCENT_PRIMARY)
-                        .strong()
-                        .size(15.0)
-                } else {
-                    RichText::new("👁 Watch").color(TEXT_SECONDARY).size(15.0)
-                };
-                if ui
-                    .selectable_label(self.state.current_tab == Tab::Watch, watch_text)
-                    .clicked()
-                {
-                    self.state.current_tab = Tab::Watch;
-                }
-
-                ui.add_space(24.0);
-
-                let manual_text = if self.state.current_tab == Tab::Manual {
-                    RichText::new("📁 Manual")
-                        .color(ACCENT_PRIMARY)
-                        .strong()
-                        .size(15.0)
-                } else {
-                    RichText::new("📁 Manual").color(TEXT_SECONDARY).size(15.0)
-                };
-                if ui
-                    .selectable_label(self.state.current_tab == Tab::Manual, manual_text)
-                    .clicked()
-                {
-                    self.state.current_tab = Tab::Manual;
-                }
+                        .strong(),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.add(button_secondary("+ Add")).clicked() {
+                        self.state.add_folder();
+                    }
+                });
             });
+
+            ui.add_space(16.0);
+
+            let (status_text, status_color, bg_color, icon) = match &self.state.status {
+                ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
+                ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG, "●"),
+                ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
+                ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
+            };
+
+            status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
 
             ui.add_space(20.0);
 
-            match self.state.current_tab {
-                Tab::Watch => self.draw_watch_content(ui),
-                Tab::Manual => self.draw_manual_content(ui),
-            }
-        });
-    }
-
-    fn draw_watch_content(&mut self, ui: &mut egui::Ui) {
-        ui.label(section_header("📂 Watch Folder"));
-        ui.add_space(10.0);
-
-        ui.horizontal(|ui| {
-            ui.add_sized(
-                egui::vec2(ui.available_width() - 90.0, 28.0),
-                text_edit_style(&mut self.state.watch_folder.to_string_lossy().to_string()),
-            );
-            if ui.add(button_secondary("Browse")).clicked() {
-                if let Some(path) = FileDialog::new().pick_folder() {
-                    self.state.watch_folder = path;
-                }
-            }
-        });
-
-        ui.add_space(16.0);
-
-        ui.label(section_header("📤 Output Folder"));
-        ui.add_space(10.0);
-
-        ui.horizontal(|ui| {
-            ui.add_sized(
-                egui::vec2(ui.available_width() - 90.0, 28.0),
-                text_edit_style(&mut self.state.output_folder.to_string_lossy().to_string()),
-            );
-            if ui.add(button_secondary("Browse")).clicked() {
-                if let Some(path) = FileDialog::new().pick_folder() {
-                    self.state.output_folder = path;
-                }
-            }
-        });
-
-        ui.add_space(20.0);
-
-        let (status_text, status_color, bg_color, icon) = match &self.state.status {
-            ProcessingStatus::Idle => ("Ready", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
-            ProcessingStatus::Watching => ("Active", SUCCESS, SUCCESS_BG, "●"),
-            ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
-            ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
-        };
-
-        status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
-
-        ui.add_space(24.0);
-
-        ui.horizontal(|ui| {
-            ui.with_layout(
-                egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                |ui| {
-                    let is_watching = self.state.status == ProcessingStatus::Watching;
-                    if is_watching {
-                        if ui.add(button_danger("■ Stop Watching")).clicked() {
-                            self.state.status = ProcessingStatus::Idle;
-                            self.state
-                                .activity_log
-                                .push(ActivityEntry::simple("Stopped watching", true));
-                        }
-                    } else {
-                        if ui.add(button_primary("▶ Start Watching")).clicked() {
-                            self.state.status = ProcessingStatus::Watching;
-                            self.state.activity_log.push(ActivityEntry::simple(
-                                "Started watching for new videos",
-                                true,
-                            ));
-                        }
-                    }
-                },
-            );
-        });
-    }
-
-    fn draw_manual_content(&mut self, ui: &mut egui::Ui) {
-        let file_count = self.state.manual_files.len();
-
-        ui.horizontal(|ui| {
-            ui.label(section_header(&format!(
-                "📹 Selected Files ({})",
-                file_count
-            )));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(button_secondary("Clear All")).clicked() {
-                    self.state.manual_files.clear();
-                }
-            });
-        });
-
-        ui.add_space(12.0);
-
-        if self.state.manual_files.is_empty() {
-            inner_panel().show(ui, |ui| {
-                ui.label(label_secondary("No files selected"));
-            });
-        } else {
-            let max_height = (file_count.min(5) * 36) as f32 + 20.0;
             egui::ScrollArea::vertical()
-                .max_height(max_height)
+                .max_height(350.0)
                 .show(ui, |ui| {
-                    for file in &self.state.manual_files {
-                        egui::Frame::NONE
-                            .fill(PANEL_BG_LIGHTER)
-                            .corner_radius(CORNER_RADIUS_SMALL)
-                            .inner_margin(egui::vec2(12.0, 8.0))
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.label(RichText::new("📹").size(14.0));
-                                    ui.label(label_primary(file.filename()));
-                                    ui.with_layout(
-                                        egui::Layout::right_to_left(egui::Align::Center),
-                                        |ui| {
-                                            ui.label(label_muted(&format_file_size(file.size)));
-                                        },
-                                    );
-                                });
+                    let mut to_remove = None;
+
+                    for (idx, folder) in self.state.folders.iter_mut().enumerate() {
+                        folder_card(folder.enabled).show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                if ui
+                                    .add(button_toggle(
+                                        folder.enabled,
+                                        if folder.enabled { "ON" } else { "OFF" },
+                                    ))
+                                    .clicked()
+                                {
+                                    folder.enabled = !folder.enabled;
+                                    self.state.activity_log.push(ActivityEntry::simple(
+                                        format!(
+                                            "Folder {} {}",
+                                            if folder.enabled {
+                                                "enabled"
+                                            } else {
+                                                "disabled"
+                                            },
+                                            folder.input.display()
+                                        ),
+                                        true,
+                                    ));
+                                }
+
+                                ui.label(
+                                    RichText::new(&folder.input.to_string_lossy())
+                                        .color(if folder.enabled {
+                                            TEXT_PRIMARY
+                                        } else {
+                                            TEXT_MUTED
+                                        })
+                                        .size(13.0),
+                                );
+
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| {
+                                        if self.state.folders.len() > 1 {
+                                            if ui.add(button_small("Remove")).clicked() {
+                                                to_remove = Some(idx);
+                                            }
+                                        }
+                                        ui.add_space(4.0);
+                                        if ui.add(button_small("Edit")).clicked() {
+                                            folder.editing = !folder.editing;
+                                        }
+                                    },
+                                );
                             });
-                        ui.add_space(6.0);
+
+                            if folder.editing {
+                                ui.add_space(12.0);
+                                ui.label(label_muted("--- Edit ---"));
+                                ui.add_space(8.0);
+
+                                ui.label(label_secondary("Input Folder"));
+                                ui.add_space(4.0);
+                                ui.horizontal(|ui| {
+                                    ui.add_sized(
+                                        egui::vec2(ui.available_width() - 70.0, 28.0),
+                                        text_edit_style(
+                                            &mut folder.input.to_string_lossy().to_string(),
+                                        ),
+                                    );
+                                    if ui.add(button_small("Browse")).clicked() {
+                                        if let Some(path) = FileDialog::new().pick_folder() {
+                                            folder.input = path;
+                                        }
+                                    }
+                                });
+
+                                ui.add_space(10.0);
+
+                                ui.label(label_secondary("Output Folder"));
+                                ui.add_space(4.0);
+                                ui.horizontal(|ui| {
+                                    ui.add_sized(
+                                        egui::vec2(ui.available_width() - 70.0, 28.0),
+                                        text_edit_style(
+                                            &mut folder.output.to_string_lossy().to_string(),
+                                        ),
+                                    );
+                                    if ui.add(button_small("Browse")).clicked() {
+                                        if let Some(path) = FileDialog::new().pick_folder() {
+                                            folder.output = path;
+                                        }
+                                    }
+                                });
+
+                                ui.add_space(10.0);
+
+                                ui.label(label_secondary("Preset"));
+                                ui.add_space(4.0);
+                                egui::ComboBox::from_id_salt(format!("preset_{}", idx))
+                                    .selected_text(
+                                        RichText::new(&folder.preset)
+                                            .color(TEXT_PRIMARY)
+                                            .size(13.0),
+                                    )
+                                    .width(ui.available_width())
+                                    .show_ui(ui, |ui| {
+                                        let presets = Config::available_presets();
+                                        for preset in presets {
+                                            if ui
+                                                .selectable_value(
+                                                    &mut folder.preset,
+                                                    preset.clone(),
+                                                    RichText::new(&preset)
+                                                        .color(TEXT_PRIMARY)
+                                                        .size(13.0),
+                                                )
+                                                .changed()
+                                            {
+                                                self.state.activity_log.push(
+                                                    ActivityEntry::simple(
+                                                        format!(
+                                                            "Changed preset to {} for {}",
+                                                            preset,
+                                                            folder.input.display()
+                                                        ),
+                                                        true,
+                                                    ),
+                                                );
+                                            }
+                                        }
+                                    });
+                            }
+                        });
+                        ui.add_space(8.0);
+                    }
+
+                    if let Some(idx) = to_remove {
+                        self.state.remove_folder(idx);
                     }
                 });
-        }
-
-        ui.add_space(16.0);
-
-        if ui.add(button_secondary("+ Add Files")).clicked() {
-            if let Some(paths) = FileDialog::new()
-                .add_filter("Video", &["mp4", "mov", "avi", "mkv", "webm"])
-                .pick_files()
-            {
-                for path in paths {
-                    self.state.manual_files.push(FileEntry::from_path(path));
-                }
-                self.state.activity_log.push(ActivityEntry::simple(
-                    format!("Added {} file(s)", self.state.manual_files.len()),
-                    true,
-                ));
-            }
-        }
-
-        ui.add_space(16.0);
-
-        ui.label(section_header("📤 Output Folder"));
-        ui.add_space(10.0);
-
-        ui.horizontal(|ui| {
-            ui.add_sized(
-                egui::vec2(ui.available_width() - 90.0, 28.0),
-                text_edit_style(
-                    &mut self
-                        .state
-                        .manual_output_folder
-                        .to_string_lossy()
-                        .to_string(),
-                ),
-            );
-            if ui.add(button_secondary("Browse")).clicked() {
-                if let Some(path) = FileDialog::new().pick_folder() {
-                    self.state.manual_output_folder = path;
-                }
-            }
-        });
-
-        ui.add_space(24.0);
-
-        let can_process = !self.state.manual_files.is_empty();
-        ui.horizontal(|ui| {
-            ui.with_layout(
-                egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                |ui| {
-                    let btn = button_primary(&format!(
-                        "⚡ Process {} File{}",
-                        file_count,
-                        if file_count == 1 { "" } else { "s" }
-                    ));
-                    if ui.add_enabled(can_process, btn).clicked() {
-                        self.state.activity_log.push(ActivityEntry::simple(
-                            format!("Started processing {} file(s)", file_count),
-                            true,
-                        ));
-                    }
-                },
-            );
         });
     }
 
     fn draw_settings_panel(&mut self, ui: &mut egui::Ui) {
         panel_frame().show(ui, |ui| {
             ui.label(
-                RichText::new("⚙ Settings")
+                RichText::new("Settings")
                     .size(18.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
 
             ui.add_space(16.0);
-
-            ui.label(label_secondary("📋 Preset"));
-            ui.add_space(8.0);
-
-            egui::ComboBox::from_id_salt("preset")
-                .selected_text(
-                    RichText::new(&self.state.selected_preset)
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
-                )
-                .width(ui.available_width())
-                .show_ui(ui, |ui| {
-                    let presets = Config::available_presets();
-                    for preset in presets {
-                        if ui
-                            .selectable_value(
-                                &mut self.state.selected_preset,
-                                preset.clone(),
-                                RichText::new(&preset).color(TEXT_PRIMARY).size(14.0),
-                            )
-                            .changed()
-                        {
-                            self.state.load_preset(&preset);
-                        }
-                    }
-                });
-
-            ui.add_space(24.0);
             ui.label(label_muted("--- Processing ---"));
             ui.add_space(12.0);
 
@@ -602,7 +544,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut enhance,
-                    RichText::new("🔊 Enhance Audio")
+                    RichText::new("Enhance Audio")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -615,7 +557,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut remove_silence,
-                    RichText::new("🔇 Remove Silence")
+                    RichText::new("Remove Silence")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -632,7 +574,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut stabilize,
-                    RichText::new("🎥 Stabilize Video")
+                    RichText::new("Stabilize Video")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -645,7 +587,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut color_correct,
-                    RichText::new("🎨 Color Correct")
+                    RichText::new("Color Correct")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -658,7 +600,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut reframe,
-                    RichText::new("📐 Auto-Reframe (9:16)")
+                    RichText::new("Auto-Reframe (9:16)")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -671,7 +613,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut blur,
-                    RichText::new("💫 Blur Background")
+                    RichText::new("Blur Background")
                         .color(TEXT_PRIMARY)
                         .size(14.0),
                 )
@@ -680,65 +622,65 @@ impl App {
                 self.state.config.video.blur_background = blur;
             }
 
-            ui.add_space(24.0);
+            ui.add_space(20.0);
             ui.label(label_muted("--- Advanced ---"));
             ui.add_space(12.0);
 
             ui.label(label_secondary("Silence Threshold (dB)"));
-            ui.add_space(8.0);
+            ui.add_space(4.0);
             ui.add(
                 egui::Slider::new(&mut self.state.config.silence.threshold_db, -60.0..=-10.0)
                     .step_by(1.0),
             );
 
-            ui.add_space(12.0);
+            ui.add_space(10.0);
 
             ui.label(label_secondary("Target LUFS"));
-            ui.add_space(8.0);
+            ui.add_space(4.0);
             ui.add(
                 egui::Slider::new(&mut self.state.config.audio.target_lufs, -24.0..=-6.0)
                     .step_by(1.0),
             );
 
-            ui.add_space(12.0);
+            ui.add_space(10.0);
 
-            ui.label(label_secondary("🔗 Join Mode"));
-            ui.add_space(8.0);
+            ui.label(label_secondary("Join Mode"));
+            ui.add_space(4.0);
 
             egui::ComboBox::from_id_salt("join")
                 .selected_text(
                     RichText::new(join_mode_display(&self.state.config.processing.join_mode))
                         .color(TEXT_PRIMARY)
-                        .size(14.0),
+                        .size(13.0),
                 )
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::Off,
-                        RichText::new("Off").color(TEXT_PRIMARY).size(14.0),
+                        RichText::new("Off").color(TEXT_PRIMARY).size(13.0),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::ByDate,
-                        RichText::new("By Date").color(TEXT_PRIMARY).size(14.0),
+                        RichText::new("By Date").color(TEXT_PRIMARY).size(13.0),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::ByName,
-                        RichText::new("By Name").color(TEXT_PRIMARY).size(14.0),
+                        RichText::new("By Name").color(TEXT_PRIMARY).size(13.0),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::AfterCount,
                         RichText::new("After N Files")
                             .color(TEXT_PRIMARY)
-                            .size(14.0),
+                            .size(13.0),
                     );
                 });
 
             if self.state.config.processing.join_mode == JoinMode::AfterCount {
-                ui.add_space(12.0);
+                ui.add_space(10.0);
                 ui.add(
                     egui::Slider::new(&mut self.state.config.processing.join_after_count, 1..=20)
                         .text("Files"),
@@ -751,7 +693,7 @@ impl App {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new("📋 Activity Log")
+                    RichText::new("Activity Log")
                         .size(18.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
@@ -763,7 +705,7 @@ impl App {
                 });
             });
 
-            ui.add_space(16.0);
+            ui.add_space(12.0);
 
             if self.state.activity_log.is_empty() {
                 inner_panel().show(ui, |ui| {
@@ -771,7 +713,7 @@ impl App {
                 });
             } else {
                 egui::ScrollArea::vertical()
-                    .max_height(200.0)
+                    .max_height(180.0)
                     .show(ui, |ui| {
                         for entry in self.state.activity_log.iter().rev().take(50) {
                             match entry.status {
@@ -813,7 +755,7 @@ impl App {
                                     );
                                 }
                             }
-                            ui.add_space(8.0);
+                            ui.add_space(6.0);
                         }
                     });
             }
