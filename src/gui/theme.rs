@@ -16,8 +16,8 @@ pub const TEXT_MUTED: egui::Color32 = egui::Color32::from_rgb(100, 100, 100);
 pub const BORDER: egui::Color32 = egui::Color32::from_rgb(36, 36, 36);
 pub const BORDER_LIGHT: egui::Color32 = egui::Color32::from_rgb(50, 50, 50);
 
-pub const SUCCESS: egui::Color32 = egui::Color32::from_rgb(78, 205, 196);
-pub const SUCCESS_BG: egui::Color32 = egui::Color32::from_rgb(20, 55, 50);
+pub const SUCCESS: egui::Color32 = egui::Color32::from_rgb(180, 90, 95);
+pub const SUCCESS_BG: egui::Color32 = egui::Color32::from_rgb(50, 25, 27);
 pub const ERROR: egui::Color32 = egui::Color32::from_rgb(255, 68, 68);
 pub const ERROR_BG: egui::Color32 = egui::Color32::from_rgb(55, 20, 20);
 pub const WARNING: egui::Color32 = egui::Color32::from_rgb(255, 193, 7);
@@ -154,6 +154,27 @@ pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'
             .stroke(egui::Stroke::new(1.0, BORDER))
             .corner_radius(CORNER_RADIUS_SMALL)
             .min_size(egui::vec2(60.0, 28.0))
+    }
+}
+
+pub fn button_tab(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
+    if is_active {
+        egui::Button::new(
+            egui::RichText::new(text)
+                .color(TEXT_PRIMARY)
+                .size(14.0)
+                .strong(),
+        )
+        .fill(PANEL_BG_LIGHTER)
+        .stroke(egui::Stroke::new(0.0, egui::Color32::TRANSPARENT))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(90.0, 36.0))
+    } else {
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(14.0))
+            .fill(PANEL_BG)
+            .stroke(egui::Stroke::new(0.0, egui::Color32::TRANSPARENT))
+            .corner_radius(CORNER_RADIUS_SMALL)
+            .min_size(egui::vec2(90.0, 36.0))
     }
 }
 
