@@ -414,7 +414,7 @@ impl App {
                                 }
 
                                 ui.label(
-                                    RichText::new(&folder.input.to_string_lossy())
+                                    RichText::new(folder.input.to_string_lossy().to_string())
                                         .color(if folder.enabled {
                                             TEXT_PRIMARY
                                         } else {
