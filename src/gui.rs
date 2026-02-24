@@ -10,7 +10,14 @@ use std::path::PathBuf;
 use ai_vid_editor::{Config, JoinMode, SilenceMode, WatchFolder};
 use theme::*;
 
-#[allow(dead_code)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+enum Tab {
+    #[default]
+    Folders,
+    Settings,
+    Activity,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum ProcessingStatus {
     Idle,
@@ -30,7 +37,6 @@ struct ActivityEntry {
     message: String,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum EntryStatus {
     Success,
@@ -150,6 +156,7 @@ pub struct AppState {
     status: ProcessingStatus,
     activity_log: Vec<ActivityEntry>,
     config_path: Option<PathBuf>,
+    current_tab: Tab,
 }
 
 fn join_mode_display(mode: &JoinMode) -> String {
@@ -197,6 +204,7 @@ impl AppState {
             status: ProcessingStatus::Watching,
             activity_log: vec![ActivityEntry::simple("Started watching for videos", true)],
             config_path: None,
+            current_tab: Tab::Folders,
         };
 
         if let Some(path) = Config::default_config_path() {
@@ -289,35 +297,23 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 self.draw_header(ui);
-                ui.add_space(16.0);
+                ui.add_space(8.0);
 
-                ui.horizontal(|ui| {
-                    ui.set_min_width(ui.available_width());
-
-                    let left_width = (ui.available_width() * 0.55).min(520.0);
-                    let right_width = ui.available_width() - left_width - 24.0;
-
-                    ui.allocate_ui_with_layout(
-                        egui::vec2(left_width, ui.available_height()),
-                        egui::Layout::top_down(egui::Align::LEFT),
-                        |ui| {
-                            self.draw_folders_panel(ui);
-                        },
-                    );
-
-                    ui.add_space(24.0);
-
-                    ui.allocate_ui_with_layout(
-                        egui::vec2(right_width, ui.available_height()),
-                        egui::Layout::top_down(egui::Align::LEFT),
-                        |ui| {
-                            self.draw_settings_panel(ui);
-                        },
-                    );
+                egui::ScrollArea::vertical().show(ui, |ui| match self.state.current_tab {
+                    Tab::Folders => {
+                        self.draw_folders_panel(ui);
+                        ui.add_space(16.0);
+                        self.draw_settings_panel(ui);
+                        ui.add_space(16.0);
+                        self.draw_activity_log(ui);
+                    }
+                    Tab::Settings => {
+                        self.draw_settings_panel(ui);
+                    }
+                    Tab::Activity => {
+                        self.draw_activity_log(ui);
+                    }
                 });
-
-                ui.add_space(16.0);
-                self.draw_activity_log(ui);
             });
         });
     }
@@ -326,12 +322,12 @@ impl eframe::App for App {
 impl App {
     fn draw_header(&mut self, ui: &mut egui::Ui) {
         accent_bar().show(ui, |_ui| {});
-        ui.add_space(16.0);
+        ui.add_space(12.0);
 
         ui.horizontal(|ui| {
             ui.label(
                 RichText::new("AI Video Processor")
-                    .size(24.0)
+                    .size(22.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
@@ -355,10 +351,30 @@ impl App {
                 }
             });
         });
-        ui.add_space(6.0);
-        ui.label(label_secondary(
-            "Drop videos into watch folders for automatic processing",
-        ));
+
+        ui.add_space(12.0);
+
+        egui::Frame::NONE
+            .fill(PANEL_BG_LIGHT)
+            .corner_radius(CORNER_RADIUS_SMALL)
+            .inner_margin(egui::vec2(8.0, 4.0))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    let tabs = [
+                        (Tab::Folders, "Folders"),
+                        (Tab::Settings, "Settings"),
+                        (Tab::Activity, "Activity"),
+                    ];
+                    for (tab, name) in tabs {
+                        if ui
+                            .add(button_tab(self.state.current_tab == tab, name))
+                            .clicked()
+                        {
+                            self.state.current_tab = tab;
+                        }
+                    }
+                });
+            });
     }
 
     fn draw_folders_panel(&mut self, ui: &mut egui::Ui) {
@@ -370,25 +386,24 @@ impl App {
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
+
+                let (status_text, status_color, bg_color, icon) = match &self.state.status {
+                    ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
+                    ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG, "●"),
+                    ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
+                    ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
+                };
+
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.add(button_secondary("+ Add")).clicked() {
+                    status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
+                    ui.add_space(8.0);
+                    if ui.add(button_secondary("+ Add Folder")).clicked() {
                         self.state.add_folder();
                     }
                 });
             });
 
             ui.add_space(16.0);
-
-            let (status_text, status_color, bg_color, icon) = match &self.state.status {
-                ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
-                ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG, "●"),
-                ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
-                ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
-            };
-
-            status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
-
-            ui.add_space(20.0);
 
             let folder_count = self.state.folders.len();
             let mut to_remove: Option<usize> = None;
@@ -397,120 +412,136 @@ impl App {
             let mut edit_toggle_idx: Option<usize> = None;
             let mut preset_changes: Vec<(usize, String)> = Vec::new();
 
-            egui::ScrollArea::vertical()
-                .max_height(350.0)
-                .show(ui, |ui| {
-                    for (idx, folder) in self.state.folders.iter_mut().enumerate() {
-                        folder_card(folder.enabled).show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                if ui
-                                    .add(button_toggle(
-                                        folder.enabled,
-                                        if folder.enabled { "ON" } else { "OFF" },
-                                    ))
-                                    .clicked()
-                                {
-                                    folder.enabled = !folder.enabled;
-                                    toggle_idx = Some(idx);
+            for (idx, folder) in self.state.folders.iter_mut().enumerate() {
+                folder_card(folder.enabled).show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui
+                            .add(button_toggle(
+                                folder.enabled,
+                                if folder.enabled { "ON" } else { "OFF" },
+                            ))
+                            .clicked()
+                        {
+                            folder.enabled = !folder.enabled;
+                            toggle_idx = Some(idx);
+                        }
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if folder_count > 1 {
+                                if ui.add(button_small("Remove")).clicked() {
+                                    to_remove = Some(idx);
                                 }
-
-                                ui.label(
-                                    RichText::new(folder.input.to_string_lossy().to_string())
-                                        .color(if folder.enabled {
-                                            TEXT_PRIMARY
-                                        } else {
-                                            TEXT_MUTED
-                                        })
-                                        .size(13.0),
-                                );
-
-                                ui.with_layout(
-                                    egui::Layout::right_to_left(egui::Align::Center),
-                                    |ui| {
-                                        if folder_count > 1 {
-                                            if ui.add(button_small("Remove")).clicked() {
-                                                to_remove = Some(idx);
-                                            }
-                                        }
-                                        ui.add_space(4.0);
-                                        if ui.add(button_small("Edit")).clicked() {
-                                            edit_toggle_idx = Some(idx);
-                                        }
-                                    },
-                                );
-                            });
-
-                            if folder.editing {
-                                ui.add_space(12.0);
-                                ui.label(label_muted("--- Edit ---"));
-                                ui.add_space(8.0);
-
-                                ui.label(label_secondary("Input Folder"));
-                                ui.add_space(4.0);
-                                ui.horizontal(|ui| {
-                                    let mut input_str = folder.input.to_string_lossy().to_string();
-                                    ui.add_sized(
-                                        egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(&mut input_str),
-                                    );
-                                    if ui.add(button_small("Browse")).clicked() {
-                                        if let Some(path) = FileDialog::new().pick_folder() {
-                                            folder.input = path;
-                                        }
-                                    }
-                                });
-
-                                ui.add_space(10.0);
-
-                                ui.label(label_secondary("Output Folder"));
-                                ui.add_space(4.0);
-                                ui.horizontal(|ui| {
-                                    let mut output_str =
-                                        folder.output.to_string_lossy().to_string();
-                                    ui.add_sized(
-                                        egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(&mut output_str),
-                                    );
-                                    if ui.add(button_small("Browse")).clicked() {
-                                        if let Some(path) = FileDialog::new().pick_folder() {
-                                            folder.output = path;
-                                        }
-                                    }
-                                });
-
-                                ui.add_space(10.0);
-
-                                ui.label(label_secondary("Preset"));
-                                ui.add_space(4.0);
-                                egui::ComboBox::from_id_salt(format!("preset_{}", idx))
-                                    .selected_text(
-                                        RichText::new(&folder.preset)
-                                            .color(TEXT_PRIMARY)
-                                            .size(13.0),
-                                    )
-                                    .width(ui.available_width())
-                                    .show_ui(ui, |ui| {
-                                        let presets = Config::available_presets();
-                                        for preset in presets {
-                                            if ui
-                                                .selectable_value(
-                                                    &mut folder.preset,
-                                                    preset.clone(),
-                                                    RichText::new(&preset)
-                                                        .color(TEXT_PRIMARY)
-                                                        .size(13.0),
-                                                )
-                                                .changed()
-                                            {
-                                                preset_changes.push((idx, preset.clone()));
-                                            }
-                                        }
-                                    });
+                            }
+                            ui.add_space(4.0);
+                            if ui.add(button_small("Edit")).clicked() {
+                                edit_toggle_idx = Some(idx);
                             }
                         });
+                    });
+
+                    ui.add_space(10.0);
+
+                    let text_color = if folder.enabled {
+                        TEXT_PRIMARY
+                    } else {
+                        TEXT_MUTED
+                    };
+                    let muted_color = if folder.enabled {
+                        TEXT_SECONDARY
+                    } else {
+                        TEXT_MUTED
+                    };
+
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("Input: ").color(muted_color).size(12.0));
+                        ui.label(
+                            RichText::new(folder.input.to_string_lossy().to_string())
+                                .color(text_color)
+                                .size(12.0),
+                        );
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("Output:").color(muted_color).size(12.0));
+                        ui.label(
+                            RichText::new(folder.output.to_string_lossy().to_string())
+                                .color(text_color)
+                                .size(12.0),
+                        );
+                    });
+
+                    ui.add_space(6.0);
+
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("Preset:").color(muted_color).size(12.0));
+                        ui.label(RichText::new(&folder.preset).color(text_color).size(12.0));
+                    });
+
+                    if folder.editing {
+                        ui.add_space(12.0);
+                        ui.label(label_muted("--- Edit ---"));
                         ui.add_space(8.0);
+
+                        ui.label(label_secondary("Input Folder"));
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            let mut input_str = folder.input.to_string_lossy().to_string();
+                            ui.add_sized(
+                                egui::vec2(ui.available_width() - 80.0, 28.0),
+                                text_edit_style(&mut input_str),
+                            );
+                            if ui.add(button_small("Browse")).clicked() {
+                                if let Some(path) = FileDialog::new().pick_folder() {
+                                    folder.input = path;
+                                }
+                            }
+                        });
+
+                        ui.add_space(10.0);
+
+                        ui.label(label_secondary("Output Folder"));
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            let mut output_str = folder.output.to_string_lossy().to_string();
+                            ui.add_sized(
+                                egui::vec2(ui.available_width() - 80.0, 28.0),
+                                text_edit_style(&mut output_str),
+                            );
+                            if ui.add(button_small("Browse")).clicked() {
+                                if let Some(path) = FileDialog::new().pick_folder() {
+                                    folder.output = path;
+                                }
+                            }
+                        });
+
+                        ui.add_space(10.0);
+
+                        ui.label(label_secondary("Preset"));
+                        ui.add_space(4.0);
+                        egui::ComboBox::from_id_salt(format!("preset_{}", idx))
+                            .selected_text(
+                                RichText::new(&folder.preset).color(TEXT_PRIMARY).size(13.0),
+                            )
+                            .width(ui.available_width())
+                            .show_ui(ui, |ui| {
+                                let presets = Config::available_presets();
+                                for preset in presets {
+                                    if ui
+                                        .selectable_value(
+                                            &mut folder.preset,
+                                            preset.clone(),
+                                            RichText::new(&preset).color(TEXT_PRIMARY).size(13.0),
+                                        )
+                                        .changed()
+                                    {
+                                        preset_changes.push((idx, preset.clone()));
+                                    }
+                                }
+                            });
                     }
                 });
+                ui.add_space(10.0);
+            }
 
             if let Some(idx) = to_remove {
                 self.state.remove_folder(idx);
@@ -730,52 +761,38 @@ impl App {
                     ui.label(label_secondary("No activity yet"));
                 });
             } else {
-                egui::ScrollArea::vertical()
-                    .max_height(180.0)
-                    .show(ui, |ui| {
-                        for entry in self.state.activity_log.iter().rev().take(50) {
-                            match entry.status {
-                                EntryStatus::Success => {
-                                    if entry.filename.is_empty() {
-                                        log_entry_simple(
-                                            ui,
-                                            &entry.timestamp,
-                                            &entry.message,
-                                            true,
-                                        );
-                                    } else {
-                                        log_entry_success(
-                                            ui,
-                                            &entry.timestamp,
-                                            &entry.filename,
-                                            &format_file_size(entry.file_size),
-                                            &entry
-                                                .duration
-                                                .map(|d| format_duration(d))
-                                                .unwrap_or_default(),
-                                        );
-                                    }
-                                }
-                                EntryStatus::Processing => {
-                                    log_entry_processing(
-                                        ui,
-                                        &entry.timestamp,
-                                        &entry.filename,
-                                        entry.progress.unwrap_or(0.0),
-                                    );
-                                }
-                                EntryStatus::Error => {
-                                    log_entry_error(
-                                        ui,
-                                        &entry.timestamp,
-                                        &entry.filename,
-                                        &entry.message,
-                                    );
-                                }
+                for entry in self.state.activity_log.iter().rev().take(20) {
+                    match entry.status {
+                        EntryStatus::Success => {
+                            if entry.filename.is_empty() {
+                                log_entry_simple(ui, &entry.timestamp, &entry.message, true);
+                            } else {
+                                log_entry_success(
+                                    ui,
+                                    &entry.timestamp,
+                                    &entry.filename,
+                                    &format_file_size(entry.file_size),
+                                    &entry
+                                        .duration
+                                        .map(|d| format_duration(d))
+                                        .unwrap_or_default(),
+                                );
                             }
-                            ui.add_space(6.0);
                         }
-                    });
+                        EntryStatus::Processing => {
+                            log_entry_processing(
+                                ui,
+                                &entry.timestamp,
+                                &entry.filename,
+                                entry.progress.unwrap_or(0.0),
+                            );
+                        }
+                        EntryStatus::Error => {
+                            log_entry_error(ui, &entry.timestamp, &entry.filename, &entry.message);
+                        }
+                    }
+                    ui.add_space(6.0);
+                }
             }
         });
     }
