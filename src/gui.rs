@@ -222,6 +222,24 @@ impl App {
                     .size(24.0)
                     .color(egui::Color32::from_rgb(78, 204, 163)),
             );
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Save Config").clicked() {
+                    if let Some(path) = FileDialog::new()
+                        .add_filter("TOML", &["toml"])
+                        .set_file_name("ai-vid-editor.toml")
+                        .save_file()
+                    {
+                        self.state.save_config(&path);
+                    }
+                }
+                if ui.button("Load Config").clicked() {
+                    if let Some(path) = FileDialog::new().add_filter("TOML", &["toml"]).pick_file()
+                    {
+                        self.state.load_config(&path);
+                    }
+                }
+            });
         });
         ui.add_space(5.0);
         ui.label(
@@ -457,16 +475,17 @@ impl App {
                     egui::ComboBox::from_label("")
                         .selected_text(self.state.selected_preset.clone())
                         .show_ui(ui, |ui| {
-                            for preset in ["youtube", "shorts", "podcast", "minimal"] {
+                            let presets = Config::available_presets();
+                            for preset in presets {
                                 if ui
                                     .selectable_value(
                                         &mut self.state.selected_preset,
-                                        preset.to_string(),
-                                        preset,
+                                        preset.clone(),
+                                        &preset,
                                     )
                                     .changed()
                                 {
-                                    self.state.load_preset(preset);
+                                    self.state.load_preset(&preset);
                                 }
                             }
                         });
