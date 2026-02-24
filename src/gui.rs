@@ -87,8 +87,6 @@ impl AppState {
             status: ProcessingStatus::Idle,
             activity_log: Vec::new(),
             current_tab: Tab::Watch,
-            join_mode: JoinMode::Off,
-            join_after_count: 5,
             manual_input_files: Vec::new(),
             manual_output_folder: PathBuf::from("output"),
         }
@@ -509,34 +507,37 @@ impl App {
                         ui.add_space(5.0);
                         ui.label(RichText::new("Join Mode").strong());
                         egui::ComboBox::from_label("")
-                            .selected_text(format!("{}", self.state.join_mode))
+                            .selected_text(format!("{}", self.state.config.processing.join_mode))
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
-                                    &mut self.state.join_mode,
+                                    &mut self.state.config.processing.join_mode,
                                     JoinMode::Off,
                                     "Off",
                                 );
                                 ui.selectable_value(
-                                    &mut self.state.join_mode,
+                                    &mut self.state.config.processing.join_mode,
                                     JoinMode::ByDate,
                                     "By Date",
                                 );
                                 ui.selectable_value(
-                                    &mut self.state.join_mode,
+                                    &mut self.state.config.processing.join_mode,
                                     JoinMode::ByName,
                                     "By Name",
                                 );
                                 ui.selectable_value(
-                                    &mut self.state.join_mode,
+                                    &mut self.state.config.processing.join_mode,
                                     JoinMode::AfterCount,
                                     "After N Files",
                                 );
                             });
 
-                        if self.state.join_mode == JoinMode::AfterCount {
+                        if self.state.config.processing.join_mode == JoinMode::AfterCount {
                             ui.add(
-                                egui::Slider::new(&mut self.state.join_after_count, 1..=20)
-                                    .text("Files"),
+                                egui::Slider::new(
+                                    &mut self.state.config.processing.join_after_count,
+                                    1..=20,
+                                )
+                                .text("Files"),
                             );
                         }
                     });
