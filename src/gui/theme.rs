@@ -71,33 +71,3 @@ pub fn draw_horizontal_line(ui: &mut egui::Ui) {
 
     ui.add_space(8.0);
 }
-
-pub fn theme_button_secondary(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(14.0))
-        .fill(PANEL_BG_LIGHT)
-        .stroke(egui::Stroke::new(1.0, BORDER))
-}
-
-pub fn theme_button_primary(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(
-        egui::RichText::new(text)
-            .color(egui::Color32::WHITE)
-            .size(14.0)
-            .strong(),
-    )
-    .fill(ACCENT_PRIMARY)
-    .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
-    .min_size(egui::vec2(150.0, 36.0))
-}
-
-pub fn theme_button_danger(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(
-        egui::RichText::new(text)
-            .color(egui::Color32::WHITE)
-            .size(14.0)
-            .strong(),
-    )
-    .fill(ERROR)
-    .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(200, 50, 50)))
-    .min_size(egui::vec2(150.0, 36.0))
-}
