@@ -16,9 +16,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "AI Video Processor",
         options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::new(gui::App::new()))
-        }),
+        Box::new(|_cc| Ok(Box::new(gui::App::new()))),
     )
 }

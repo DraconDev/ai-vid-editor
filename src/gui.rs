@@ -1,12 +1,9 @@
 #![cfg(feature = "gui")]
 
 use eframe::egui;
-use egui::{FontId, RichText};
+use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
 
 use crate::config::{Config, Preset, SilenceMode};
 
