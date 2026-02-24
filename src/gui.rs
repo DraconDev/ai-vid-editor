@@ -649,7 +649,7 @@ impl App {
             }
 
             ui.add_space(16.0);
-            ui.label(label_muted("─── Advanced ───"));
+            ui.label(label_muted("--- Advanced ---"));
             ui.add_space(8.0);
 
             ui.label(label_secondary("Silence Threshold (dB)"));
