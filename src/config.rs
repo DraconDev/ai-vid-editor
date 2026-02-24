@@ -630,7 +630,19 @@ impl Config {
 
     /// Generate a default config file content
     pub fn generate_default_toml() -> Result<String> {
-        let config = Config::default();
+        let mut config = Config::default();
+
+        // Round float values for cleaner TOML output
+        config.silence.threshold_db = (config.silence.threshold_db * 10.0).round() / 10.0;
+        config.silence.min_duration = (config.silence.min_duration * 10.0).round() / 10.0;
+        config.silence.padding = (config.silence.padding * 100.0).round() / 100.0;
+        config.silence.speedup_factor = (config.silence.speedup_factor * 10.0).round() / 10.0;
+        config.silence.min_silence_for_speedup =
+            (config.silence.min_silence_for_speedup * 10.0).round() / 10.0;
+        config.filler_words.padding = (config.filler_words.padding * 100.0).round() / 100.0;
+        config.audio.target_lufs = (config.audio.target_lufs * 10.0).round() / 10.0;
+        config.audio.duck_volume = (config.audio.duck_volume * 10.0).round() / 10.0;
+
         toml::to_string_pretty(&config).context("Failed to serialize default config")
     }
 
