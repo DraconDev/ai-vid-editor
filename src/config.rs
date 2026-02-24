@@ -631,15 +631,34 @@ impl Config {
     /// Generate a default config file content
     pub fn generate_default_toml() -> Result<String> {
         let config = Config::default();
-        let mut toml =
-            toml::to_string_pretty(&config).context("Failed to serialize default config")?;
+        let toml = toml::to_string_pretty(&config).context("Failed to serialize default config")?;
 
         // Fix floating point precision artifacts (e.g., 0.10000000149011612 -> 0.1)
         // This happens because f32 values get serialized as f64
-        let float_pattern = regex::Regex::new(r"(\d+\.\d{1,2})\d+").unwrap();
-        toml = float_pattern.replace_all(&toml, "$1").to_string();
+        fn fix_floats(s: &str) -> String {
+            let mut result = String::new();
+            for line in s.lines() {
+                if line.contains('=') && line.chars().any(|c| c == '.') {
+                    // Parse and fix float values
+                    let parts: Vec<&str> = line.splitn(2, '=').collect();
+                    if parts.len() == 2 {
+                        let key = parts[0];
+                        let value = parts[1].trim();
+                        if let Ok(float_val) = value.parse::<f64>() {
+                            // Round to 2 decimal places max
+                            let rounded = (float_val * 100.0).round() / 100.0;
+                            result.push_str(&format!("{} = {}\n", key, rounded));
+                            continue;
+                        }
+                    }
+                }
+                result.push_str(line);
+                result.push('\n');
+            }
+            result
+        }
 
-        Ok(toml)
+        Ok(fix_floats(&toml))
     }
 
     /// Load a preset from a TOML file in the presets directory
