@@ -114,6 +114,46 @@ impl AppState {
         }
     }
 
+    fn load_config(&mut self, path: &PathBuf) {
+        match Config::from_file(path) {
+            Ok(config) => {
+                self.config = config;
+                self.watch_folder = self.config.paths.input_dir.clone().unwrap_or_default();
+                self.output_folder = self.config.paths.output_dir.clone().unwrap_or_default();
+                self.activity_log.push(ActivityEntry::new(
+                    format!("Loaded config from {}", path.display()),
+                    true,
+                ));
+            }
+            Err(e) => {
+                self.activity_log.push(ActivityEntry::new(
+                    format!("Failed to load config: {}", e),
+                    false,
+                ));
+            }
+        }
+    }
+
+    fn save_config(&mut self, path: &PathBuf) {
+        self.config.paths.input_dir = Some(self.watch_folder.clone());
+        self.config.paths.output_dir = Some(self.output_folder.clone());
+
+        match self.config.to_file(path) {
+            Ok(()) => {
+                self.activity_log.push(ActivityEntry::new(
+                    format!("Saved config to {}", path.display()),
+                    true,
+                ));
+            }
+            Err(e) => {
+                self.activity_log.push(ActivityEntry::new(
+                    format!("Failed to save config: {}", e),
+                    false,
+                ));
+            }
+        }
+    }
+
     fn load_preset(&mut self, preset_name: &str) {
         if let Some(preset) = Preset::from_str(preset_name) {
             self.config = Config::from(preset.to_config());
@@ -122,6 +162,23 @@ impl AppState {
                 format!("Loaded {} preset", preset_name),
                 true,
             ));
+        } else {
+            match Config::from_preset_file(preset_name) {
+                Ok(config) => {
+                    self.config = config;
+                    self.selected_preset = preset_name.to_string();
+                    self.activity_log.push(ActivityEntry::new(
+                        format!("Loaded {} preset from file", preset_name),
+                        true,
+                    ));
+                }
+                Err(e) => {
+                    self.activity_log.push(ActivityEntry::new(
+                        format!("Failed to load preset: {}", e),
+                        false,
+                    ));
+                }
+            }
         }
     }
 }
