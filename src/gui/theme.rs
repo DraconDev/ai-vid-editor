@@ -16,7 +16,6 @@ pub const TEXT_SECONDARY: egui::Color32 = egui::Color32::from_rgb(170, 170, 170)
 pub const TEXT_MUTED: egui::Color32 = egui::Color32::from_rgb(100, 100, 100);
 
 pub const BORDER: egui::Color32 = egui::Color32::from_rgb(40, 40, 40);
-pub const BORDER_LIGHT: egui::Color32 = egui::Color32::from_rgb(55, 55, 55);
 
 pub const SUCCESS: egui::Color32 = egui::Color32::from_rgb(78, 205, 196);
 pub const ERROR: egui::Color32 = egui::Color32::from_rgb(255, 68, 68);
