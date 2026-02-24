@@ -54,14 +54,26 @@ pub struct AppState {
     manual_output_folder: PathBuf,
 }
 
-impl std::fmt::Display for JoinMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            JoinMode::Off => write!(f, "Off"),
-            JoinMode::ByDate => write!(f, "By Date"),
-            JoinMode::ByName => write!(f, "By Name"),
-            JoinMode::AfterCount => write!(f, "After N Files"),
-        }
+#[derive(Debug, Clone)]
+pub struct AppState {
+    config: Config,
+    selected_preset: String,
+    watch_folder: PathBuf,
+    output_folder: PathBuf,
+    status: ProcessingStatus,
+    activity_log: Vec<ActivityEntry>,
+    current_tab: Tab,
+
+    manual_input_files: Vec<PathBuf>,
+    manual_output_folder: PathBuf,
+}
+
+fn join_mode_display(mode: &JoinMode) -> String {
+    match mode {
+        JoinMode::Off => "Off".to_string(),
+        JoinMode::ByDate => "By Date".to_string(),
+        JoinMode::ByName => "By Name".to_string(),
+        JoinMode::AfterCount => "After N Files".to_string(),
     }
 }
 
@@ -507,7 +519,9 @@ impl App {
                         ui.add_space(5.0);
                         ui.label(RichText::new("Join Mode").strong());
                         egui::ComboBox::from_label("")
-                            .selected_text(format!("{}", self.state.config.processing.join_mode))
+                            .selected_text(join_mode_display(
+                                &self.state.config.processing.join_mode,
+                            ))
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
                                     &mut self.state.config.processing.join_mode,
