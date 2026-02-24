@@ -630,20 +630,16 @@ impl Config {
 
     /// Generate a default config file content
     pub fn generate_default_toml() -> Result<String> {
-        let mut config = Config::default();
+        let config = Config::default();
+        let mut toml =
+            toml::to_string_pretty(&config).context("Failed to serialize default config")?;
 
-        // Round float values for cleaner TOML output
-        config.silence.threshold_db = (config.silence.threshold_db * 10.0).round() / 10.0;
-        config.silence.min_duration = (config.silence.min_duration * 10.0).round() / 10.0;
-        config.silence.padding = (config.silence.padding * 100.0).round() / 100.0;
-        config.silence.speedup_factor = (config.silence.speedup_factor * 10.0).round() / 10.0;
-        config.silence.min_silence_for_speedup =
-            (config.silence.min_silence_for_speedup * 10.0).round() / 10.0;
-        config.filler_words.padding = (config.filler_words.padding * 100.0).round() / 100.0;
-        config.audio.target_lufs = (config.audio.target_lufs * 10.0).round() / 10.0;
-        config.audio.duck_volume = (config.audio.duck_volume * 10.0).round() / 10.0;
+        // Fix floating point precision artifacts (e.g., 0.10000000149011612 -> 0.1)
+        // This happens because f32 values get serialized as f64
+        let float_pattern = regex::Regex::new(r"(\d+\.\d{1,2})\d+").unwrap();
+        toml = float_pattern.replace_all(&toml, "$1").to_string();
 
-        toml::to_string_pretty(&config).context("Failed to serialize default config")
+        Ok(toml)
     }
 
     /// Load a preset from a TOML file in the presets directory
