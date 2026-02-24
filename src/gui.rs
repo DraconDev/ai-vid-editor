@@ -185,9 +185,9 @@ impl App {
     }
 
     fn draw_watch_tab(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none()
+        egui::Frame::NONE
             .fill(egui::Color32::from_rgb(22, 33, 62))
-            .rounding(8.0)
+            .corner_radius(8.0)
             .inner_margin(15.0)
             .show(ui, |ui| {
                 ui.label(
@@ -286,9 +286,9 @@ impl App {
     }
 
     fn draw_manual_tab(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none()
+        egui::Frame::NONE
             .fill(egui::Color32::from_rgb(22, 33, 62))
-            .rounding(8.0)
+            .corner_radius(8.0)
             .inner_margin(15.0)
             .show(ui, |ui| {
                 ui.label(
@@ -380,9 +380,9 @@ impl App {
     }
 
     fn draw_settings(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none()
+        egui::Frame::NONE
             .fill(egui::Color32::from_rgb(22, 33, 62))
-            .rounding(8.0)
+            .corner_radius(8.0)
             .inner_margin(15.0)
             .show(ui, |ui| {
                 ui.label(
@@ -512,9 +512,9 @@ impl App {
     }
 
     fn draw_activity_log(&mut self, ui: &mut egui::Ui) {
-        egui::Frame::none()
+        egui::Frame::NONE
             .fill(egui::Color32::from_rgb(22, 33, 62))
-            .rounding(8.0)
+            .corner_radius(8.0)
             .inner_margin(15.0)
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
