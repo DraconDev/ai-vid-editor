@@ -227,7 +227,7 @@ impl App {
                 .color(TEXT_SECONDARY),
         );
         ui.add_space(4.0);
-        ui.add(egui::Separator::default().stroke(egui::Stroke::new(1.0, BORDER)));
+        draw_horizontal_line(ui);
     }
 
     fn draw_tabs(&mut self, ui: &mut egui::Ui) {
@@ -259,7 +259,7 @@ impl App {
                 self.state.current_tab = Tab::Manual;
             }
         });
-        ui.add(egui::Separator::default().stroke(egui::Stroke::new(1.0, BORDER)));
+        draw_horizontal_line(ui);
 
         match self.state.current_tab {
             Tab::Watch => self.draw_watch_tab(ui),
