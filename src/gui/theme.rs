@@ -2,13 +2,11 @@
 
 use eframe::egui;
 
-pub const BACKGROUND: egui::Color32 = egui::Color32::from_rgb(8, 8, 8);
 pub const PANEL_BG: egui::Color32 = egui::Color32::from_rgb(16, 16, 16);
 pub const PANEL_BG_LIGHT: egui::Color32 = egui::Color32::from_rgb(24, 24, 24);
 pub const PANEL_BG_LIGHTER: egui::Color32 = egui::Color32::from_rgb(34, 34, 34);
 
 pub const ACCENT_PRIMARY: egui::Color32 = egui::Color32::from_rgb(230, 57, 70);
-pub const ACCENT_SECONDARY: egui::Color32 = egui::Color32::from_rgb(255, 107, 107);
 pub const ACCENT_DARK: egui::Color32 = egui::Color32::from_rgb(180, 45, 55);
 
 pub const TEXT_PRIMARY: egui::Color32 = egui::Color32::from_rgb(250, 250, 250);
