@@ -318,7 +318,7 @@ impl eframe::App for App {
 
 impl App {
     fn draw_header(&mut self, ui: &mut egui::Ui) {
-        accent_bar().show(ui, |ui| {});
+        accent_bar().show(ui, |_ui| {});
         ui.add_space(16.0);
 
         ui.horizontal(|ui| {
@@ -383,11 +383,13 @@ impl App {
 
             ui.add_space(20.0);
 
+            let folder_count = self.state.folders.len();
+            let mut to_remove = None;
+            let mut activity_entries: Vec<ActivityEntry> = Vec::new();
+
             egui::ScrollArea::vertical()
                 .max_height(350.0)
                 .show(ui, |ui| {
-                    let mut to_remove = None;
-
                     for (idx, folder) in self.state.folders.iter_mut().enumerate() {
                         folder_card(folder.enabled).show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -399,7 +401,7 @@ impl App {
                                     .clicked()
                                 {
                                     folder.enabled = !folder.enabled;
-                                    self.state.activity_log.push(ActivityEntry::simple(
+                                    activity_entries.push(ActivityEntry::simple(
                                         format!(
                                             "Folder {} {}",
                                             if folder.enabled {
@@ -426,7 +428,7 @@ impl App {
                                 ui.with_layout(
                                     egui::Layout::right_to_left(egui::Align::Center),
                                     |ui| {
-                                        if self.state.folders.len() > 1 {
+                                        if folder_count > 1 {
                                             if ui.add(button_small("Remove")).clicked() {
                                                 to_remove = Some(idx);
                                             }
