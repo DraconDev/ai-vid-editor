@@ -146,16 +146,8 @@ fn join_mode_display(mode: &JoinMode) -> String {
 impl AppState {
     fn new() -> Self {
         let config = Config::default();
-        let watch_folder = config
-            .paths
-            .input_dir
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("watch"));
-        let output_folder = config
-            .paths
-            .output_dir
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("output"));
+        let watch_folder = config.paths.input_dir.clone().unwrap_or_else(|| PathBuf::from("watch"));
+        let output_folder = config.paths.output_dir.clone().unwrap_or_else(|| PathBuf::from("output"));
 
         Self {
             config,
@@ -163,11 +155,12 @@ impl AppState {
             watch_folder,
             output_folder,
             status: ProcessingStatus::Idle,
-            activity_log: Vec::new(),
+            activity_log: vec![ActivityEntry::simple("Welcome! Configure settings and start processing.", true)],
             current_tab: Tab::Watch,
             manual_files: Vec::new(),
             manual_output_folder: PathBuf::from("output"),
         }
+    }
     }
 
     fn load_config(&mut self, path: &PathBuf) {
