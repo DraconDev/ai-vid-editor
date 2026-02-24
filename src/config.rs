@@ -639,15 +639,17 @@ impl Config {
             let mut result = String::new();
             for line in s.lines() {
                 if line.contains('=') && line.chars().any(|c| c == '.') {
-                    // Parse and fix float values
                     let parts: Vec<&str> = line.splitn(2, '=').collect();
                     if parts.len() == 2 {
-                        let key = parts[0];
+                        let key = parts[0].trim_end();
                         let value = parts[1].trim();
                         if let Ok(float_val) = value.parse::<f64>() {
-                            // Round to 2 decimal places max
                             let rounded = (float_val * 100.0).round() / 100.0;
-                            result.push_str(&format!("{} = {}\n", key, rounded));
+                            if rounded == rounded.trunc() {
+                                result.push_str(&format!("{} = {}\n", key, rounded as i64));
+                            } else {
+                                result.push_str(&format!("{} = {}\n", key, rounded));
+                            }
                             continue;
                         }
                     }
