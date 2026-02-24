@@ -363,6 +363,55 @@ impl Default for VideoConfig {
     }
 }
 
+/// Join mode for combining processed videos
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum JoinMode {
+    /// Don't join videos
+    #[default]
+    Off,
+    /// Join videos by date (newest first)
+    ByDate,
+    /// Join videos alphabetically by name
+    ByName,
+    /// Join after N videos processed
+    AfterCount,
+}
+
+/// Configuration for processing options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProcessingConfig {
+    /// How to join processed videos
+    #[serde(default)]
+    pub join_mode: JoinMode,
+
+    /// Number of videos after which to join (when join_mode = AfterCount)
+    #[serde(default = "default_join_after_count")]
+    pub join_after_count: u32,
+
+    /// Output filename pattern for joined videos
+    /// Supports: {date}, {time}, {count}
+    #[serde(default = "default_join_pattern")]
+    pub join_output_pattern: String,
+}
+
+fn default_join_after_count() -> u32 {
+    5
+}
+fn default_join_pattern() -> String {
+    "joined_{date}.mp4".to_string()
+}
+
+impl Default for ProcessingConfig {
+    fn default() -> Self {
+        Self {
+            join_mode: JoinMode::Off,
+            join_after_count: default_join_after_count(),
+            join_output_pattern: default_join_pattern(),
+        }
+    }
+}
+
 /// Main configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
@@ -385,6 +434,10 @@ pub struct Config {
     /// Video processing
     #[serde(default)]
     pub video: VideoConfig,
+
+    /// Processing options (join mode, etc.)
+    #[serde(default)]
+    pub processing: ProcessingConfig,
 
     /// Export options
     #[serde(default)]
