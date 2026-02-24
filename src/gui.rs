@@ -113,7 +113,7 @@ impl AppState {
 
     fn load_preset(&mut self, preset_name: &str) {
         if let Some(preset) = Preset::from_str(preset_name) {
-            self.config = preset.to_config();
+            self.config = Config::from(preset.to_config());
             self.selected_preset = preset_name.to_string();
             self.activity_log.push(ActivityEntry::new(
                 format!("Loaded {} preset", preset_name),
