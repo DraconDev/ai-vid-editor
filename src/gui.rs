@@ -449,11 +449,10 @@ impl App {
                                 ui.label(label_secondary("Input Folder"));
                                 ui.add_space(4.0);
                                 ui.horizontal(|ui| {
+                                    let mut input_str = folder.input.to_string_lossy().to_string();
                                     ui.add_sized(
                                         egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(
-                                            &mut folder.input.to_string_lossy().to_string(),
-                                        ),
+                                        text_edit_style(&mut input_str),
                                     );
                                     if ui.add(button_small("Browse")).clicked() {
                                         if let Some(path) = FileDialog::new().pick_folder() {
@@ -467,11 +466,11 @@ impl App {
                                 ui.label(label_secondary("Output Folder"));
                                 ui.add_space(4.0);
                                 ui.horizontal(|ui| {
+                                    let mut output_str =
+                                        folder.output.to_string_lossy().to_string();
                                     ui.add_sized(
                                         egui::vec2(ui.available_width() - 70.0, 28.0),
-                                        text_edit_style(
-                                            &mut folder.output.to_string_lossy().to_string(),
-                                        ),
+                                        text_edit_style(&mut output_str),
                                     );
                                     if ui.add(button_small("Browse")).clicked() {
                                         if let Some(path) = FileDialog::new().pick_folder() {
@@ -484,6 +483,7 @@ impl App {
 
                                 ui.label(label_secondary("Preset"));
                                 ui.add_space(4.0);
+                                let folder_idx = idx;
                                 egui::ComboBox::from_id_salt(format!("preset_{}", idx))
                                     .selected_text(
                                         RichText::new(&folder.preset)
@@ -494,6 +494,7 @@ impl App {
                                     .show_ui(ui, |ui| {
                                         let presets = Config::available_presets();
                                         for preset in presets {
+                                            let mut changed_preset: Option<String> = None;
                                             if ui
                                                 .selectable_value(
                                                     &mut folder.preset,
@@ -504,16 +505,16 @@ impl App {
                                                 )
                                                 .changed()
                                             {
-                                                self.state.activity_log.push(
-                                                    ActivityEntry::simple(
-                                                        format!(
-                                                            "Changed preset to {} for {}",
-                                                            preset,
-                                                            folder.input.display()
-                                                        ),
-                                                        true,
+                                                changed_preset = Some(preset.clone());
+                                            }
+                                            if let Some(p) = changed_preset {
+                                                activity_entries.push(ActivityEntry::simple(
+                                                    format!(
+                                                        "Changed preset to {} for folder {}",
+                                                        p, folder_idx
                                                     ),
-                                                );
+                                                    true,
+                                                ));
                                             }
                                         }
                                     });
