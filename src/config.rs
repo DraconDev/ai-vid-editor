@@ -546,6 +546,53 @@ impl Config {
         let config = Config::default();
         toml::to_string_pretty(&config).context("Failed to serialize default config")
     }
+
+    /// Load a preset from a TOML file in the presets directory
+    pub fn from_preset_file(preset_name: &str) -> Result<Self> {
+        let preset_path = PathBuf::from("presets").join(format!("{}.toml", preset_name));
+        if preset_path.exists() {
+            Self::from_file(&preset_path)
+        } else {
+            anyhow::bail!("Preset file not found: {:?}", preset_path)
+        }
+    }
+
+    /// Get list of available preset names from presets directory
+    pub fn available_presets() -> Vec<String> {
+        let presets_dir = PathBuf::from("presets");
+        if !presets_dir.exists() {
+            return vec![
+                "youtube".to_string(),
+                "shorts".to_string(),
+                "podcast".to_string(),
+                "minimal".to_string(),
+            ];
+        }
+
+        let mut presets = Vec::new();
+        if let Ok(entries) = fs::read_dir(&presets_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map(|e| e == "toml").unwrap_or(false) {
+                    if let Some(stem) = path.file_stem() {
+                        presets.push(stem.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+        presets.sort();
+
+        if presets.is_empty() {
+            vec![
+                "youtube".to_string(),
+                "shorts".to_string(),
+                "podcast".to_string(),
+                "minimal".to_string(),
+            ]
+        } else {
+            presets
+        }
+    }
 }
 
 #[cfg(test)]
