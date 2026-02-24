@@ -100,10 +100,6 @@ pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
     .min_size(egui::vec2(160.0, 38.0))
 }
 
-pub fn checkbox(checked: &mut bool, text: &str) -> egui::Checkbox<'_> {
-    egui::Checkbox::new(checked, label_primary(text))
-}
-
 pub fn draw_horizontal_line(ui: &mut egui::Ui) {
     let rect = ui.available_rect_before_wrap();
     let painter = ui.painter();
