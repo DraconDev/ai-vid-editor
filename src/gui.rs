@@ -156,6 +156,7 @@ fn join_mode_display(mode: &JoinMode) -> String {
     }
 }
 
+#[allow(dead_code)]
 fn notify_complete(filename: &str) {
     let _ = notify_rust::Notification::new()
         .summary("Processing Complete")
@@ -476,7 +477,6 @@ impl App {
 
                                 ui.label(label_secondary("Preset"));
                                 ui.add_space(4.0);
-                                let current_preset = folder.preset.clone();
                                 egui::ComboBox::from_id_salt(format!("preset_{}", idx))
                                     .selected_text(
                                         RichText::new(&folder.preset)
