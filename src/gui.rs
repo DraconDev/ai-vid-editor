@@ -527,6 +527,10 @@ impl App {
                         self.state.remove_folder(idx);
                     }
                 });
+
+            for entry in activity_entries {
+                self.state.activity_log.push(entry);
+            }
         });
     }
 
