@@ -113,6 +113,7 @@ pub fn button_icon(icon: &str, _tooltip: &str) -> egui::Button<'static> {
         .sense(egui::Sense::click())
 }
 
+#[allow(dead_code)]
 pub fn button_primary(text: impl Into<String>) -> egui::Button<'static> {
     egui::Button::new(
         egui::RichText::new(text)
@@ -126,6 +127,7 @@ pub fn button_primary(text: impl Into<String>) -> egui::Button<'static> {
     .min_size(egui::vec2(180.0, 48.0))
 }
 
+#[allow(dead_code)]
 pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
     egui::Button::new(egui::RichText::new(text).color(ERROR).size(15.0).strong())
         .fill(ERROR_BG)
