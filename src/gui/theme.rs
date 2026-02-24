@@ -26,6 +26,7 @@ pub const PROCESSING_BG: egui::Color32 = egui::Color32::from_rgb(25, 40, 60);
 
 pub const CORNER_RADIUS: f32 = 12.0;
 pub const CORNER_RADIUS_SMALL: f32 = 8.0;
+#[allow(dead_code)]
 pub const CORNER_RADIUS_PILL: f32 = 24.0;
 
 pub fn accent_bar() -> egui::Frame {
@@ -58,6 +59,7 @@ pub fn card_frame(bg: egui::Color32) -> egui::Frame {
         .stroke(egui::Stroke::new(1.0, BORDER))
 }
 
+#[allow(dead_code)]
 pub fn section_header(text: &str) -> egui::RichText {
     egui::RichText::new(text)
         .size(15.0)
