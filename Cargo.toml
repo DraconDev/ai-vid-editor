@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.135"
+version = "0.1.136"
 edition = "2024"
 
 [dependencies]
@@ -20,8 +20,8 @@ toml = "0.8"
 tract-onnx = "0.21"
 walkdir = "2.5.0"
 
-# GUI dependencies (optional) - using egui for pure Rust, no system deps
-eframe = { version = "0.31", optional = true }
+# GUI dependencies (optional) - using egui with wgpu backend for better compatibility
+eframe = { version = "0.31", optional = true, default-features = false, features = ["wgpu", "accesskit", "wayland", "x11"] }
 egui = { version = "0.31", optional = true }
 rfd = { version = "0.15", optional = true }
 chrono = { version = "0.4", optional = true }

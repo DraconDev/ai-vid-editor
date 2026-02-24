@@ -15,6 +15,7 @@ enum Tab {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 enum ProcessingStatus {
     Idle,
     Watching,
