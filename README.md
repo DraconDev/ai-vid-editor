@@ -72,12 +72,14 @@ This sets up all required libraries for GUI support (OpenGL, Vulkan, Wayland, X1
 
 The GUI provides a visual interface for:
 
-- **Watch Mode**: Set input/output folders and auto-process new videos
-- **Manual Processing**: Select specific files to process
-- **Presets**: Choose from built-in presets (YouTube, Shorts, Podcast, Minimal)
-- **Settings**: Configure silence threshold, audio enhancement, video processing
+- **Multi-Folder Watch**: Configure multiple input/output folder pairs, each with its own preset
+- **Per-Folder Presets**: Set youtube, shorts, podcast, or minimal preset per folder
+- **Enable/Disable Folders**: Toggle folders on/off without deleting them
+- **Auto-Watching**: Starts watching automatically on launch - no buttons needed
+- **Desktop Notifications**: Get notified when processing completes or errors
+- **Settings Panel**: Configure silence threshold, audio enhancement, video processing
 - **Join Mode**: Combine processed videos by date, name, or after N files
-- **Activity Log**: Track processing status
+- **Activity Log**: Track processing status in real-time
 
 ## Usage
 
