@@ -208,8 +208,9 @@ edl = false
 | Export formats | ✅ Done |
 | Whisper STT | ✅ Done |
 | Filler word removal | ✅ Done |
-| Auto-reframe | 🔜 Planned |
-| Background blur | 🔜 Planned |
+| Auto-reframe | ✅ Done |
+| Background blur | ✅ Done |
+| GUI (egui) | ✅ Done |
 
 ## License
 
