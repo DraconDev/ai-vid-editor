@@ -556,7 +556,7 @@ impl App {
             ui.add_space(4.0);
 
             egui::ComboBox::from_id_salt("preset")
-                .selected_text(&self.state.selected_preset)
+                .selected_text(RichText::new(&self.state.selected_preset).color(TEXT_PRIMARY))
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {
                     let presets = Config::available_presets();
@@ -565,7 +565,7 @@ impl App {
                             .selectable_value(
                                 &mut self.state.selected_preset,
                                 preset.clone(),
-                                &preset,
+                                RichText::new(&preset).color(TEXT_PRIMARY),
                             )
                             .changed()
                         {
@@ -680,22 +680,22 @@ impl App {
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::Off,
-                        "Off",
+                        RichText::new("Off").color(TEXT_PRIMARY),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::ByDate,
-                        "By Date",
+                        RichText::new("By Date").color(TEXT_PRIMARY),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::ByName,
-                        "By Name",
+                        RichText::new("By Name").color(TEXT_PRIMARY),
                     );
                     ui.selectable_value(
                         &mut self.state.config.processing.join_mode,
                         JoinMode::AfterCount,
-                        "After N Files",
+                        RichText::new("After N Files").color(TEXT_PRIMARY),
                     );
                 });
 
