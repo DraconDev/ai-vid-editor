@@ -575,7 +575,7 @@ impl App {
                 });
 
             ui.add_space(16.0);
-            ui.label(label_muted("─── Processing ───"));
+            ui.label(label_muted("--- Processing ---"));
             ui.add_space(8.0);
 
             let mut enhance = self.state.config.audio.enhance;

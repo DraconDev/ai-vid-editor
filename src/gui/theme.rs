@@ -85,16 +85,11 @@ pub fn button_primary(text: impl Into<String>) -> egui::Button<'static> {
 }
 
 pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(
-        egui::RichText::new(text)
-            .color(egui::Color32::WHITE)
-            .size(13.0)
-            .strong(),
-    )
-    .fill(ERROR)
-    .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(180, 50, 50)))
-    .corner_radius(6.0)
-    .min_size(egui::vec2(160.0, 38.0))
+    egui::Button::new(egui::RichText::new(text).color(ERROR).size(13.0).strong())
+        .fill(PANEL_BG_LIGHT)
+        .stroke(egui::Stroke::new(1.0, ERROR))
+        .corner_radius(6.0)
+        .min_size(egui::vec2(160.0, 38.0))
 }
 
 pub fn status_badge(status: &str, color: egui::Color32) -> egui::RichText {
