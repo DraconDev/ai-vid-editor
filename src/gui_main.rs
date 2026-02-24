@@ -2,10 +2,7 @@
 
 use eframe::egui;
 
-pub mod config;
 mod gui;
-
-use config::{Config, Preset, SilenceMode};
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {

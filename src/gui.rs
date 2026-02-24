@@ -5,7 +5,7 @@ use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
 
-use crate::config::{Config, Preset, SilenceMode};
+use ai_vid_editor::{Config, Preset, SilenceMode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Tab {

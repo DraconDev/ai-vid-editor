@@ -1,14 +1,14 @@
-use std::path::{PathBuf, Path};
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::fs;
+use std::path::{Path, PathBuf};
 
-use crate::analyzer::VideoAnalyzer;
-use crate::editor::VideoEditor;
-use crate::editor::calculate_keep_segments;
-use crate::utils::find_video_files;
-use crate::config::Config;
-use crate::exporter;
 use crate::analyzer::ProcessedSegment;
+use crate::analyzer::VideoAnalyzer;
+use crate::config::Config;
+use crate::editor::calculate_keep_segments;
+use crate::editor::VideoEditor;
+use crate::exporter;
+use crate::utils::find_video_files;
 
 // Trait for getting video duration
 pub trait DurationGetter {
@@ -22,9 +22,12 @@ impl DurationGetter for FfmpegDurationGetter {
     fn get_duration(&self, path: &Path) -> Result<f32> {
         let output = std::process::Command::new("ffprobe")
             .args([
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
                 path.to_str().context("invalid path")?,
             ])
             .output()
@@ -35,41 +38,54 @@ impl DurationGetter for FfmpegDurationGetter {
     }
 }
 
-
 /// Concatenate intro/outro videos using ffmpeg
-fn concatenate_videos(intro: Option<&Path>, main: &Path, outro: Option<&Path>, output: &Path) -> Result<()> {
+fn concatenate_videos(
+    intro: Option<&Path>,
+    main: &Path,
+    outro: Option<&Path>,
+    output: &Path,
+) -> Result<()> {
     let has_intro = intro.is_some();
     let has_outro = outro.is_some();
-    
+
     if !has_intro && !has_outro {
         // No intro/outro, just copy
         fs::copy(main, output)?;
         return Ok(());
     }
-    
+
     // Build ffmpeg concat filter
     let mut inputs: Vec<String> = vec![];
     let mut concat_inputs = String::new();
     let mut input_idx = 0;
-    
+
     if let Some(intro_path) = intro {
-        inputs.push(format!("-i {}", intro_path.to_str().context("invalid intro path")?));
+        inputs.push(format!(
+            "-i {}",
+            intro_path.to_str().context("invalid intro path")?
+        ));
         concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
         input_idx += 1;
     }
-    
-    inputs.push(format!("-i {}", main.to_str().context("invalid main path")?));
+
+    inputs.push(format!(
+        "-i {}",
+        main.to_str().context("invalid main path")?
+    ));
     concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
     input_idx += 1;
-    
+
     if let Some(outro_path) = outro {
-        inputs.push(format!("-i {}", outro_path.to_str().context("invalid outro path")?));
+        inputs.push(format!(
+            "-i {}",
+            outro_path.to_str().context("invalid outro path")?
+        ));
         concat_inputs.push_str(&format!("[{}:v][{}:a]", input_idx, input_idx));
     }
-    
+
     let n = inputs.len();
     let filter = format!("{}concat=n={}:v=1:a=1[outv][outa]", concat_inputs, n);
-    
+
     let mut args = vec![];
     for input in &inputs {
         args.push(input.clone());
@@ -82,41 +98,50 @@ fn concatenate_videos(intro: Option<&Path>, main: &Path, outro: Option<&Path>, o
     args.push("[outa]".to_string());
     args.push("-y".to_string());
     args.push(output.to_str().context("invalid output path")?.to_string());
-    
+
     let status = std::process::Command::new("ffmpeg")
         .args(&args)
         .status()
         .context("failed to execute ffmpeg for concat")?;
-    
+
     if !status.success() {
         anyhow::bail!("ffmpeg concat failed with status: {}", status);
     }
-    
+
     Ok(())
 }
 
 pub fn process_single_file<A, E, D>(
-    input_file: PathBuf, 
-    output_file: PathBuf, 
+    input_file: PathBuf,
+    output_file: PathBuf,
     config: &Config,
-    analyzer: &A, 
-    editor: &E, 
-    duration_getter: &D
+    analyzer: &A,
+    editor: &E,
+    duration_getter: &D,
 ) -> Result<()>
 where
     A: VideoAnalyzer,
     E: VideoEditor,
     D: DurationGetter,
 {
-    process_single_file_with_intro_outro(input_file, output_file, config, analyzer, editor, duration_getter, None, None)
+    process_single_file_with_intro_outro(
+        input_file,
+        output_file,
+        config,
+        analyzer,
+        editor,
+        duration_getter,
+        None,
+        None,
+    )
 }
 
 pub fn process_single_file_with_intro_outro<A, E, D>(
-    input_file: PathBuf, 
-    output_file: PathBuf, 
+    input_file: PathBuf,
+    output_file: PathBuf,
     config: &Config,
-    analyzer: &A, 
-    editor: &E, 
+    analyzer: &A,
+    editor: &E,
     duration_getter: &D,
     intro: Option<PathBuf>,
     outro: Option<PathBuf>,
@@ -128,21 +153,23 @@ where
 {
     println!("Analyzing video: {:?}", input_file);
     println!("Silence mode: {:?}", config.silence.mode);
-    
-    let silences = analyzer.detect_silence(
-        &input_file, 
-        config.silence.threshold_db, 
-        config.silence.min_duration
-    ).context("Failed to detect silence")?;
+
+    let silences = analyzer
+        .detect_silence(
+            &input_file,
+            config.silence.threshold_db,
+            config.silence.min_duration,
+        )
+        .context("Failed to detect silence")?;
 
     println!("Detected {} silent segments.", silences.len());
 
-    let video_duration = duration_getter.get_duration(&input_file)?; 
+    let video_duration = duration_getter.get_duration(&input_file)?;
     println!("Total duration: {}s", video_duration);
 
     let processed_segments = calculate_keep_segments(
-        &silences, 
-        video_duration, 
+        &silences,
+        video_duration,
         config.silence.padding,
         config.silence.mode,
         config.silence.speedup_factor,
@@ -151,13 +178,18 @@ where
     println!("Segments to process: {}", processed_segments.len());
 
     // Step 1: Trim video (silence removal/speedup)
-    let trimmed_file = if config.audio.enhance || config.audio.music_file.is_some() || intro.is_some() || outro.is_some() {
+    let trimmed_file = if config.audio.enhance
+        || config.audio.music_file.is_some()
+        || intro.is_some()
+        || outro.is_some()
+    {
         output_file.with_extension("trimmed.mp4")
     } else {
         output_file.clone()
     };
 
-    editor.trim_video(&input_file, &trimmed_file, &processed_segments)
+    editor
+        .trim_video(&input_file, &trimmed_file, &processed_segments)
         .context("Failed to trim video")?;
     println!("Trimmed video saved to: {:?}", trimmed_file);
 
@@ -165,9 +197,10 @@ where
     let enhanced_file = if config.audio.enhance {
         let enhanced = output_file.with_extension("enhanced.mp4");
         println!("Enhancing audio...");
-        editor.enhance_audio(&trimmed_file, &enhanced)
+        editor
+            .enhance_audio(&trimmed_file, &enhanced)
             .context("Failed to enhance audio")?;
-        
+
         if trimmed_file != output_file {
             let _ = fs::remove_file(&trimmed_file);
         }
@@ -180,11 +213,12 @@ where
     let with_music_file = if let Some(ref music_path) = config.audio.music_file {
         let with_music = output_file.with_extension("music.mp4");
         println!("Mixing with background music: {:?}", music_path);
-        
+
         let empty_transcript = vec![];
-        editor.mix_with_music(&enhanced_file, music_path, &with_music, &empty_transcript)
+        editor
+            .mix_with_music(&enhanced_file, music_path, &with_music, &empty_transcript)
             .context("Failed to mix music")?;
-        
+
         if enhanced_file != output_file {
             let _ = fs::remove_file(&enhanced_file);
         }
@@ -200,9 +234,9 @@ where
             intro.as_deref(),
             &with_music_file,
             outro.as_deref(),
-            &output_file
+            &output_file,
         )?;
-        
+
         if with_music_file != output_file {
             let _ = fs::remove_file(&with_music_file);
         }
@@ -216,7 +250,7 @@ where
 
     // Step 5: Video processing (stabilize, color correct, reframe, blur)
     let mut current_file = concat_file;
-    
+
     if config.video.stabilize {
         let stabilized = output_file.with_extension("stabilized.mp4");
         println!("Stabilizing video...");
@@ -226,7 +260,7 @@ where
         }
         current_file = stabilized;
     }
-    
+
     if config.video.color_correct {
         let corrected = output_file.with_extension("corrected.mp4");
         println!("Color correcting...");
@@ -236,7 +270,7 @@ where
         }
         current_file = corrected;
     }
-    
+
     if config.video.reframe {
         let reframed = output_file.with_extension("reframed.mp4");
         println!("Auto-reframing to vertical (9:16)...");
@@ -246,7 +280,7 @@ where
         }
         current_file = reframed;
     }
-    
+
     if config.video.blur_background {
         let blurred = output_file.with_extension("blurred.mp4");
         println!("Blurring background...");
@@ -256,7 +290,7 @@ where
         }
         current_file = blurred;
     }
-    
+
     // Rename final file to output
     let final_file = output_file.clone();
     if current_file != final_file {
@@ -284,7 +318,10 @@ fn export_additional_files(
         println!("Exporting SRT subtitles to: {}", srt_path);
         // TODO: Need actual transcript for subtitles
         // For now, create placeholder
-        fs::write(&srt_path, "# Subtitles will be generated when STT is complete\n")?;
+        fs::write(
+            &srt_path,
+            "# Subtitles will be generated when STT is complete\n",
+        )?;
     }
 
     if config.export.chapters {
@@ -310,12 +347,12 @@ fn export_additional_files(
 }
 
 pub fn process_batch_dir<A, E, D>(
-    input_dir: PathBuf, 
-    output_dir: PathBuf, 
+    input_dir: PathBuf,
+    output_dir: PathBuf,
     config: &Config,
-    analyzer: &A, 
-    editor: &E, 
-    duration_getter: &D
+    analyzer: &A,
+    editor: &E,
+    duration_getter: &D,
 ) -> Result<()>
 where
     A: VideoAnalyzer,
@@ -326,8 +363,10 @@ where
     println!("Output directory: {:?}", output_dir);
     println!("Silence mode: {:?}", config.silence.mode);
 
-    fs::create_dir_all(&output_dir)
-        .context(format!("Failed to create output directory {:?}", output_dir))?;
+    fs::create_dir_all(&output_dir).context(format!(
+        "Failed to create output directory {:?}",
+        output_dir
+    ))?;
 
     let video_files = find_video_files(&input_dir)?;
 
@@ -341,20 +380,33 @@ where
     let mut failed_files = 0;
 
     for (index, input_file) in video_files.iter().enumerate() {
-        let file_name = input_file.file_name()
+        let file_name = input_file
+            .file_name()
             .context(format!("Could not get file name for {:?}", input_file))?;
         let output_file = output_dir.join(file_name);
 
-        println!("\n--- Processing file {}/{} : {:?} ---", index + 1, total_files, input_file);
-        match process_single_file(input_file.clone(), output_file.clone(), config, analyzer, editor, duration_getter) {
+        println!(
+            "\n--- Processing file {}/{} : {:?} ---",
+            index + 1,
+            total_files,
+            input_file
+        );
+        match process_single_file(
+            input_file.clone(),
+            output_file.clone(),
+            config,
+            analyzer,
+            editor,
+            duration_getter,
+        ) {
             Ok(_) => {
                 println!("Successfully processed {:?}", input_file);
                 successful_files += 1;
-            },
+            }
             Err(e) => {
                 eprintln!("Error processing {:?}: {}", input_file, e);
                 failed_files += 1;
-            },
+            }
         }
     }
 
@@ -366,17 +418,21 @@ where
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs;
+    use tempfile::tempdir;
 
     // Mock implementations for testing without actual ffmpeg calls
     struct MockFfmpegAnalyzer;
     impl VideoAnalyzer for MockFfmpegAnalyzer {
-        fn detect_silence(&self, _path: &Path, _threshold_db: f32, _duration_s: f32) -> Result<Vec<crate::analyzer::Segment>> {
+        fn detect_silence(
+            &self,
+            _path: &Path,
+            _threshold_db: f32,
+            _duration_s: f32,
+        ) -> Result<Vec<crate::analyzer::Segment>> {
             Ok(vec![]) // Simulate no silences detected for simplicity
         }
     }
@@ -386,18 +442,29 @@ mod tests {
         fn reframe(&self, _input: &Path, _output: &Path) -> Result<()> {
             Ok(())
         }
-        
+
         fn blur_background(&self, _input: &Path, _output: &Path) -> Result<()> {
             Ok(())
         }
-        
-        fn trim_video(&self, _input: &Path, output: &Path, _segments: &[crate::analyzer::ProcessedSegment]) -> Result<()> {
+
+        fn trim_video(
+            &self,
+            _input: &Path,
+            output: &Path,
+            _segments: &[crate::analyzer::ProcessedSegment],
+        ) -> Result<()> {
             // Simulate successful trimming by creating an empty output file
             fs::File::create(output)?;
             Ok(())
         }
 
-        fn mix_with_music(&self, _input: &Path, _music: &Path, _output: &Path, _transcript: &[crate::stt_analyzer::TranscriptSegment]) -> Result<()> {
+        fn mix_with_music(
+            &self,
+            _input: &Path,
+            _music: &Path,
+            _output: &Path,
+            _transcript: &[crate::stt_analyzer::TranscriptSegment],
+        ) -> Result<()> {
             Ok(())
         }
 
@@ -440,7 +507,7 @@ mod tests {
         let mock_analyzer = MockFfmpegAnalyzer;
         let mock_editor = MockFfmpegEditor;
         let mock_duration_getter = MockDurationGetter;
-        
+
         // Use config with audio enhancement disabled (mock doesn't create files)
         let mut config = Config::default();
         config.audio.enhance = false;

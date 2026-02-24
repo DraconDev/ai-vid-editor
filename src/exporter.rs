@@ -1,18 +1,29 @@
 use crate::analyzer::ProcessedSegment;
 use crate::stt_analyzer::TranscriptSegment;
-use std::path::Path;
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::fs;
+use std::path::Path;
 
-pub fn export_fcpxml(segments: &[ProcessedSegment], input_path: &Path, output_path: &Path) -> Result<()> {
-    let filename = input_path.file_name().and_then(|s| s.to_str()).unwrap_or("video.mp4");
-    
+pub fn export_fcpxml(
+    segments: &[ProcessedSegment],
+    input_path: &Path,
+    output_path: &Path,
+) -> Result<()> {
+    let filename = input_path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("video.mp4");
+
     let mut xml = String::new();
     xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     xml.push_str("<!DOCTYPE fcpxml>\n");
     xml.push_str("<fcpxml version=\"1.8\">\n");
     xml.push_str("  <resources>\n");
-    xml.push_str(&format!("    <asset id=\"r1\" name=\"{}\" src=\"file://{}\" />\n", filename, input_path.to_str().unwrap()));
+    xml.push_str(&format!(
+        "    <asset id=\"r1\" name=\"{}\" src=\"file://{}\" />\n",
+        filename,
+        input_path.to_str().unwrap()
+    ));
     xml.push_str("  </resources>\n");
     xml.push_str("  <library>\n");
     xml.push_str("    <event name=\"Automated Cuts\">\n");
@@ -41,8 +52,15 @@ pub fn export_fcpxml(segments: &[ProcessedSegment], input_path: &Path, output_pa
     Ok(())
 }
 
-pub fn export_edl(segments: &[ProcessedSegment], input_path: &Path, output_path: &Path) -> Result<()> {
-    let filename = input_path.file_name().and_then(|s| s.to_str()).unwrap_or("video.mp4");
+pub fn export_edl(
+    segments: &[ProcessedSegment],
+    input_path: &Path,
+    output_path: &Path,
+) -> Result<()> {
+    let filename = input_path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("video.mp4");
     let mut edl = String::new();
     edl.push_str("TITLE: Edited Timeline\n");
     edl.push_str("FCM: NON-DROP FRAME\n\n");
@@ -51,8 +69,14 @@ pub fn export_edl(segments: &[ProcessedSegment], input_path: &Path, output_path:
         edl.push_str(&format!(
             "{:03}  AX       V     C        {:02}:{:02}:{:02}:{:02} {:02}:{:02}:{:02}:{:02}\n",
             i + 1,
-            0, 0, 0, 0, 
-            0, 0, 0, 0 
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
         ));
         edl.push_str(&format!("* FROM CLIP NAME: {}\n\n", filename));
     }
@@ -65,7 +89,11 @@ pub fn export_srt(transcript: &[TranscriptSegment], output_path: &Path) -> Resul
     let mut srt = String::new();
     for (i, seg) in transcript.iter().enumerate() {
         srt.push_str(&format!("{}\n", i + 1));
-        srt.push_str(&format!("{} --> {}\n", format_srt_time(seg.start), format_srt_time(seg.end)));
+        srt.push_str(&format!(
+            "{} --> {}\n",
+            format_srt_time(seg.start),
+            format_srt_time(seg.end)
+        ));
         srt.push_str(&format!("{}\n\n", seg.text.trim()));
     }
 
@@ -76,12 +104,17 @@ pub fn export_srt(transcript: &[TranscriptSegment], output_path: &Path) -> Resul
 pub fn export_youtube_chapters(transcript: &[TranscriptSegment], output_path: &Path) -> Result<()> {
     let mut chapters = String::new();
     chapters.push_str("00:00 Intro\n");
-    
+
     // Simplistic logic: Every 5 minutes or significant topic change (TODO)
     // For now, let's just generate a few placeholders based on transcript
     for seg in transcript {
-        if seg.text.to_lowercase().contains("chapter") || seg.text.to_lowercase().contains("topic") {
-             chapters.push_str(&format!("{} {}\n", format_youtube_time(seg.start), seg.text.trim()));
+        if seg.text.to_lowercase().contains("chapter") || seg.text.to_lowercase().contains("topic")
+        {
+            chapters.push_str(&format!(
+                "{} {}\n",
+                format_youtube_time(seg.start),
+                seg.text.trim()
+            ));
         }
     }
 
@@ -117,9 +150,12 @@ mod tests {
     fn test_export_youtube_chapters() -> Result<()> {
         let dir = tempdir()?;
         let output_chapters = dir.path().join("chapters.txt");
-        let transcript = vec![
-            TranscriptSegment { start: 65.0, end: 70.0, text: "New Topic: AI features".to_string(), confidence: 1.0 },
-        ];
+        let transcript = vec![TranscriptSegment {
+            start: 65.0,
+            end: 70.0,
+            text: "New Topic: AI features".to_string(),
+            confidence: 1.0,
+        }];
 
         export_youtube_chapters(&transcript, &output_chapters)?;
 
@@ -135,8 +171,18 @@ mod tests {
         let dir = tempdir()?;
         let output_srt = dir.path().join("subtitles.srt");
         let transcript = vec![
-            TranscriptSegment { start: 0.0, end: 5.0, text: "Hello world".to_string(), confidence: 1.0 },
-            TranscriptSegment { start: 5.0, end: 10.0, text: "This is a test".to_string(), confidence: 1.0 },
+            TranscriptSegment {
+                start: 0.0,
+                end: 5.0,
+                text: "Hello world".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 5.0,
+                end: 10.0,
+                text: "This is a test".to_string(),
+                confidence: 1.0,
+            },
         ];
 
         export_srt(&transcript, &output_srt)?;

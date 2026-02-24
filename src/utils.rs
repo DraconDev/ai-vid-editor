@@ -1,6 +1,6 @@
+use anyhow::Result;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use anyhow::Result;
 
 pub fn find_video_files(dir: &Path) -> Result<Vec<PathBuf>> {
     let mut video_files = Vec::new();
@@ -22,8 +22,8 @@ pub fn find_video_files(dir: &Path) -> Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs;
+    use tempfile::tempdir;
 
     #[test]
     fn test_find_video_files() -> Result<()> {

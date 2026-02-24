@@ -1,12 +1,12 @@
-use crate::analyzer::{Segment, ProcessedSegment};
-use crate::stt_analyzer::TranscriptSegment;
+use crate::analyzer::{ProcessedSegment, Segment};
 use crate::config::SilenceMode;
+use crate::stt_analyzer::TranscriptSegment;
+use anyhow::{Context, Result};
 use std::path::Path;
-use anyhow::{Result, Context};
 use std::process::Command;
 
 /// Calculate segments to keep after processing silences
-/// 
+///
 /// # Arguments
 /// * `silence_segments` - Detected silent segments
 /// * `total_duration` - Total video duration in seconds
@@ -15,8 +15,8 @@ use std::process::Command;
 /// * `speedup_factor` - Speed multiplier when mode is Speedup
 /// * `min_silence_for_speedup` - Minimum silence duration to speedup (seconds)
 pub fn calculate_keep_segments(
-    silence_segments: &[Segment], 
-    total_duration: f32, 
+    silence_segments: &[Segment],
+    total_duration: f32,
     padding: f32,
     mode: SilenceMode,
     speedup_factor: f32,
@@ -27,7 +27,7 @@ pub fn calculate_keep_segments(
 
     for silence in silence_segments {
         let silence_duration = silence.end - silence.start;
-        
+
         // Add the non-silent segment before this silence
         let keep_end = (silence.start + padding).min(total_duration);
         if keep_end > current_pos {
@@ -37,7 +37,7 @@ pub fn calculate_keep_segments(
                 speed: 1.0,
             });
         }
-        
+
         // Handle the silence based on mode
         match mode {
             SilenceMode::Cut => {
@@ -48,7 +48,7 @@ pub fn calculate_keep_segments(
                 // Speedup mode: keep silence but speed it up if long enough
                 let silence_start = (silence.start + padding).max(0.0);
                 let silence_end = (silence.end - padding).min(total_duration);
-                
+
                 if silence_duration >= min_silence_for_speedup && silence_end > silence_start {
                     processed.push(ProcessedSegment {
                         start: silence_start,
@@ -75,17 +75,17 @@ pub fn calculate_keep_segments(
 
 /// Legacy function for backward compatibility - uses Cut mode
 pub fn calculate_keep_segments_simple(
-    silence_segments: &[Segment], 
-    total_duration: f32, 
-    padding: f32
+    silence_segments: &[Segment],
+    total_duration: f32,
+    padding: f32,
 ) -> Vec<ProcessedSegment> {
     calculate_keep_segments(
-        silence_segments, 
-        total_duration, 
-        padding, 
-        SilenceMode::Cut, 
-        4.0, 
-        0.5
+        silence_segments,
+        total_duration,
+        padding,
+        SilenceMode::Cut,
+        4.0,
+        0.5,
     )
 }
 
@@ -99,8 +99,10 @@ pub fn calculate_keep_segments_from_transcript(
     let mut current_pos = 0.0;
 
     for seg in transcript {
-        let is_filler = filler_words.iter().any(|&f| seg.text.to_lowercase().contains(f));
-        
+        let is_filler = filler_words
+            .iter()
+            .any(|&f| seg.text.to_lowercase().contains(f));
+
         if is_filler {
             // Cut this segment with padding
             let keep_end = (seg.start + padding).min(total_duration);
@@ -128,7 +130,13 @@ pub fn calculate_keep_segments_from_transcript(
 
 pub trait VideoEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
-    fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()>;
+    fn mix_with_music(
+        &self,
+        input: &Path,
+        music: &Path,
+        output: &Path,
+        transcript: &[TranscriptSegment],
+    ) -> Result<()>;
     fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()>;
     fn reduce_noise(&self, input: &Path, output: &Path) -> Result<()>;
     fn stabilize(&self, input: &Path, output: &Path) -> Result<()>;
@@ -149,10 +157,14 @@ impl VideoEditor for FfmpegEditor {
 
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-filter_complex", &format!("{}{}", v_filter, a_filter),
-                "-map", "[outv]",
-                "-map", "[outa]",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-filter_complex",
+                &format!("{}{}", v_filter, a_filter),
+                "-map",
+                "[outv]",
+                "-map",
+                "[outa]",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -166,16 +178,27 @@ impl VideoEditor for FfmpegEditor {
         Ok(())
     }
 
-    fn mix_with_music(&self, input: &Path, music: &Path, output: &Path, transcript: &[TranscriptSegment]) -> Result<()> {
+    fn mix_with_music(
+        &self,
+        input: &Path,
+        music: &Path,
+        output: &Path,
+        transcript: &[TranscriptSegment],
+    ) -> Result<()> {
         let duck_filter = generate_duck_filter(transcript);
-        
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-i", music.to_str().context("invalid music path")?,
-                "-filter_complex", &duck_filter,
-                "-map", "0:v",
-                "-map", "[outa]",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-i",
+                music.to_str().context("invalid music path")?,
+                "-filter_complex",
+                &duck_filter,
+                "-map",
+                "0:v",
+                "-map",
+                "[outa]",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -191,13 +214,17 @@ impl VideoEditor for FfmpegEditor {
 
     fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()> {
         // Apply loudnorm and basic speech EQ
-        let filter = "loudnorm=I=-14:TP=-1:LRA=11,equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3";
-        
+        let filter =
+            "loudnorm=I=-14:TP=-1:LRA=11,equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3";
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-af", filter,
-                "-c:v", "copy",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-af",
+                filter,
+                "-c:v",
+                "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -215,12 +242,15 @@ impl VideoEditor for FfmpegEditor {
         // Apply FFT-based noise reduction
         // afftdn removes steady background noise (fans, AC, hiss)
         let filter = "afftdn=nf=-25:tn=1";
-        
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-af", filter,
-                "-c:v", "copy",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-af",
+                filter,
+                "-c:v",
+                "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -238,17 +268,23 @@ impl VideoEditor for FfmpegEditor {
         // Video stabilization using vidstab filter (two-pass)
         // Pass 1: Analyze video motion
         // Pass 2: Apply stabilization
-        
+
         let input_str = input.to_str().context("invalid input path")?;
         let output_str = output.to_str().context("invalid output path")?;
         let trf_file = "/tmp/transforms.trf";
-        
+
         // Pass 1: Detect motion and generate transforms
         let status1 = Command::new("ffmpeg")
             .args([
-                "-i", input_str,
-                "-vf", &format!("vidstabdetect=stepsize=6:shakiness=5:accuracy=15:result={}", trf_file),
-                "-f", "null",
+                "-i",
+                input_str,
+                "-vf",
+                &format!(
+                    "vidstabdetect=stepsize=6:shakiness=5:accuracy=15:result={}",
+                    trf_file
+                ),
+                "-f",
+                "null",
                 "-",
             ])
             .status()
@@ -261,10 +297,17 @@ impl VideoEditor for FfmpegEditor {
         // Pass 2: Apply stabilization
         let status2 = Command::new("ffmpeg")
             .args([
-                "-i", input_str,
-                "-vf", &format!("vidstabtransform=input={}:smoothing=10:optzoom=1:interpol=bicubic", trf_file),
-                "-c:a", "copy",
-                "-y", output_str,
+                "-i",
+                input_str,
+                "-vf",
+                &format!(
+                    "vidstabtransform=input={}:smoothing=10:optzoom=1:interpol=bicubic",
+                    trf_file
+                ),
+                "-c:a",
+                "copy",
+                "-y",
+                output_str,
             ])
             .status()
             .context("failed to execute ffmpeg (stabilize pass 2)")?;
@@ -284,12 +327,15 @@ impl VideoEditor for FfmpegEditor {
         // Adjusts brightness, contrast, saturation for a more balanced look
         // Also applies slight sharpening for clarity
         let filter = "eq=contrast=1.1:brightness=0.05:saturation=1.1,unsharp=5:5:0.5:5:5:0.0";
-        
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-vf", filter,
-                "-c:a", "copy",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-vf",
+                filter,
+                "-c:a",
+                "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -306,9 +352,9 @@ impl VideoEditor for FfmpegEditor {
     fn reframe(&self, input: &Path, output: &Path) -> Result<()> {
         // Auto-reframe: Convert horizontal (16:9) to vertical (9:16)
         // Uses ML face detection to follow the speaker
-        
+
         println!("Auto-reframe: Analyzing video for face tracking...");
-        
+
         // Try to use ML-powered reframe
         let filter = match crate::ml::AutoReframeProcessor::new() {
             Ok(processor) => {
@@ -318,7 +364,7 @@ impl VideoEditor for FfmpegEditor {
                         // Get video dimensions
                         let (w, h) = crate::ml::FrameExtractor::get_video_dimensions(input)
                             .unwrap_or((1920, 1080));
-                        
+
                         processor.generate_crop_filter(&crop_regions, w, h)
                     }
                     Err(e) => {
@@ -328,18 +374,24 @@ impl VideoEditor for FfmpegEditor {
                 }
             }
             Err(e) => {
-                eprintln!("Warning: Could not load face detection model ({}), using center crop", e);
+                eprintln!(
+                    "Warning: Could not load face detection model ({}), using center crop",
+                    e
+                );
                 "crop=ih*9/16:ih,scale=1080:1920".to_string()
             }
         };
-        
+
         println!("Applying crop filter: {}", filter);
-        
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-vf", &filter,
-                "-c:a", "copy",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-vf",
+                &filter,
+                "-c:a",
+                "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -356,33 +408,36 @@ impl VideoEditor for FfmpegEditor {
     fn blur_background(&self, input: &Path, output: &Path) -> Result<()> {
         // Background blur using person segmentation
         // Falls back to simple blur if ML not available
-        
+
         println!("Background blur: Processing video...");
-        
+
         // For now, use a simple boxblur
         // Full ML implementation would process each frame with segmentation
         // This is computationally expensive and requires frame-by-frame processing
-        
+
         // Try ML-powered blur (experimental)
         let use_ml = std::env::var("AI_VID_EDITOR_ML_BLUR")
             .map(|v| v == "1" || v == "true")
             .unwrap_or(false);
-        
+
         if use_ml {
             println!("Using ML-powered background blur (experimental)...");
             // ML blur would go here - requires significant processing time
             // For production, this would extract frames, process with segmentation, and re-encode
         }
-        
+
         // Use ffmpeg's boxblur as the practical solution
         // This blurs the entire frame - for person-aware blur, use a video editor
         let filter = "boxblur=20:5";
-        
+
         let status = Command::new("ffmpeg")
             .args([
-                "-i", input.to_str().context("invalid input path")?,
-                "-vf", filter,
-                "-c:a", "copy",
+                "-i",
+                input.to_str().context("invalid input path")?,
+                "-vf",
+                filter,
+                "-c:a",
+                "copy",
                 "-y",
                 output.to_str().context("invalid output path")?,
             ])
@@ -445,13 +500,19 @@ fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
 
 fn generate_duck_filter(transcript: &[TranscriptSegment]) -> String {
     let mut volume_expr = "1.0".to_string();
-    
+
     // For each speech segment, lower the music volume
     for seg in transcript {
-        volume_expr = format!("if(between(t,{},{}),0.2,{})", seg.start, seg.end, volume_expr);
+        volume_expr = format!(
+            "if(between(t,{},{}),0.2,{})",
+            seg.start, seg.end, volume_expr
+        );
     }
 
-    format!("[1:a]volume=volume='{}'[ducked];[0:a][ducked]amix=inputs=2:duration=first[outa]", volume_expr)
+    format!(
+        "[1:a]volume=volume='{}'[ducked];[0:a][ducked]amix=inputs=2:duration=first[outa]",
+        volume_expr
+    )
 }
 
 #[cfg(test)]
@@ -460,14 +521,14 @@ mod tests {
 
     #[test]
     fn test_calculate_keep_segments_cut_mode() {
-        let silences = vec![
-            Segment { start: 2.0, end: 3.0 },
-        ];
+        let silences = vec![Segment {
+            start: 2.0,
+            end: 3.0,
+        }];
         let duration = 10.0;
         let padding = 0.1;
-        let processed = calculate_keep_segments(
-            &silences, duration, padding, SilenceMode::Cut, 4.0, 0.5
-        );
+        let processed =
+            calculate_keep_segments(&silences, duration, padding, SilenceMode::Cut, 4.0, 0.5);
 
         assert_eq!(processed.len(), 2);
         assert_eq!(processed[0].end, 2.1);
@@ -479,24 +540,26 @@ mod tests {
     #[test]
     fn test_calculate_keep_segments_speedup_mode() {
         let silences = vec![
-            Segment { start: 2.0, end: 4.0 }, // 2 second silence
+            Segment {
+                start: 2.0,
+                end: 4.0,
+            }, // 2 second silence
         ];
         let duration = 10.0;
         let padding = 0.1;
-        let processed = calculate_keep_segments(
-            &silences, duration, padding, SilenceMode::Speedup, 4.0, 0.5
-        );
+        let processed =
+            calculate_keep_segments(&silences, duration, padding, SilenceMode::Speedup, 4.0, 0.5);
 
         // Should have 3 segments: before silence, silence (sped up), after silence
         assert_eq!(processed.len(), 3);
         assert_eq!(processed[0].end, 2.1);
         assert_eq!(processed[0].speed, 1.0);
-        
+
         // Silence segment should be sped up
         assert_eq!(processed[1].start, 2.1);
         assert_eq!(processed[1].end, 3.9);
         assert_eq!(processed[1].speed, 4.0);
-        
+
         // After silence
         assert_eq!(processed[2].start, 3.9);
         assert_eq!(processed[2].speed, 1.0);
@@ -506,13 +569,21 @@ mod tests {
     fn test_calculate_keep_segments_speedup_short_silence() {
         // Silence too short for speedup should be cut
         let silences = vec![
-            Segment { start: 2.0, end: 2.3 }, // 0.3 second silence (below min)
+            Segment {
+                start: 2.0,
+                end: 2.3,
+            }, // 0.3 second silence (below min)
         ];
         let duration = 10.0;
         let padding = 0.1;
         let min_silence = 0.5;
         let processed = calculate_keep_segments(
-            &silences, duration, padding, SilenceMode::Speedup, 4.0, min_silence
+            &silences,
+            duration,
+            padding,
+            SilenceMode::Speedup,
+            4.0,
+            min_silence,
         );
 
         // Short silence should be cut, not sped up
@@ -524,14 +595,19 @@ mod tests {
     #[test]
     fn test_calculate_keep_segments_multiple_silences() {
         let silences = vec![
-            Segment { start: 2.0, end: 3.0 },
-            Segment { start: 5.0, end: 7.0 },
+            Segment {
+                start: 2.0,
+                end: 3.0,
+            },
+            Segment {
+                start: 5.0,
+                end: 7.0,
+            },
         ];
         let duration = 10.0;
         let padding = 0.1;
-        let processed = calculate_keep_segments(
-            &silences, duration, padding, SilenceMode::Cut, 4.0, 0.5
-        );
+        let processed =
+            calculate_keep_segments(&silences, duration, padding, SilenceMode::Cut, 4.0, 0.5);
 
         assert_eq!(processed.len(), 3);
         assert_eq!(processed[0].start, 0.0);
@@ -544,9 +620,12 @@ mod tests {
 
     #[test]
     fn test_generate_duck_filter() {
-        let transcript = vec![
-            TranscriptSegment { start: 1.0, end: 2.0, text: "hello".to_string(), confidence: 1.0 },
-        ];
+        let transcript = vec![TranscriptSegment {
+            start: 1.0,
+            end: 2.0,
+            text: "hello".to_string(),
+            confidence: 1.0,
+        }];
         let filter = generate_duck_filter(&transcript);
         assert!(filter.contains("between(t,1,2)"));
         assert!(filter.contains("volume='if(between(t,1,2),0.2,1.0)'"));

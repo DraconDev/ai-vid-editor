@@ -1,5 +1,5 @@
-use std::path::Path;
 use anyhow::Result;
+use std::path::Path;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Segment {
@@ -15,18 +15,31 @@ pub struct ProcessedSegment {
 }
 
 pub trait VideoAnalyzer {
-    fn detect_silence(&self, path: &Path, threshold_db: f32, duration_s: f32) -> Result<Vec<Segment>>;
+    fn detect_silence(
+        &self,
+        path: &Path,
+        threshold_db: f32,
+        duration_s: f32,
+    ) -> Result<Vec<Segment>>;
 }
 
 pub struct FfmpegAnalyzer;
 
 impl VideoAnalyzer for FfmpegAnalyzer {
-    fn detect_silence(&self, path: &Path, threshold_db: f32, duration_s: f32) -> Result<Vec<Segment>> {
+    fn detect_silence(
+        &self,
+        path: &Path,
+        threshold_db: f32,
+        duration_s: f32,
+    ) -> Result<Vec<Segment>> {
         let output = std::process::Command::new("ffmpeg")
             .args([
-                "-i", path.to_str().context("invalid path")?,
-                "-af", &format!("silencedetect=noise={}dB:d={}", threshold_db, duration_s),
-                "-f", "null",
+                "-i",
+                path.to_str().context("invalid path")?,
+                "-af",
+                &format!("silencedetect=noise={}dB:d={}", threshold_db, duration_s),
+                "-f",
+                "null",
                 "-",
             ])
             .output()
@@ -86,7 +99,19 @@ mod tests {
 
         let segments = parse_ffmpeg_silence(output);
         assert_eq!(segments.len(), 2);
-        assert_eq!(segments[0], Segment { start: 1.234, end: 4.567 });
-        assert_eq!(segments[1], Segment { start: 10.0, end: 12.5 });
+        assert_eq!(
+            segments[0],
+            Segment {
+                start: 1.234,
+                end: 4.567
+            }
+        );
+        assert_eq!(
+            segments[1],
+            Segment {
+                start: 10.0,
+                end: 12.5
+            }
+        );
     }
 }
