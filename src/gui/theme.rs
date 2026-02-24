@@ -114,13 +114,6 @@ pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
         .min_size(egui::vec2(180.0, 48.0))
 }
 
-pub fn status_badge(status: &str, color: egui::Color32) -> egui::RichText {
-    egui::RichText::new(format!("● {}", status))
-        .color(color)
-        .size(14.0)
-        .strong()
-}
-
 pub fn status_badge_with_bg(
     ui: &mut egui::Ui,
     status: &str,
