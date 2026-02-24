@@ -232,13 +232,30 @@ impl App {
 
     fn draw_tabs(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            let watch_tab = egui::RichText::new("Watch Mode").color(if self.state.current_tab == Tab::Watch { ACCENT_PRIMARY } else { TEXT_PRIMARY });
-            if ui.selectable_label(self.state.current_tab == Tab::Watch, watch_tab).clicked() {
+            let watch_tab =
+                egui::RichText::new("Watch Mode").color(if self.state.current_tab == Tab::Watch {
+                    ACCENT_PRIMARY
+                } else {
+                    TEXT_PRIMARY
+                });
+            if ui
+                .selectable_label(self.state.current_tab == Tab::Watch, watch_tab)
+                .clicked()
+            {
                 self.state.current_tab = Tab::Watch;
             }
-            
-            let manual_tab = egui::RichText::new("Manual Process").color(if self.state.current_tab == Tab::Manual { ACCENT_PRIMARY } else { TEXT_PRIMARY });
-            if ui.selectable_label(self.state.current_tab == Tab::Manual, manual_tab).clicked() {
+
+            let manual_tab = egui::RichText::new("Manual Process").color(
+                if self.state.current_tab == Tab::Manual {
+                    ACCENT_PRIMARY
+                } else {
+                    TEXT_PRIMARY
+                },
+            );
+            if ui
+                .selectable_label(self.state.current_tab == Tab::Manual, manual_tab)
+                .clicked()
+            {
                 self.state.current_tab = Tab::Manual;
             }
         });
@@ -265,8 +282,17 @@ impl App {
                 ui.add_space(12.0);
 
                 ui.horizontal(|ui| {
-                    ui.add_sized([100.0, 20.0], egui::Label::new(RichText::new("Watch Folder:").color(TEXT_PRIMARY)));
-                    ui.add_sized([300.0, 20.0], egui::TextEdit::singleline(&mut self.state.watch_folder.to_string_lossy().to_string()).text_color(TEXT_PRIMARY));
+                    ui.add_sized(
+                        [100.0, 20.0],
+                        egui::Label::new(RichText::new("Watch Folder:").color(TEXT_PRIMARY)),
+                    );
+                    ui.add_sized(
+                        [300.0, 20.0],
+                        egui::TextEdit::singleline(
+                            &mut self.state.watch_folder.to_string_lossy().to_string(),
+                        )
+                        .text_color(TEXT_PRIMARY),
+                    );
                     if ui.add(theme_button_secondary("Browse...")).clicked() {
                         if let Some(path) = FileDialog::new().pick_folder() {
                             self.state.watch_folder = path;
@@ -277,8 +303,17 @@ impl App {
                 ui.add_space(8.0);
 
                 ui.horizontal(|ui| {
-                    ui.add_sized([100.0, 20.0], egui::Label::new(RichText::new("Output Folder:").color(TEXT_PRIMARY)));
-                    ui.add_sized([300.0, 20.0], egui::TextEdit::singleline(&mut self.state.output_folder.to_string_lossy().to_string()).text_color(TEXT_PRIMARY));
+                    ui.add_sized(
+                        [100.0, 20.0],
+                        egui::Label::new(RichText::new("Output Folder:").color(TEXT_PRIMARY)),
+                    );
+                    ui.add_sized(
+                        [300.0, 20.0],
+                        egui::TextEdit::singleline(
+                            &mut self.state.output_folder.to_string_lossy().to_string(),
+                        )
+                        .text_color(TEXT_PRIMARY),
+                    );
                     if ui.add(theme_button_secondary("Browse...")).clicked() {
                         if let Some(path) = FileDialog::new().pick_folder() {
                             self.state.output_folder = path;
@@ -289,18 +324,26 @@ impl App {
                 ui.add_space(16.0);
 
                 let is_watching = self.state.status == ProcessingStatus::Watching;
-                let button_text = if is_watching { "Stop Watching" } else { "Start Watching" };
+                let button_text = if is_watching {
+                    "Stop Watching"
+                } else {
+                    "Start Watching"
+                };
 
                 ui.horizontal(|ui| {
                     if is_watching {
                         if ui.add(theme_button_danger(button_text)).clicked() {
                             self.state.status = ProcessingStatus::Idle;
-                            self.state.activity_log.push(ActivityEntry::new("Stopped watching", true));
+                            self.state
+                                .activity_log
+                                .push(ActivityEntry::new("Stopped watching", true));
                         }
                     } else {
                         if ui.add(theme_button_primary(button_text)).clicked() {
                             self.state.status = ProcessingStatus::Watching;
-                            self.state.activity_log.push(ActivityEntry::new("Started watching for new videos", true));
+                            self.state
+                                .activity_log
+                                .push(ActivityEntry::new("Started watching for new videos", true));
                         }
                     }
                 });
@@ -368,17 +411,22 @@ impl App {
                     ui.label(RichText::new("No files selected").color(TEXT_SECONDARY));
                 } else {
                     ui.label(
-                        RichText::new(format!("{} file(s) selected:", self.state.manual_input_files.len()))
-                            .color(TEXT_PRIMARY),
+                        RichText::new(format!(
+                            "{} file(s) selected:",
+                            self.state.manual_input_files.len()
+                        ))
+                        .color(TEXT_PRIMARY),
                     );
                     egui::ScrollArea::vertical()
                         .max_height(100.0)
                         .show(ui, |ui| {
                             for path in &self.state.manual_input_files {
                                 ui.label(
-                                    RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
-                                        .color(TEXT_SECONDARY)
-                                        .monospace(),
+                                    RichText::new(
+                                        path.file_name().unwrap_or_default().to_string_lossy(),
+                                    )
+                                    .color(TEXT_SECONDARY)
+                                    .monospace(),
                                 );
                             }
                         });
@@ -387,10 +435,21 @@ impl App {
                 ui.add_space(12.0);
 
                 ui.horizontal(|ui| {
-                    ui.add_sized([100.0, 20.0], egui::Label::new(RichText::new("Output Folder:").color(TEXT_PRIMARY)));
-                    ui.add_sized([300.0, 20.0], egui::TextEdit::singleline(
-                        &mut self.state.manual_output_folder.to_string_lossy().to_string()
-                    ).text_color(TEXT_PRIMARY));
+                    ui.add_sized(
+                        [100.0, 20.0],
+                        egui::Label::new(RichText::new("Output Folder:").color(TEXT_PRIMARY)),
+                    );
+                    ui.add_sized(
+                        [300.0, 20.0],
+                        egui::TextEdit::singleline(
+                            &mut self
+                                .state
+                                .manual_output_folder
+                                .to_string_lossy()
+                                .to_string(),
+                        )
+                        .text_color(TEXT_PRIMARY),
+                    );
                     if ui.add(theme_button_secondary("Browse...")).clicked() {
                         if let Some(path) = FileDialog::new().pick_folder() {
                             self.state.manual_output_folder = path;
@@ -403,9 +462,15 @@ impl App {
                 let can_process = !self.state.manual_input_files.is_empty()
                     && !self.state.manual_output_folder.as_os_str().is_empty();
 
-                if ui.add_enabled(can_process, theme_button_primary("Process Files")).clicked() {
+                if ui
+                    .add_enabled(can_process, theme_button_primary("Process Files"))
+                    .clicked()
+                {
                     self.state.activity_log.push(ActivityEntry::new(
-                        format!("Processing {} file(s)...", self.state.manual_input_files.len()),
+                        format!(
+                            "Processing {} file(s)...",
+                            self.state.manual_input_files.len()
+                        ),
                         true,
                     ));
                 }
@@ -419,23 +484,30 @@ impl App {
             .inner_margin(16.0)
             .stroke(egui::Stroke::new(1.0, BORDER))
             .show(ui, |ui| {
-                ui.label(
-                    RichText::new("Settings")
-                        .size(16.0)
-                        .color(ACCENT_PRIMARY),
-                );
+                ui.label(RichText::new("Settings").size(16.0).color(ACCENT_PRIMARY));
                 ui.add_space(12.0);
 
                 ui.horizontal(|ui| {
-                    ui.add_sized([60.0, 20.0], egui::Label::new(RichText::new("Preset:").color(TEXT_PRIMARY)));
+                    ui.add_sized(
+                        [60.0, 20.0],
+                        egui::Label::new(RichText::new("Preset:").color(TEXT_PRIMARY)),
+                    );
                     egui::ComboBox::from_id_salt("preset_combo")
-                        .selected_text(RichText::new(&self.state.selected_preset).color(TEXT_PRIMARY))
+                        .selected_text(
+                            RichText::new(&self.state.selected_preset).color(TEXT_PRIMARY),
+                        )
                         .width(150.0)
                         .show_ui(ui, |ui| {
                             let presets = Config::available_presets();
                             for preset in presets {
                                 let is_selected = self.state.selected_preset == preset;
-                                if ui.selectable_label(is_selected, RichText::new(&preset).color(TEXT_PRIMARY)).clicked() {
+                                if ui
+                                    .selectable_label(
+                                        is_selected,
+                                        RichText::new(&preset).color(TEXT_PRIMARY),
+                                    )
+                                    .clicked()
+                                {
                                     self.state.load_preset(&preset);
                                 }
                             }
@@ -446,13 +518,29 @@ impl App {
 
                 ui.columns(2, |columns| {
                     columns[0].vertical(|ui| {
-                        ui.label(RichText::new("Processing Options").strong().color(TEXT_PRIMARY));
+                        ui.label(
+                            RichText::new("Processing Options")
+                                .strong()
+                                .color(TEXT_PRIMARY),
+                        );
                         ui.add_space(4.0);
-                        
-                        ui.checkbox(&mut self.state.config.audio.enhance, RichText::new("Enhance Audio").color(TEXT_PRIMARY));
-                        ui.checkbox(&mut self.state.config.video.stabilize, RichText::new("Stabilize Video").color(TEXT_PRIMARY));
-                        ui.checkbox(&mut self.state.config.video.color_correct, RichText::new("Color Correct").color(TEXT_PRIMARY));
-                        ui.checkbox(&mut self.state.config.video.reframe, RichText::new("Auto-Reframe (9:16)").color(TEXT_PRIMARY));
+
+                        ui.checkbox(
+                            &mut self.state.config.audio.enhance,
+                            RichText::new("Enhance Audio").color(TEXT_PRIMARY),
+                        );
+                        ui.checkbox(
+                            &mut self.state.config.video.stabilize,
+                            RichText::new("Stabilize Video").color(TEXT_PRIMARY),
+                        );
+                        ui.checkbox(
+                            &mut self.state.config.video.color_correct,
+                            RichText::new("Color Correct").color(TEXT_PRIMARY),
+                        );
+                        ui.checkbox(
+                            &mut self.state.config.video.reframe,
+                            RichText::new("Auto-Reframe (9:16)").color(TEXT_PRIMARY),
+                        );
                         ui.checkbox(
                             &mut self.state.config.video.blur_background,
                             RichText::new("Blur Background").color(TEXT_PRIMARY),
@@ -462,37 +550,81 @@ impl App {
                     columns[1].vertical(|ui| {
                         ui.label(RichText::new("Silence Mode").strong().color(TEXT_PRIMARY));
                         ui.add_space(4.0);
-                        
+
                         let mut is_cut = self.state.config.silence.mode == SilenceMode::Cut;
-                        if ui.checkbox(&mut is_cut, RichText::new("Remove Silence (Cut)").color(TEXT_PRIMARY)).changed() {
-                            self.state.config.silence.mode = if is_cut { SilenceMode::Cut } else { SilenceMode::Speedup };
+                        if ui
+                            .checkbox(
+                                &mut is_cut,
+                                RichText::new("Remove Silence (Cut)").color(TEXT_PRIMARY),
+                            )
+                            .changed()
+                        {
+                            self.state.config.silence.mode = if is_cut {
+                                SilenceMode::Cut
+                            } else {
+                                SilenceMode::Speedup
+                            };
                         }
 
                         let mut is_speedup = self.state.config.silence.mode == SilenceMode::Speedup;
-                        if ui.checkbox(&mut is_speedup, RichText::new("Speedup Silences").color(TEXT_PRIMARY)).changed() {
-                            self.state.config.silence.mode = if is_speedup { SilenceMode::Speedup } else { SilenceMode::Cut };
+                        if ui
+                            .checkbox(
+                                &mut is_speedup,
+                                RichText::new("Speedup Silences").color(TEXT_PRIMARY),
+                            )
+                            .changed()
+                        {
+                            self.state.config.silence.mode = if is_speedup {
+                                SilenceMode::Speedup
+                            } else {
+                                SilenceMode::Cut
+                            };
                         }
 
                         ui.add_space(8.0);
                         ui.label(RichText::new("Join Mode").strong().color(TEXT_PRIMARY));
                         ui.add_space(4.0);
-                        
+
                         egui::ComboBox::from_id_salt("join_combo")
-                            .selected_text(RichText::new(join_mode_display(&self.state.config.processing.join_mode)).color(TEXT_PRIMARY))
+                            .selected_text(
+                                RichText::new(join_mode_display(
+                                    &self.state.config.processing.join_mode,
+                                ))
+                                .color(TEXT_PRIMARY),
+                            )
                             .width(120.0)
                             .show_ui(ui, |ui| {
-                                ui.selectable_value(&mut self.state.config.processing.join_mode, JoinMode::Off, RichText::new("Off").color(TEXT_PRIMARY));
-                                ui.selectable_value(&mut self.state.config.processing.join_mode, JoinMode::ByDate, RichText::new("By Date").color(TEXT_PRIMARY));
-                                ui.selectable_value(&mut self.state.config.processing.join_mode, JoinMode::ByName, RichText::new("By Name").color(TEXT_PRIMARY));
-                                ui.selectable_value(&mut self.state.config.processing.join_mode, JoinMode::AfterCount, RichText::new("After N Files").color(TEXT_PRIMARY));
+                                ui.selectable_value(
+                                    &mut self.state.config.processing.join_mode,
+                                    JoinMode::Off,
+                                    RichText::new("Off").color(TEXT_PRIMARY),
+                                );
+                                ui.selectable_value(
+                                    &mut self.state.config.processing.join_mode,
+                                    JoinMode::ByDate,
+                                    RichText::new("By Date").color(TEXT_PRIMARY),
+                                );
+                                ui.selectable_value(
+                                    &mut self.state.config.processing.join_mode,
+                                    JoinMode::ByName,
+                                    RichText::new("By Name").color(TEXT_PRIMARY),
+                                );
+                                ui.selectable_value(
+                                    &mut self.state.config.processing.join_mode,
+                                    JoinMode::AfterCount,
+                                    RichText::new("After N Files").color(TEXT_PRIMARY),
+                                );
                             });
 
                         if self.state.config.processing.join_mode == JoinMode::AfterCount {
                             ui.add_space(4.0);
                             ui.add(
-                                egui::Slider::new(&mut self.state.config.processing.join_after_count, 1..=20)
-                                    .text("Files")
-                                    .text_color(TEXT_PRIMARY),
+                                egui::Slider::new(
+                                    &mut self.state.config.processing.join_after_count,
+                                    1..=20,
+                                )
+                                .text("Files")
+                                .text_color(TEXT_PRIMARY),
                             );
                         }
                     });
@@ -504,18 +636,24 @@ impl App {
                     columns[0].horizontal(|ui| {
                         ui.label(RichText::new("Silence Threshold (dB):").color(TEXT_SECONDARY));
                         ui.add(
-                            egui::Slider::new(&mut self.state.config.silence.threshold_db, -60.0..=-10.0)
-                                .step_by(1.0)
-                                .text_color(TEXT_PRIMARY),
+                            egui::Slider::new(
+                                &mut self.state.config.silence.threshold_db,
+                                -60.0..=-10.0,
+                            )
+                            .step_by(1.0)
+                            .text_color(TEXT_PRIMARY),
                         );
                     });
 
                     columns[1].horizontal(|ui| {
                         ui.label(RichText::new("Target LUFS:").color(TEXT_SECONDARY));
                         ui.add(
-                            egui::Slider::new(&mut self.state.config.audio.target_lufs, -24.0..=-6.0)
-                                .step_by(1.0)
-                                .text_color(TEXT_PRIMARY),
+                            egui::Slider::new(
+                                &mut self.state.config.audio.target_lufs,
+                                -24.0..=-6.0,
+                            )
+                            .step_by(1.0)
+                            .text_color(TEXT_PRIMARY),
                         );
                     });
                 });
