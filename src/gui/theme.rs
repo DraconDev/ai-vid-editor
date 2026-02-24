@@ -101,7 +101,7 @@ pub fn button_small(text: impl Into<String>) -> egui::Button<'static> {
         .min_size(egui::vec2(50.0, 28.0))
 }
 
-pub fn button_icon(icon: &str, tooltip: &str) -> egui::Button<'static> {
+pub fn button_icon(icon: &str, _tooltip: &str) -> egui::Button<'static> {
     egui::Button::new(egui::RichText::new(icon).size(14.0))
         .fill(PANEL_BG_LIGHTER)
         .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
