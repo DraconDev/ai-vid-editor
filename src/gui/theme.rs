@@ -19,9 +19,7 @@ pub const BORDER: egui::Color32 = egui::Color32::from_rgb(40, 40, 40);
 pub const BORDER_LIGHT: egui::Color32 = egui::Color32::from_rgb(55, 55, 55);
 
 pub const SUCCESS: egui::Color32 = egui::Color32::from_rgb(78, 205, 196);
-pub const SUCCESS_BG: egui::Color32 = egui::Color32::from_rgb(78, 205, 196);
 pub const ERROR: egui::Color32 = egui::Color32::from_rgb(255, 68, 68);
-pub const ERROR_BG: egui::Color32 = egui::Color32::from_rgb(255, 68, 68);
 pub const WARNING: egui::Color32 = egui::Color32::from_rgb(255, 193, 7);
 pub const PROCESSING: egui::Color32 = egui::Color32::from_rgb(100, 149, 237);
 
@@ -98,19 +96,6 @@ pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
     .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(180, 50, 50)))
     .corner_radius(6.0)
     .min_size(egui::vec2(160.0, 38.0))
-}
-
-pub fn draw_horizontal_line(ui: &mut egui::Ui) {
-    let rect = ui.available_rect_before_wrap();
-    let painter = ui.painter();
-    painter.line_segment(
-        [
-            egui::pos2(rect.left(), rect.top() + 1.0),
-            egui::pos2(rect.right(), rect.top() + 1.0),
-        ],
-        egui::Stroke::new(1.0, BORDER),
-    );
-    ui.add_space(4.0);
 }
 
 pub fn status_badge(status: &str, color: egui::Color32) -> egui::RichText {
