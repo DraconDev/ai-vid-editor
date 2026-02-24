@@ -653,9 +653,7 @@ impl App {
             ui.add_space(4.0);
             ui.add(
                 egui::Slider::new(&mut self.state.config.silence.threshold_db, -60.0..=-10.0)
-                    .step_by(1.0)
-                    .text_color(TEXT_PRIMARY)
-                    .background_color(PANEL_BG_LIGHT),
+                    .step_by(1.0),
             );
 
             ui.add_space(8.0);
@@ -664,9 +662,7 @@ impl App {
             ui.add_space(4.0);
             ui.add(
                 egui::Slider::new(&mut self.state.config.audio.target_lufs, -24.0..=-6.0)
-                    .step_by(1.0)
-                    .text_color(TEXT_PRIMARY)
-                    .background_color(PANEL_BG_LIGHT),
+                    .step_by(1.0),
             );
 
             ui.add_space(8.0);
@@ -704,9 +700,7 @@ impl App {
                 ui.add_space(8.0);
                 ui.add(
                     egui::Slider::new(&mut self.state.config.processing.join_after_count, 1..=20)
-                        .text("Files")
-                        .text_color(TEXT_PRIMARY)
-                        .background_color(PANEL_BG_LIGHT),
+                        .text("Files"),
                 );
             }
         });
