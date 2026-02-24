@@ -39,6 +39,7 @@ enum EntryStatus {
 }
 
 impl ActivityEntry {
+    #[allow(dead_code)]
     fn success(filename: impl Into<String>, file_size: u64, duration: u64) -> Self {
         let now = chrono::Local::now();
         Self {
@@ -52,6 +53,7 @@ impl ActivityEntry {
         }
     }
 
+    #[allow(dead_code)]
     fn processing(filename: impl Into<String>, file_size: u64, progress: f32) -> Self {
         let now = chrono::Local::now();
         Self {
