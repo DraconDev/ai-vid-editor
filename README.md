@@ -1,6 +1,6 @@
-# AI Video Editor (CLI)
+# AI Video Editor (CLI + GUI)
 
-A command-line tool for automated video editing using AI. Designed for content creators who want to drop in raw footage and get polished results without manual editing.
+A command-line and GUI tool for automated video editing using AI. Designed for content creators who want to drop in raw footage and get polished results without manual editing.
 
 ## Features
 
@@ -42,6 +42,42 @@ cargo build --release
 ```
 
 The binary will be at `target/release/ai-vid-editor`.
+
+### Build with GUI
+
+```bash
+cargo build --release --features gui
+```
+
+Run the GUI:
+```bash
+cargo run --features gui --bin ai-vid-editor-gui
+```
+
+### NixOS
+
+For NixOS users, use the provided shell.nix or flake.nix:
+
+```bash
+# Using nix-shell
+nix-shell
+
+# Using flakes
+nix develop
+```
+
+This sets up all required libraries for GUI support (OpenGL, Vulkan, Wayland, X11).
+
+## GUI Features
+
+The GUI provides a visual interface for:
+
+- **Watch Mode**: Set input/output folders and auto-process new videos
+- **Manual Processing**: Select specific files to process
+- **Presets**: Choose from built-in presets (YouTube, Shorts, Podcast, Minimal)
+- **Settings**: Configure silence threshold, audio enhancement, video processing
+- **Join Mode**: Combine processed videos by date, name, or after N files
+- **Activity Log**: Track processing status
 
 ## Usage
 
