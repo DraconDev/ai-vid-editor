@@ -67,6 +67,7 @@ impl ActivityEntry {
         }
     }
 
+    #[allow(dead_code)]
     fn error(filename: impl Into<String>, message: impl Into<String>) -> Self {
         let now = chrono::Local::now();
         Self {
