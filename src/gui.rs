@@ -163,6 +163,7 @@ fn notify_complete(filename: &str) {
         .show();
 }
 
+#[allow(dead_code)]
 fn notify_error(filename: &str, error: &str) {
     let _ = notify_rust::Notification::new()
         .summary("Processing Error")
