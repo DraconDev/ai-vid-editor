@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.120"
+version = "0.1.121"
 edition = "2024"
 
 [dependencies]
@@ -20,16 +20,16 @@ toml = "0.8"
 tract-onnx = "0.21"
 walkdir = "2.5.0"
 
-# GUI dependencies (optional)
-dioxus = { version = "0.7.3", optional = true }
-dioxus-desktop = { version = "0.7.3", optional = true }
+# GUI dependencies (optional) - using egui for pure Rust, no system deps
+eframe = { version = "0.31", optional = true }
+egui = { version = "0.31", optional = true }
 rfd = { version = "0.15", optional = true }
 chrono = { version = "0.4", optional = true }
 
 [features]
 default = ["cli"]
 cli = ["clap"]
-gui = ["dioxus", "dioxus-desktop", "rfd", "chrono"]
+gui = ["eframe", "egui", "rfd", "chrono"]
 
 [dev-dependencies]
 tempfile = "3.25.0"
