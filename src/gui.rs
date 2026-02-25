@@ -13,6 +13,7 @@ use theme::*;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 enum Tab {
     #[default]
+    All,
     Folders,
     Settings,
     Activity,
@@ -112,7 +113,6 @@ struct FolderState {
     output: PathBuf,
     preset: String,
     enabled: bool,
-    editing: bool,
 }
 
 impl From<WatchFolder> for FolderState {
@@ -122,7 +122,6 @@ impl From<WatchFolder> for FolderState {
             output: folder.output,
             preset: folder.preset,
             enabled: folder.enabled,
-            editing: false,
         }
     }
 }
@@ -145,8 +144,42 @@ impl Default for FolderState {
             output: PathBuf::from("videos/output"),
             preset: "youtube".to_string(),
             enabled: true,
-            editing: false,
         }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct ModalState {
+    show: bool,
+    editing_idx: Option<usize>,
+    input: PathBuf,
+    output: PathBuf,
+    preset: String,
+    enabled: bool,
+}
+
+impl ModalState {
+    fn reset_for_add(&mut self) {
+        self.show = true;
+        self.editing_idx = None;
+        self.input = PathBuf::from("videos");
+        self.output = PathBuf::from("videos/output");
+        self.preset = "youtube".to_string();
+        self.enabled = true;
+    }
+
+    fn set_for_edit(&mut self, idx: usize, folder: &FolderState) {
+        self.show = true;
+        self.editing_idx = Some(idx);
+        self.input = folder.input.clone();
+        self.output = folder.output.clone();
+        self.preset = folder.preset.clone();
+        self.enabled = folder.enabled;
+    }
+
+    fn close(&mut self) {
+        self.show = false;
+        self.editing_idx = None;
     }
 }
 
@@ -158,6 +191,7 @@ pub struct AppState {
     activity_log: Vec<ActivityEntry>,
     config_path: Option<PathBuf>,
     current_tab: Tab,
+    modal: ModalState,
 }
 
 fn join_mode_display(mode: &JoinMode) -> String {
@@ -205,7 +239,8 @@ impl AppState {
             status: ProcessingStatus::Watching,
             activity_log: vec![ActivityEntry::simple("Started watching for videos", true)],
             config_path: None,
-            current_tab: Tab::Folders,
+            current_tab: Tab::All,
+            modal: ModalState::default(),
         };
 
         if let Some(path) = Config::default_config_path() {
@@ -266,10 +301,27 @@ impl AppState {
         }
     }
 
-    fn add_folder(&mut self) {
-        self.folders.push(FolderState::default());
+    fn add_folder_from_modal(&mut self) {
+        let folder = FolderState {
+            input: self.modal.input.clone(),
+            output: self.modal.output.clone(),
+            preset: self.modal.preset.clone(),
+            enabled: self.modal.enabled,
+        };
+        self.folders.push(folder);
         self.activity_log
             .push(ActivityEntry::simple("Added new watch folder", true));
+    }
+
+    fn update_folder_from_modal(&mut self, idx: usize) {
+        if let Some(folder) = self.folders.get_mut(idx) {
+            folder.input = self.modal.input.clone();
+            folder.output = self.modal.output.clone();
+            folder.preset = self.modal.preset.clone();
+            folder.enabled = self.modal.enabled;
+            self.activity_log
+                .push(ActivityEntry::simple("Updated watch folder", true));
+        }
     }
 
     fn remove_folder(&mut self, index: usize) {
@@ -277,6 +329,21 @@ impl AppState {
             self.folders.remove(index);
             self.activity_log
                 .push(ActivityEntry::simple("Removed watch folder", true));
+        }
+    }
+
+    fn toggle_folder(&mut self, index: usize) {
+        if let Some(folder) = self.folders.get_mut(index) {
+            folder.enabled = !folder.enabled;
+            let status = if folder.enabled {
+                "enabled"
+            } else {
+                "disabled"
+            };
+            self.activity_log.push(ActivityEntry::simple(
+                format!("Folder {} ({})", status, folder.input.display()),
+                true,
+            ));
         }
     }
 }
@@ -301,12 +368,15 @@ impl eframe::App for App {
                 ui.add_space(8.0);
 
                 egui::ScrollArea::vertical().show(ui, |ui| match self.state.current_tab {
-                    Tab::Folders => {
+                    Tab::All => {
                         self.draw_folders_panel(ui);
                         ui.add_space(16.0);
                         self.draw_settings_panel(ui);
                         ui.add_space(16.0);
                         self.draw_activity_log(ui);
+                    }
+                    Tab::Folders => {
+                        self.draw_folders_panel(ui);
                     }
                     Tab::Settings => {
                         self.draw_settings_panel(ui);
@@ -317,6 +387,10 @@ impl eframe::App for App {
                 });
             });
         });
+
+        if self.state.modal.show {
+            self.draw_modal(ctx);
+        }
     }
 }
 
@@ -362,6 +436,7 @@ impl App {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     let tabs = [
+                        (Tab::All, "All"),
                         (Tab::Folders, "Folders"),
                         (Tab::Settings, "Settings"),
                         (Tab::Activity, "Activity"),
@@ -398,183 +473,211 @@ impl App {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
                     ui.add_space(8.0);
-                    if ui.add(button_secondary("+ Add Folder")).clicked() {
-                        self.state.add_folder();
+                    if ui.add(button_add("+ Add Folder")).clicked() {
+                        self.state.modal.reset_for_add();
                     }
                 });
             });
 
             ui.add_space(16.0);
 
-            let folder_count = self.state.folders.len();
-            let mut to_remove: Option<usize> = None;
-            let mut activity_entries: Vec<ActivityEntry> = Vec::new();
             let mut toggle_idx: Option<usize> = None;
-            let mut edit_toggle_idx: Option<usize> = None;
-            let mut preset_changes: Vec<(usize, String)> = Vec::new();
+            let mut edit_idx: Option<usize> = None;
 
-            for (idx, folder) in self.state.folders.iter_mut().enumerate() {
-                folder_card(folder.enabled).show(ui, |ui| {
+            for (idx, folder) in self.state.folders.iter().enumerate() {
+                let enabled = folder.enabled;
+                let input = folder.input.clone();
+                let output = folder.output.clone();
+                let preset = folder.preset.clone();
+
+                let response = folder_card_compact(enabled).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         if ui
-                            .add(button_toggle(
-                                folder.enabled,
-                                if folder.enabled { "ON" } else { "OFF" },
-                            ))
+                            .add(button_toggle(enabled, if enabled { "ON" } else { "OFF" }))
                             .clicked()
                         {
-                            folder.enabled = !folder.enabled;
                             toggle_idx = Some(idx);
                         }
 
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if folder_count > 1 {
-                                if ui.add(button_small("Remove")).clicked() {
-                                    to_remove = Some(idx);
-                                }
-                            }
-                            ui.add_space(4.0);
-                            if ui.add(button_small("Edit")).clicked() {
-                                edit_toggle_idx = Some(idx);
-                            }
-                        });
-                    });
-
-                    ui.add_space(10.0);
-
-                    let text_color = if folder.enabled {
-                        TEXT_PRIMARY
-                    } else {
-                        TEXT_MUTED
-                    };
-                    let muted_color = if folder.enabled {
-                        TEXT_SECONDARY
-                    } else {
-                        TEXT_MUTED
-                    };
-
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Input: ").color(muted_color).size(12.0));
-                        ui.label(
-                            RichText::new(folder.input.to_string_lossy().to_string())
-                                .color(text_color)
-                                .size(12.0),
-                        );
-                    });
-
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Output:").color(muted_color).size(12.0));
-                        ui.label(
-                            RichText::new(folder.output.to_string_lossy().to_string())
-                                .color(text_color)
-                                .size(12.0),
-                        );
-                    });
-
-                    ui.add_space(6.0);
-
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Preset:").color(muted_color).size(12.0));
-                        ui.label(RichText::new(&folder.preset).color(text_color).size(12.0));
-                    });
-
-                    if folder.editing {
-                        ui.add_space(12.0);
-                        ui.label(label_muted("--- Edit ---"));
                         ui.add_space(8.0);
 
-                        ui.label(label_secondary("Input Folder"));
-                        ui.add_space(4.0);
-                        ui.horizontal(|ui| {
-                            let mut input_str = folder.input.to_string_lossy().to_string();
-                            ui.add_sized(
-                                egui::vec2(ui.available_width() - 80.0, 28.0),
-                                text_edit_style(&mut input_str),
-                            );
-                            if ui.add(button_small("Browse")).clicked() {
-                                if let Some(path) = FileDialog::new().pick_folder() {
-                                    folder.input = path;
-                                }
-                            }
+                        let path_display = format!(
+                            "{} → {}",
+                            truncate_path(&input.to_string_lossy(), 25),
+                            truncate_path(&output.to_string_lossy(), 20)
+                        );
+                        let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
+                        ui.label(RichText::new(path_display).color(text_color).size(13.0));
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            preset_badge(&preset, ui);
                         });
-
-                        ui.add_space(10.0);
-
-                        ui.label(label_secondary("Output Folder"));
-                        ui.add_space(4.0);
-                        ui.horizontal(|ui| {
-                            let mut output_str = folder.output.to_string_lossy().to_string();
-                            ui.add_sized(
-                                egui::vec2(ui.available_width() - 80.0, 28.0),
-                                text_edit_style(&mut output_str),
-                            );
-                            if ui.add(button_small("Browse")).clicked() {
-                                if let Some(path) = FileDialog::new().pick_folder() {
-                                    folder.output = path;
-                                }
-                            }
-                        });
-
-                        ui.add_space(10.0);
-
-                        ui.label(label_secondary("Preset"));
-                        ui.add_space(4.0);
-                        egui::ComboBox::from_id_salt(format!("preset_{}", idx))
-                            .selected_text(
-                                RichText::new(&folder.preset).color(TEXT_PRIMARY).size(13.0),
-                            )
-                            .width(ui.available_width())
-                            .show_ui(ui, |ui| {
-                                let presets = Config::available_presets();
-                                for preset in presets {
-                                    if ui
-                                        .selectable_value(
-                                            &mut folder.preset,
-                                            preset.clone(),
-                                            RichText::new(&preset).color(TEXT_PRIMARY).size(13.0),
-                                        )
-                                        .changed()
-                                    {
-                                        preset_changes.push((idx, preset.clone()));
-                                    }
-                                }
-                            });
-                    }
+                    });
                 });
-                ui.add_space(10.0);
+
+                if response.response.clicked() {
+                    edit_idx = Some(idx);
+                }
+
+                ui.add_space(6.0);
             }
 
-            if let Some(idx) = to_remove {
-                self.state.remove_folder(idx);
-            }
             if let Some(idx) = toggle_idx {
+                self.state.toggle_folder(idx);
+            }
+            if let Some(idx) = edit_idx {
                 let folder = &self.state.folders[idx];
-                activity_entries.push(ActivityEntry::simple(
-                    format!(
-                        "Folder {} {}",
-                        if folder.enabled {
-                            "enabled"
-                        } else {
-                            "disabled"
-                        },
-                        folder.input.display()
-                    ),
-                    true,
-                ));
-            }
-            if let Some(idx) = edit_toggle_idx {
-                self.state.folders[idx].editing = !self.state.folders[idx].editing;
-            }
-            for (idx, preset) in preset_changes {
-                activity_entries.push(ActivityEntry::simple(
-                    format!("Changed preset to {} for folder {}", preset, idx),
-                    true,
-                ));
-            }
-            for entry in activity_entries {
-                self.state.activity_log.push(entry);
+                self.state.modal.set_for_edit(idx, folder);
             }
         });
+    }
+
+    fn draw_modal(&mut self, ctx: &egui::Context) {
+        let title = if self.state.modal.editing_idx.is_some() {
+            "Edit Watch Folder"
+        } else {
+            "Add Watch Folder"
+        };
+
+        let mut should_close = false;
+        let mut should_save = false;
+        let mut should_delete = false;
+
+        let screen_rect = ctx.screen_rect();
+
+        egui::Area::new(egui::Id::new("modal_overlay"))
+            .anchor(egui::Align2::LEFT_TOP, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .show(ctx, |ui| {
+                modal_overlay().show(ui, |ui| {
+                    ui.allocate_space(screen_rect.size());
+                });
+            });
+
+        egui::Area::new(egui::Id::new("modal_dialog"))
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .interactable(true)
+            .show(ctx, |ui| {
+                modal_dialog().show(ui, |ui| {
+                    ui.set_min_width(420.0);
+
+                    ui.label(
+                        RichText::new(title)
+                            .size(18.0)
+                            .color(ACCENT_PRIMARY)
+                            .strong(),
+                    );
+                    ui.add_space(20.0);
+
+                    ui.label(label_secondary("Input Folder"));
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        let mut input_str = self.state.modal.input.to_string_lossy().to_string();
+                        ui.add_sized(
+                            egui::vec2(ui.available_width() - 90.0, 32.0),
+                            text_edit_style(&mut input_str),
+                        );
+                        self.state.modal.input = PathBuf::from(&input_str);
+                        if ui.add(button_small("Browse")).clicked() {
+                            if let Some(path) = FileDialog::new().pick_folder() {
+                                self.state.modal.input = path;
+                            }
+                        }
+                    });
+
+                    ui.add_space(12.0);
+
+                    ui.label(label_secondary("Output Folder"));
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        let mut output_str = self.state.modal.output.to_string_lossy().to_string();
+                        ui.add_sized(
+                            egui::vec2(ui.available_width() - 90.0, 32.0),
+                            text_edit_style(&mut output_str),
+                        );
+                        self.state.modal.output = PathBuf::from(&output_str);
+                        if ui.add(button_small("Browse")).clicked() {
+                            if let Some(path) = FileDialog::new().pick_folder() {
+                                self.state.modal.output = path;
+                            }
+                        }
+                    });
+
+                    ui.add_space(12.0);
+
+                    ui.label(label_secondary("Preset"));
+                    ui.add_space(4.0);
+                    egui::ComboBox::from_id_salt("modal_preset")
+                        .selected_text(
+                            RichText::new(&self.state.modal.preset)
+                                .color(TEXT_PRIMARY)
+                                .size(13.0),
+                        )
+                        .width(ui.available_width())
+                        .show_ui(ui, |ui| {
+                            let presets = Config::available_presets();
+                            for preset in presets {
+                                ui.selectable_value(
+                                    &mut self.state.modal.preset,
+                                    preset.clone(),
+                                    RichText::new(&preset).color(TEXT_PRIMARY).size(13.0),
+                                );
+                            }
+                        });
+
+                    ui.add_space(12.0);
+
+                    ui.checkbox(
+                        &mut self.state.modal.enabled,
+                        RichText::new("Enabled").color(TEXT_PRIMARY).size(14.0),
+                    );
+
+                    ui.add_space(24.0);
+
+                    ui.horizontal(|ui| {
+                        if let Some(_idx) = self.state.modal.editing_idx {
+                            if self.state.folders.len() > 1 {
+                                if ui.add(button_small("Delete")).clicked() {
+                                    should_delete = true;
+                                    should_close = true;
+                                }
+                            }
+                        }
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            let btn_text = if self.state.modal.editing_idx.is_some() {
+                                "Save Changes"
+                            } else {
+                                "Add Folder"
+                            };
+                            if ui.add(button_secondary(btn_text)).clicked() {
+                                should_save = true;
+                                should_close = true;
+                            }
+                            ui.add_space(8.0);
+                            if ui.add(button_small("Cancel")).clicked() {
+                                should_close = true;
+                            }
+                        });
+                    });
+                });
+            });
+
+        if should_close {
+            if should_delete {
+                if let Some(idx) = self.state.modal.editing_idx {
+                    self.state.remove_folder(idx);
+                }
+            } else if should_save {
+                if let Some(idx) = self.state.modal.editing_idx {
+                    self.state.update_folder_from_modal(idx);
+                } else {
+                    self.state.add_folder_from_modal();
+                }
+            }
+            self.state.modal.close();
+        }
     }
 
     fn draw_settings_panel(&mut self, ui: &mut egui::Ui) {

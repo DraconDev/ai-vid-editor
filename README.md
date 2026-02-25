@@ -2,6 +2,43 @@
 
 A command-line and GUI tool for automated video editing using AI. Designed for content creators who want to drop in raw footage and get polished results without manual editing.
 
+## Quick Start
+
+**GUI (recommended):**
+```bash
+cargo run --features gui --bin ai-vid-editor-gui
+```
+
+**CLI:**
+```bash
+cargo run --release -- -i input.mp4 -o output.mp4 --preset youtube
+```
+
+**Using just (optional):**
+```bash
+just gui      # Run GUI
+just build    # Build release
+just test     # Run tests
+```
+
+## Installation
+
+```bash
+git clone https://github.com/DraconDev/ai-vid-editor.git
+cd ai-vid-editor
+```
+
+### Requirements
+
+- [Rust](https://rustup.rs/) (edition 2024)
+- [FFmpeg](https://ffmpeg.org/) (for video processing)
+
+### NixOS
+
+```bash
+nix-shell  # or: nix develop
+```
+
 ## Features
 
 ### ✅ Fully Working
@@ -26,60 +63,42 @@ A command-line and GUI tool for automated video editing using AI. Designed for c
 - **Whisper STT** - Speech-to-text using Candle (HuggingFace model)
 - **Filler Word Removal** - Remove "um", "uh", etc. (`--remove-fillers`)
 
-## Installation
+## GUI
 
-### Prerequisites
+The GUI provides a visual interface for managing watch folders and settings:
 
-- [Rust](https://rustup.rs/) (edition 2024)
-- [FFmpeg](https://ffmpeg.org/) (for video processing)
+**Navigation:**
+- **All** - Shows Folders, Settings, and Activity stacked
+- **Folders** - Manage watch folders only
+- **Settings** - Configure processing options
+- **Activity** - View processing log
 
-### Build from Source
+**Watch Folders:**
+- Add multiple input/output folder pairs
+- Each folder has its own preset (YouTube, Shorts, Podcast, Minimal)
+- Toggle folders on/off without deleting
+- Click any folder card to edit
 
-```bash
-git clone https://github.com/DraconDev/ai-vid-editor.git
-cd ai-vid-editor
-cargo build --release
+**Layout:**
 ```
-
-The binary will be at `target/release/ai-vid-editor`.
-
-### Build with GUI
-
-```bash
-cargo build --release --features gui
+┌─────────────────────────────────────────────┐
+│ █ AI Video Processor      [Save] [Load]     │
+│ [All] [Folders] [Settings] [Activity]       │
+├─────────────────────────────────────────────┤
+│ Watch Folders              ● Watching       │
+│ ┌─────────────────────────────────────────┐ │
+│ │ [ON] videos → videos/output    youtube  │ │
+│ └─────────────────────────────────────────┘ │
+│ [+ Add Folder]                              │
+├─────────────────────────────────────────────┤
+│ Settings                                    │
+│ [x] Enhance Audio    [x] Remove Silence     │
+│ ...                                         │
+├─────────────────────────────────────────────┤
+│ Activity Log                        [Clear] │
+│ ✓ 14:32 Added new watch folder              │
+└─────────────────────────────────────────────┘
 ```
-
-Run the GUI:
-```bash
-cargo run --features gui --bin ai-vid-editor-gui
-```
-
-### NixOS
-
-For NixOS users, use the provided shell.nix or flake.nix:
-
-```bash
-# Using nix-shell
-nix-shell
-
-# Using flakes
-nix develop
-```
-
-This sets up all required libraries for GUI support (OpenGL, Vulkan, Wayland, X11).
-
-## GUI Features
-
-The GUI provides a visual interface for:
-
-- **Multi-Folder Watch**: Configure multiple input/output folder pairs, each with its own preset
-- **Per-Folder Presets**: Set youtube, shorts, podcast, or minimal preset per folder
-- **Enable/Disable Folders**: Toggle folders on/off without deleting them
-- **Auto-Watching**: Starts watching automatically on launch - no buttons needed
-- **Desktop Notifications**: Get notified when processing completes or errors
-- **Settings Panel**: Configure silence threshold, audio enhancement, video processing
-- **Join Mode**: Combine processed videos by date, name, or after N files
-- **Activity Log**: Track processing status in real-time
 
 ## Usage
 

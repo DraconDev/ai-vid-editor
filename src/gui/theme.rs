@@ -178,6 +178,7 @@ pub fn button_tab(is_active: bool, text: impl Into<String>) -> egui::Button<'sta
     }
 }
 
+#[allow(dead_code)]
 pub fn folder_card(enabled: bool) -> egui::Frame {
     let bg = if enabled {
         PANEL_BG_LIGHTER
@@ -188,8 +189,78 @@ pub fn folder_card(enabled: bool) -> egui::Frame {
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(16.0)
+        .inner_margin(12.0)
         .stroke(egui::Stroke::new(1.0, border))
+}
+
+pub fn folder_card_compact(enabled: bool) -> egui::Frame {
+    let bg = if enabled {
+        PANEL_BG_LIGHTER
+    } else {
+        PANEL_BG_LIGHT
+    };
+    egui::Frame::NONE
+        .fill(bg)
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .inner_margin(egui::vec2(12.0, 10.0))
+        .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+}
+
+pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
+    egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(13.0))
+        .fill(PANEL_BG)
+        .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(100.0, 32.0))
+}
+
+pub fn modal_overlay() -> egui::Frame {
+    egui::Frame::NONE.fill(egui::Color32::from_rgba_unmultiplied(0, 0, 0, 200))
+}
+
+pub fn modal_dialog() -> egui::Frame {
+    egui::Frame::NONE
+        .fill(PANEL_BG)
+        .corner_radius(CORNER_RADIUS)
+        .inner_margin(24.0)
+        .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+        .shadow(egui::epaint::Shadow {
+            offset: [0, 8],
+            blur: 32,
+            spread: 0,
+            color: egui::Color32::from_black_alpha(150),
+        })
+}
+
+pub fn preset_badge(preset: &str, ui: &mut egui::Ui) {
+    let color = match preset {
+        "youtube" => egui::Color32::from_rgb(230, 57, 70),
+        "shorts" => egui::Color32::from_rgb(255, 140, 0),
+        "podcast" => egui::Color32::from_rgb(100, 149, 237),
+        _ => ACCENT_PRIMARY,
+    };
+    egui::Frame::NONE
+        .fill(color)
+        .corner_radius(4.0)
+        .inner_margin(egui::vec2(8.0, 4.0))
+        .show(ui, |ui| {
+            ui.label(
+                egui::RichText::new(preset)
+                    .color(TEXT_PRIMARY)
+                    .size(11.0)
+                    .strong(),
+            );
+        });
+}
+
+pub fn truncate_path(path: &str, max_len: usize) -> String {
+    if path.len() <= max_len {
+        path.to_string()
+    } else {
+        let start = &path[..max_len / 2 - 1];
+        let end = &path[path.len() - max_len / 2 + 1..];
+        format!("{}…{}", start, end)
+    }
 }
 
 pub fn status_badge_with_bg(
