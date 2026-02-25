@@ -281,6 +281,7 @@ impl AppState {
         }
     }
 
+    #[allow(dead_code)]
     fn save_config(&mut self, path: &PathBuf) {
         self.config.paths.watch_folders = self.folders.iter().map(|f| f.clone().into()).collect();
 
