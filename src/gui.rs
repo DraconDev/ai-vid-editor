@@ -199,6 +199,7 @@ pub struct AppState {
     selected_folder_idx: usize,
 }
 
+#[allow(dead_code)]
 fn join_mode_display(mode: &JoinMode) -> String {
     match mode {
         JoinMode::Off => "Off".to_string(),
