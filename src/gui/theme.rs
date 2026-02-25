@@ -33,6 +33,9 @@ pub const CORNER_RADIUS_SMALL: f32 = 8.0;
 #[allow(dead_code)]
 pub const CORNER_RADIUS_PILL: f32 = 24.0;
 
+pub const GLOW_RADIUS: f32 = 15.0;
+pub const GLOW_COLOR: egui::Color32 = egui::Color32::from_rgba_unmultiplied(230, 57, 70, 80);
+
 pub fn accent_bar() -> egui::Frame {
     egui::Frame::NONE
         .fill(ACCENT_PRIMARY)
