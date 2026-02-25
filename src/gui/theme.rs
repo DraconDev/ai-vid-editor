@@ -197,7 +197,13 @@ pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
-        .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
+        .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
+        .shadow(egui::epaint::Shadow {
+            offset: [0, 0],
+            blur: GLOW_RADIUS,
+            spread: 0,
+            color: GLOW_COLOR,
+        })
     } else {
         egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHT)
@@ -235,7 +241,13 @@ pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'st
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
-        .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
+        .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
+        .shadow(egui::epaint::Shadow {
+            offset: [0, 0],
+            blur: GLOW_RADIUS,
+            spread: 0,
+            color: GLOW_COLOR,
+        })
     } else {
         egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHTER)
@@ -245,83 +257,18 @@ pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'st
         .min_size(egui::vec2(50.0, 26.0))
 }
 
-pub fn slider_filled(
-    value: &mut f32,
-    range: std::ops::RangeInclusive<f32>,
-    ui: &mut egui::Ui,
-) -> egui::Response {
-    ui.scope(|ui| {
-        ui.style_mut().visuals.selection.bg_fill = ACCENT_PRIMARY;
-        let slider = egui::Slider::new(value, range)
-            .step_by(1.0)
-            .trailing_fill(true);
-        ui.add(slider)
-    })
-    .inner
-}
-
-#[allow(dead_code)]
-pub fn slider_with_ticks(value: &mut f32, range: std::ops::RangeInclusive<f32>, ui: &mut egui::Ui) {
-    let range_clone = range.clone();
-    ui.horizontal(|ui| {
-        ui.style_mut().visuals.selection.bg_fill = ACCENT_PRIMARY;
-        let slider = egui::Slider::new(value, range)
-            .step_by(1.0)
-            .trailing_fill(true);
-        ui.add(slider);
-    });
-
-    ui.horizontal(|ui| {
-        ui.label(
-            egui::RichText::new(&format!("{}", range_clone.start()))
-                .color(TEXT_MUTED)
-                .size(10.0),
-        );
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.label(
-                egui::RichText::new(&format!("{}", range_clone.end()))
-                    .color(TEXT_MUTED)
-                    .size(10.0),
-            );
-        });
-    });
-}
-
-#[allow(dead_code)]
-pub fn folder_card(enabled: bool) -> egui::Frame {
-    let bg = if enabled {
-        PANEL_BG_LIGHTER
-    } else {
-        PANEL_BG_LIGHT
-    };
-    let border = if enabled { BORDER_LIGHT } else { BORDER };
-    egui::Frame::NONE
-        .fill(bg)
-        .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(12.0)
-        .stroke(egui::Stroke::new(1.0, border))
-}
-
-pub fn folder_card_compact(enabled: bool) -> egui::Frame {
-    let bg = if enabled {
-        PANEL_BG_LIGHTER
-    } else {
-        PANEL_BG_LIGHT
-    };
-    let border = if enabled { BORDER_LIGHT } else { BORDER };
-    egui::Frame::NONE
-        .fill(bg)
-        .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(egui::vec2(14.0, 10.0))
-        .stroke(egui::Stroke::new(1.0, border))
-}
-
 pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
     egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(12.0))
         .fill(PANEL_BG)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
         .corner_radius(CORNER_RADIUS_SMALL)
         .min_size(egui::vec2(60.0, 28.0))
+        .shadow(egui::epaint::Shadow {
+            offset: [0, 0],
+            blur: 10.0,
+            spread: 0,
+            color: egui::Color32::from_rgba_unmultiplied(230, 57, 70, 40),
+        })
 }
 
 pub fn modal_overlay() -> egui::Frame {
