@@ -752,77 +752,8 @@ impl App {
             }
         };
 
-        let enabled_modules = [
-            enhance_val,
-            remove_silence_val,
-            stabilize_val,
-            color_correct_val,
-            reframe_val,
-            blur_val,
-        ]
-        .into_iter()
-        .filter(|is_enabled| *is_enabled)
-        .count();
-
         settings_panel_frame().show(ui, |ui| {
-            settings_section_frame(true).show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label(
-                            RichText::new("Pipeline Control")
-                                .size(18.0)
-                                .color(TEXT_PRIMARY)
-                                .strong(),
-                        );
-                        ui.label(label_secondary(
-                            "Modern editing controls for this folder profile.",
-                        ));
-                    });
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        preset_badge(&preset_name, ui);
-                        ui.add_space(8.0);
-                        Self::draw_settings_metric(
-                            ui,
-                            "Active Modules",
-                            &format!("{enabled_modules}/6"),
-                            ACCENT_PRIMARY,
-                        );
-                    });
-                });
-            });
-
-            ui.add_space(10.0);
-
-            settings_section_frame(false).show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    Self::draw_settings_metric(
-                        ui,
-                        "Silence Gate",
-                        &format!("{threshold_val:.0} dB"),
-                        WARNING,
-                    );
-                    Self::draw_settings_metric(
-                        ui,
-                        "Target Loudness",
-                        &format!("{lufs_val:.0} LUFS"),
-                        PROCESSING,
-                    );
-                });
-            });
-
-            ui.add_space(12.0);
-
-            settings_section_frame(false).show(ui, |ui| {
-                ui.label(
-                    RichText::new("Folder Profile")
-                        .size(13.0)
-                        .color(ACCENT_PRIMARY)
-                        .strong(),
-                );
-                ui.add_space(6.0);
-                ui.label(label_muted("Select which watcher profile to tune."));
-                ui.add_space(10.0);
-
+            ui.horizontal(|ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (idx, name) in folder_names.iter().enumerate() {
                         if ui
@@ -833,16 +764,19 @@ impl App {
                         }
                     }
                 });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    preset_badge(&preset_name, ui);
+                });
             });
 
-            ui.add_space(12.0);
+            ui.add_space(16.0);
 
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
 
             settings_section_frame(false).show(ui, |ui| {
                 ui.label(
-                    RichText::new("Processing Stack")
+                    RichText::new("Processing")
                         .size(13.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
@@ -939,7 +873,7 @@ impl App {
 
             settings_section_frame(false).show(ui, |ui| {
                 ui.label(
-                    RichText::new("Advanced Tuning")
+                    RichText::new("Advanced")
                         .size(13.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
@@ -1021,31 +955,21 @@ impl App {
 
             ui.add_space(12.0);
 
-            settings_section_frame(true).show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label(
-                            RichText::new("Reset")
-                                .size(13.0)
-                                .color(ACCENT_PRIMARY)
-                                .strong(),
-                        );
-                        ui.label(label_muted(
-                            "Restore this folder's settings to default values.",
-                        ));
-                    });
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.add(button_small("Reset to Defaults")).clicked() {
-                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                                folder.settings = FolderSettings::default();
-                                needs_save = true;
-                                self.state.activity_log.push(ActivityEntry::simple(
-                                    format!("Reset folder {} to defaults", folder_idx + 1),
-                                    true,
-                                ));
-                            }
+            ui.horizontal(|ui| {
+                ui.label(label_muted(
+                    "Restore this folder's settings to default values.",
+                ));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.add(button_small("Reset to Defaults")).clicked() {
+                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                            folder.settings = FolderSettings::default();
+                            needs_save = true;
+                            self.state.activity_log.push(ActivityEntry::simple(
+                                format!("Reset folder {} to defaults", folder_idx + 1),
+                                true,
+                            ));
                         }
-                    });
+                    }
                 });
             });
 
