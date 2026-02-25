@@ -33,6 +33,7 @@ pub const CORNER_RADIUS_SMALL: f32 = 8.0;
 #[allow(dead_code)]
 pub const CORNER_RADIUS_PILL: f32 = 24.0;
 
+#[allow(dead_code)]
 pub fn glow_color() -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(230, 57, 70, 80)
 }
