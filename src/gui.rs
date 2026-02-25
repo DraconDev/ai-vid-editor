@@ -366,6 +366,7 @@ impl AppState {
                 format!("Folder {} ({})", status, folder.input.display()),
                 true,
             ));
+            self.auto_save_config();
         }
     }
 }
