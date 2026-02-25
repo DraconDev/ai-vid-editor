@@ -987,25 +987,6 @@ impl App {
         changed
     }
 
-    fn draw_settings_toggle_compact(ui: &mut egui::Ui, label: &str, value: &mut bool) -> bool {
-        let mut changed = false;
-        ui.horizontal(|ui| {
-            let dot_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
-            let (dot_rect, _) = ui.allocate_exact_size(egui::vec2(6.0, 6.0), egui::Sense::hover());
-            ui.painter()
-                .circle_filled(dot_rect.center(), 3.0, dot_color);
-            ui.add_space(4.0);
-            ui.label(RichText::new(label).color(TEXT_PRIMARY).size(11.0));
-            ui.add_space(4.0);
-            let switch_text = if *value { "ON" } else { "OFF" };
-            if ui.add(button_toggle(*value, switch_text)).clicked() {
-                *value = !*value;
-                changed = true;
-            }
-        });
-        changed
-    }
-
     fn draw_advanced_slider(
         ui: &mut egui::Ui,
         title: &str,
