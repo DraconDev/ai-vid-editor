@@ -851,9 +851,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut reframe,
-                    RichText::new("Auto-Reframe (9:16)")
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
+                    RichText::new("Auto-Reframe (9:16)").color(TEXT_PRIMARY).size(12.0),
                 )
                 .changed()
             {
@@ -867,9 +865,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut blur,
-                    RichText::new("Blur Background")
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
+                    RichText::new("Blur Background").color(TEXT_PRIMARY).size(12.0),
                 )
                 .changed()
             {
@@ -879,9 +875,9 @@ impl App {
                 }
             }
 
-            ui.add_space(20.0);
-            ui.label(label_muted("--- Advanced ---"));
             ui.add_space(12.0);
+            ui.label(label_muted("Advanced"));
+            ui.add_space(8.0);
 
             ui.label(label_secondary("Silence Threshold (dB)"));
             ui.add_space(4.0);
@@ -893,7 +889,7 @@ impl App {
                 }
             }
 
-            ui.add_space(10.0);
+            ui.add_space(8.0);
 
             ui.label(label_secondary("Target LUFS"));
             ui.add_space(4.0);
@@ -905,17 +901,17 @@ impl App {
                 }
             }
 
-            ui.add_space(20.0);
+            ui.add_space(12.0);
 
             if ui
-                .add(button_secondary("Reset to Preset Defaults"))
+                .add(button_small("Reset to Defaults"))
                 .clicked()
             {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings = FolderSettings::default();
                     needs_save = true;
                     self.state.activity_log.push(ActivityEntry::simple(
-                        format!("Reset folder {} to preset defaults", folder_idx + 1),
+                        format!("Reset folder {} to defaults", folder_idx + 1),
                         true,
                     ));
                 }
@@ -939,19 +935,19 @@ impl App {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new("Activity Log")
-                        .size(18.0)
+                    RichText::new("Activity")
+                        .size(16.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.add(button_secondary("Clear")).clicked() {
+                    if ui.add(button_small("Clear")).clicked() {
                         self.state.activity_log.clear();
                     }
                 });
             });
 
-            ui.add_space(12.0);
+            ui.add_space(10.0);
 
             if self.state.activity_log.is_empty() {
                 inner_panel().show(ui, |ui| {
