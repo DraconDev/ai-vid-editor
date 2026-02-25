@@ -705,60 +705,75 @@ impl App {
     }
 
     fn draw_settings_panel(&mut self, ui: &mut egui::Ui) {
-        panel_frame().show(ui, |ui| {
-            ui.label(
-                RichText::new("Settings")
-                    .size(16.0)
-                    .color(ACCENT_PRIMARY)
-                    .strong(),
-            );
+        let folder_names: Vec<String> = self
+            .state
+            .folders
+            .iter()
+            .enumerate()
+            .map(|(i, f)| {
+                format!(
+                    "{}. {}",
+                    i + 1,
+                    f.input.file_name().unwrap_or_default().to_string_lossy()
+                )
+            })
+            .collect();
 
-            ui.add_space(16.0);
+        let preset_name = self
+            .state
+            .folders
+            .get(self.state.selected_folder_idx)
+            .map(|f| f.preset.clone())
+            .unwrap_or_default();
 
-            ui.label(label_secondary("Configure Folder"));
-            ui.add_space(8.0);
-            let folder_names: Vec<String> = self
-                .state
-                .folders
-                .iter()
-                .enumerate()
-                .map(|(i, f)| {
-                    format!(
-                        "{}. {}",
-                        i + 1,
-                        f.input.file_name().unwrap_or_default().to_string_lossy()
-                    )
-                })
-                .collect();
+        settings_panel_frame().show(ui, |ui| {
+            settings_section_frame(true).show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(
+                            RichText::new("Settings Studio")
+                                .size(17.0)
+                                .color(TEXT_PRIMARY)
+                                .strong(),
+                        );
+                        ui.label(label_secondary(
+                            "Shape how this folder is processed before export.",
+                        ));
+                    });
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        preset_badge(&preset_name, ui);
+                        ui.add_space(6.0);
+                        ui.label(label_muted("Preset"));
+                    });
+                });
+            });
 
-            ui.horizontal_wrapped(|ui| {
-                for (idx, name) in folder_names.iter().enumerate() {
-                    if ui
-                        .add(button_pill(idx == self.state.selected_folder_idx, name))
-                        .clicked()
-                    {
-                        self.state.selected_folder_idx = idx;
+            ui.add_space(12.0);
+
+            settings_section_frame(false).show(ui, |ui| {
+                ui.label(
+                    RichText::new("Folder Profile")
+                        .size(13.0)
+                        .color(ACCENT_PRIMARY)
+                        .strong(),
+                );
+                ui.add_space(6.0);
+                ui.label(label_muted("Select the folder configuration to edit."));
+                ui.add_space(10.0);
+
+                ui.horizontal_wrapped(|ui| {
+                    for (idx, name) in folder_names.iter().enumerate() {
+                        if ui
+                            .add(button_pill(idx == self.state.selected_folder_idx, name))
+                            .clicked()
+                        {
+                            self.state.selected_folder_idx = idx;
+                        }
                     }
-                }
+                });
             });
 
-            ui.add_space(10.0);
-
-            let preset_name = self
-                .state
-                .folders
-                .get(self.state.selected_folder_idx)
-                .map(|f| f.preset.clone())
-                .unwrap_or_default();
-            ui.horizontal(|ui| {
-                ui.label(label_muted("Preset:"));
-                ui.add_space(4.0);
-                preset_badge(&preset_name, ui);
-            });
-
-            ui.add_space(20.0);
-            ui.label(label_muted("Processing"));
-            ui.add_space(10.0);
+            ui.add_space(12.0);
 
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
@@ -789,150 +804,238 @@ impl App {
                 }
             };
 
-            let mut enhance = enhance_val;
-            if ui
-                .checkbox(
+            settings_section_frame(false).show(ui, |ui| {
+                ui.label(
+                    RichText::new("Processing Stack")
+                        .size(13.0)
+                        .color(ACCENT_PRIMARY)
+                        .strong(),
+                );
+                ui.add_space(8.0);
+
+                let mut enhance = enhance_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Enhance Audio",
+                    "Normalize and improve dialogue clarity.",
                     &mut enhance,
-                    RichText::new("Enhance Audio")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.enhance_audio = Some(enhance);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.enhance_audio = Some(enhance);
+                        needs_save = true;
+                    }
                 }
-            }
-            ui.add_space(4.0);
+                ui.add_space(6.0);
 
-            let mut remove_silence = remove_silence_val;
-            if ui
-                .checkbox(
+                let mut remove_silence = remove_silence_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Remove Silence",
+                    "Trim dead air and tighten pacing.",
                     &mut remove_silence,
-                    RichText::new("Remove Silence")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.remove_silence = Some(remove_silence);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.remove_silence = Some(remove_silence);
+                        needs_save = true;
+                    }
                 }
-            }
-            ui.add_space(4.0);
+                ui.add_space(6.0);
 
-            let mut stabilize = stabilize_val;
-            if ui
-                .checkbox(
+                let mut stabilize = stabilize_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Stabilize Video",
+                    "Reduce camera shake in moving clips.",
                     &mut stabilize,
-                    RichText::new("Stabilize Video")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.stabilize = Some(stabilize);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.stabilize = Some(stabilize);
+                        needs_save = true;
+                    }
                 }
-            }
-            ui.add_space(4.0);
+                ui.add_space(6.0);
 
-            let mut color_correct = color_correct_val;
-            if ui
-                .checkbox(
+                let mut color_correct = color_correct_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Color Correct",
+                    "Auto-balance contrast and white levels.",
                     &mut color_correct,
-                    RichText::new("Color Correct")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.color_correct = Some(color_correct);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.color_correct = Some(color_correct);
+                        needs_save = true;
+                    }
                 }
-            }
-            ui.add_space(4.0);
+                ui.add_space(6.0);
 
-            let mut reframe = reframe_val;
-            if ui
-                .checkbox(
+                let mut reframe = reframe_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Auto-Reframe (9:16)",
+                    "Center content for vertical output.",
                     &mut reframe,
-                    RichText::new("Auto-Reframe (9:16)")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.reframe = Some(reframe);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.reframe = Some(reframe);
+                        needs_save = true;
+                    }
                 }
-            }
-            ui.add_space(4.0);
+                ui.add_space(6.0);
 
-            let mut blur = blur_val;
-            if ui
-                .checkbox(
+                let mut blur = blur_val;
+                if Self::draw_settings_toggle(
+                    ui,
+                    "Blur Background",
+                    "Fill side space when reframing to portrait.",
                     &mut blur,
-                    RichText::new("Blur Background")
-                        .color(TEXT_PRIMARY)
-                        .size(12.0),
-                )
-                .changed()
-            {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.blur_background = Some(blur);
-                    needs_save = true;
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.blur_background = Some(blur);
+                        needs_save = true;
+                    }
                 }
-            }
-
-            ui.add_space(20.0);
-            ui.label(label_muted("Advanced"));
-            ui.add_space(10.0);
-
-            ui.label(label_secondary("Silence Threshold (dB)"));
-            ui.add_space(6.0);
-            let mut threshold = threshold_val;
-            if slider_filled(&mut threshold, -60.0..=-10.0, ui).changed() {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.silence_threshold_db = Some(threshold);
-                    needs_save = true;
-                }
-            }
+            });
 
             ui.add_space(12.0);
 
-            ui.label(label_secondary("Target LUFS"));
-            ui.add_space(6.0);
-            let mut lufs = lufs_val;
-            if slider_filled(&mut lufs, -24.0..=-6.0, ui).changed() {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings.target_lufs = Some(lufs);
-                    needs_save = true;
-                }
-            }
+            settings_section_frame(false).show(ui, |ui| {
+                ui.label(
+                    RichText::new("Advanced Tuning")
+                        .size(13.0)
+                        .color(ACCENT_PRIMARY)
+                        .strong(),
+                );
+                ui.add_space(8.0);
 
-            ui.add_space(16.0);
-
-            if ui.add(button_small("Reset to Defaults")).clicked() {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                    folder.settings = FolderSettings::default();
-                    needs_save = true;
-                    self.state.activity_log.push(ActivityEntry::simple(
-                        format!("Reset folder {} to defaults", folder_idx + 1),
-                        true,
-                    ));
+                let mut threshold = threshold_val;
+                if Self::draw_advanced_slider(
+                    ui,
+                    "Silence Threshold (dB)",
+                    "Lower values are more conservative.",
+                    &mut threshold,
+                    -60.0..=-10.0,
+                    format!("{threshold:.0} dB"),
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.silence_threshold_db = Some(threshold);
+                        needs_save = true;
+                    }
                 }
-            }
+
+                ui.add_space(8.0);
+
+                let mut lufs = lufs_val;
+                if Self::draw_advanced_slider(
+                    ui,
+                    "Target LUFS",
+                    "Audio loudness target for final export.",
+                    &mut lufs,
+                    -24.0..=-6.0,
+                    format!("{lufs:.0} LUFS"),
+                ) {
+                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        folder.settings.target_lufs = Some(lufs);
+                        needs_save = true;
+                    }
+                }
+            });
+
+            ui.add_space(12.0);
+
+            settings_section_frame(true).show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(
+                            RichText::new("Reset")
+                                .size(13.0)
+                                .color(ACCENT_PRIMARY)
+                                .strong(),
+                        );
+                        ui.label(label_muted(
+                            "Restore this folder's settings to default values.",
+                        ));
+                    });
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.add(button_small("Reset to Defaults")).clicked() {
+                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                                folder.settings = FolderSettings::default();
+                                needs_save = true;
+                                self.state.activity_log.push(ActivityEntry::simple(
+                                    format!("Reset folder {} to defaults", folder_idx + 1),
+                                    true,
+                                ));
+                            }
+                        }
+                    });
+                });
+            });
 
             if needs_save {
                 self.state.auto_save_config();
             }
         });
+    }
+
+    fn draw_settings_toggle(
+        ui: &mut egui::Ui,
+        label: &str,
+        help_text: &str,
+        value: &mut bool,
+    ) -> bool {
+        let mut changed = false;
+        settings_toggle_frame(*value).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                if ui
+                    .checkbox(
+                        value,
+                        RichText::new(label).color(TEXT_PRIMARY).size(12.0).strong(),
+                    )
+                    .changed()
+                {
+                    changed = true;
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let status_text = if *value { "ENABLED" } else { "DISABLED" };
+                    let status_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
+                    ui.label(
+                        RichText::new(status_text)
+                            .size(10.0)
+                            .color(status_color)
+                            .strong(),
+                    );
+                });
+            });
+            ui.add_space(2.0);
+            ui.label(label_muted(help_text));
+        });
+        changed
+    }
+
+    fn draw_advanced_slider(
+        ui: &mut egui::Ui,
+        title: &str,
+        help_text: &str,
+        value: &mut f32,
+        range: std::ops::RangeInclusive<f32>,
+        value_label: String,
+    ) -> bool {
+        let mut changed = false;
+        settings_section_frame(false).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(label_secondary(title));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    settings_value_badge(ui, &value_label);
+                });
+            });
+            ui.add_space(6.0);
+            if slider_filled(value, range, ui).changed() {
+                changed = true;
+            }
+            ui.add_space(3.0);
+            ui.label(label_muted(help_text));
+        });
+        changed
     }
 
     #[allow(dead_code)]

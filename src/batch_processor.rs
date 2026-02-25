@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use crate::analyzer::ProcessedSegment;
 use crate::analyzer::VideoAnalyzer;
 use crate::config::Config;
-use crate::editor::calculate_keep_segments;
 use crate::editor::VideoEditor;
+use crate::editor::calculate_keep_segments;
 use crate::exporter;
 use crate::utils::find_video_files;
 

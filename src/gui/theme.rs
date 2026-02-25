@@ -63,7 +63,10 @@ pub fn settings_panel_frame() -> egui::Frame {
 
 pub fn settings_section_frame(highlight: bool) -> egui::Frame {
     let (bg, border) = if highlight {
-        (SETTINGS_SECTION_BG_HIGHLIGHT, SETTINGS_SECTION_BORDER_HIGHLIGHT)
+        (
+            SETTINGS_SECTION_BG_HIGHLIGHT,
+            SETTINGS_SECTION_BORDER_HIGHLIGHT,
+        )
     } else {
         (SETTINGS_SECTION_BG, BORDER_LIGHT)
     };

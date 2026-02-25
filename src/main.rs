@@ -1,25 +1,27 @@
+use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
-use anyhow::Result;
 
 pub mod analyzer;
-pub mod editor;
-pub mod utils;
 pub mod batch_processor;
-pub mod stt_analyzer;
-pub mod exporter;
 pub mod config;
+pub mod editor;
+pub mod exporter;
 pub mod ml;
+pub mod stt_analyzer;
+pub mod utils;
 
-use crate::batch_processor::{process_single_file_with_intro_outro, process_batch_dir, FfmpegDurationGetter};
 use crate::analyzer::FfmpegAnalyzer;
-use crate::editor::FfmpegEditor;
+use crate::batch_processor::{
+    FfmpegDurationGetter, process_batch_dir, process_single_file_with_intro_outro,
+};
 use crate::config::{Config, Preset};
+use crate::editor::FfmpegEditor;
 
 #[derive(Parser, Debug)]
 #[command(
-    author, 
-    version, 
+    author,
+    version,
     about = "AI video editor - configure via config.toml, CLI for quick overrides",
     long_about = "AI Video Editor\n\n\
         CONFIG-FIRST: Create ai-vid-editor.toml with all your settings.\n\
@@ -76,70 +78,69 @@ pub struct Cli {
     pub generate_config: bool,
 
     // === Advanced overrides (use config file instead) ===
-    
     #[arg(long, hide = true)]
     pub threshold: Option<f32>,
-    
+
     #[arg(long, hide = true)]
     pub duration: Option<f32>,
-    
+
     #[arg(short = 'p', long, hide = true)]
     pub padding: Option<f32>,
-    
+
     #[arg(short = 's', long, hide = true)]
     pub speedup: bool,
-    
+
     #[arg(short = 'E', long, hide = true)]
     pub enhance: bool,
-    
+
     #[arg(long, hide = true)]
     pub noise_reduction: bool,
-    
+
     #[arg(short = 'm', long, hide = true)]
     pub music: Option<PathBuf>,
-    
+
     #[arg(long, hide = true)]
     pub music_dir: Option<PathBuf>,
-    
+
     #[arg(long, hide = true)]
     pub intro: Option<PathBuf>,
-    
+
     #[arg(long, hide = true)]
     pub outro: Option<PathBuf>,
-    
+
     #[arg(long, hide = true)]
     pub export_srt: bool,
-    
+
     #[arg(long, hide = true)]
     pub export_chapters: bool,
-    
+
     #[arg(long, hide = true)]
     pub export_fcpxml: bool,
-    
+
     #[arg(long, hide = true)]
     pub export_edl: bool,
-    
+
     #[arg(long, hide = true)]
     pub remove_fillers: bool,
-    
+
     #[arg(long, hide = true, default_value = "5")]
     pub watch_interval: u64,
-    
+
     #[arg(long, hide = true)]
     pub join: bool,
-    
+
     /// Enable video stabilization (removes camera shake)
     #[arg(long)]
     pub stabilize: bool,
-    
+
     /// Enable auto color correction
     #[arg(long)]
     pub color_correct: bool,
-    
+
     /// Auto-reframe horizontal video to vertical (9:16) following speaker's face
     #[arg(long)]
     pub reframe: bool,
-    
+
     /// Blur background while keeping speaker sharp
     #[arg(long)]
     pub blur_background: bool,
@@ -149,8 +150,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // If no input specified and not a special command, show help
-    if cli.input_file.is_none() 
-        && cli.input_dir.is_none() 
+    if cli.input_file.is_none()
+        && cli.input_dir.is_none()
         && cli.watch.is_none()
         && !cli.generate_config
         && !cli.dry_run
@@ -172,8 +173,12 @@ fn main() -> Result<()> {
 
     // Start with preset or default config
     let mut config = if let Some(ref preset_str) = cli.preset {
-        let preset = Preset::from_str(preset_str)
-            .ok_or_else(|| anyhow::anyhow!("Unknown preset: {}. Valid presets: youtube, shorts, podcast, minimal", preset_str))?;
+        let preset = Preset::from_str(preset_str).ok_or_else(|| {
+            anyhow::anyhow!(
+                "Unknown preset: {}. Valid presets: youtube, shorts, podcast, minimal",
+                preset_str
+            )
+        })?;
         if !cli.json {
             println!("Using preset: {}", preset.as_str());
         }
@@ -197,7 +202,7 @@ fn main() -> Result<()> {
     let output_dir = cli.output_dir.clone().or(config.paths.output_dir.clone());
     let intro = cli.intro.clone().or(config.paths.intro.clone());
     let outro = cli.outro.clone().or(config.paths.outro.clone());
-    
+
     // Music: CLI takes precedence, then config
     let music = cli.music.clone().or(config.paths.music.clone());
     let music_dir = cli.music_dir.clone().or(config.paths.music_dir.clone());
@@ -221,7 +226,7 @@ fn main() -> Result<()> {
     if cli.noise_reduction {
         config.audio.noise_reduction = true;
     }
-    
+
     // Handle music selection: --music takes precedence over --music-dir
     if let Some(ref music_path) = music {
         config.audio.music_file = Some(music_path.clone());
@@ -236,7 +241,7 @@ fn main() -> Result<()> {
             }
         }
     }
-    
+
     if cli.export_srt {
         config.export.subtitles = true;
     }
@@ -252,7 +257,7 @@ fn main() -> Result<()> {
     if cli.remove_fillers {
         config.filler_words.enabled = true;
     }
-    
+
     // Video processing overrides
     if cli.stabilize {
         config.video.stabilize = true;
@@ -277,9 +282,13 @@ fn main() -> Result<()> {
         if let Some(ref music) = config.audio.music_file {
             println!("  Background music: {:?}", music);
         }
-        println!("  Export: SRT={} Chapters={} FCPXML={} EDL={}", 
-            config.export.subtitles, config.export.chapters, 
-            config.export.fcpxml, config.export.edl);
+        println!(
+            "  Export: SRT={} Chapters={} FCPXML={} EDL={}",
+            config.export.subtitles,
+            config.export.chapters,
+            config.export.fcpxml,
+            config.export.edl
+        );
     }
 
     // Handle dry-run mode
@@ -290,11 +299,13 @@ fn main() -> Result<()> {
     // Handle watch mode (from config or CLI)
     let watch_enabled = config.watch.enabled || cli.watch.is_some();
     let watch_dir = cli.watch.clone().or(input_dir.clone());
-    
+
     if watch_enabled {
-        let watch_path = watch_dir.clone()
-            .ok_or_else(|| anyhow::anyhow!("Watch directory required (set input_dir in config or use --watch)"))?;
-        let out_dir = output_dir.clone()
+        let watch_path = watch_dir.clone().ok_or_else(|| {
+            anyhow::anyhow!("Watch directory required (set input_dir in config or use --watch)")
+        })?;
+        let out_dir = output_dir
+            .clone()
             .ok_or_else(|| anyhow::anyhow!("Output directory required for watch mode"))?;
         return run_watch_mode(&watch_path, &out_dir, &config, &intro, &outro);
     }
@@ -307,79 +318,101 @@ fn main() -> Result<()> {
         // Single file processing logic
         let out = output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified"))?;
         process_single_file_with_intro_outro(
-            input, 
-            out, 
-            &config, 
-            &analyzer, 
-            &editor, 
+            input,
+            out,
+            &config,
+            &analyzer,
+            &editor,
             &duration_getter,
             intro,
-            outro
+            outro,
         )?;
     } else if let Some(in_dir) = input_dir {
         // Batch processing logic
-        let out_dir = output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified"))?;
-        process_batch_dir(in_dir, out_dir, &config, &analyzer, &editor, &duration_getter)?;
+        let out_dir =
+            output_dir.ok_or_else(|| anyhow::anyhow!("Output directory must be specified"))?;
+        process_batch_dir(
+            in_dir,
+            out_dir,
+            &config,
+            &analyzer,
+            &editor,
+            &duration_getter,
+        )?;
     } else {
-        anyhow::bail!("Either an input file or an input directory must be specified (set in config or CLI).");
+        anyhow::bail!(
+            "Either an input file or an input directory must be specified (set in config or CLI)."
+        );
     }
 
     Ok(())
 }
 
 /// Run in watch mode - monitor a directory and process new videos
-fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, intro: &Option<PathBuf>, outro: &Option<PathBuf>) -> Result<()> {
+fn run_watch_mode(
+    watch_dir: &PathBuf,
+    output_dir: &PathBuf,
+    config: &Config,
+    intro: &Option<PathBuf>,
+    outro: &Option<PathBuf>,
+) -> Result<()> {
     use std::collections::HashSet;
     use std::time::Duration;
-    
+
     println!("=== WATCH MODE ===");
     println!("Watching: {:?}", watch_dir);
     println!("Output to: {:?}", output_dir);
     println!("Polling interval: {}s", config.watch.interval);
     println!("Press Ctrl+C to stop\n");
-    
+
     // Create output directory if it doesn't exist
     std::fs::create_dir_all(output_dir)?;
-    
+
     // Track processed files
     let mut processed: HashSet<PathBuf> = HashSet::new();
-    
+
     // Initial scan - process existing files
     let video_extensions = ["mp4", "mov", "avi", "mkv", "webm"];
     for entry in std::fs::read_dir(watch_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if video_extensions.contains(&ext.to_lowercase().as_str()) {
                 processed.insert(path.clone());
             }
         }
     }
-    
-    println!("Found {} existing files (will not reprocess)", processed.len());
-    
+
+    println!(
+        "Found {} existing files (will not reprocess)",
+        processed.len()
+    );
+
     let analyzer = FfmpegAnalyzer;
     let editor = FfmpegEditor;
     let duration_getter = FfmpegDurationGetter;
-    
+
     loop {
         std::thread::sleep(Duration::from_secs(config.watch.interval));
-        
+
         // Check for new files
         if let Ok(entries) = std::fs::read_dir(watch_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                
+
                 if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                    if video_extensions.contains(&ext.to_lowercase().as_str()) && !processed.contains(&path) {
+                    if video_extensions.contains(&ext.to_lowercase().as_str())
+                        && !processed.contains(&path)
+                    {
                         println!("\n[NEW FILE] {:?}", path);
-                        
-                        let file_name = path.file_name()
+
+                        let file_name = path
+                            .file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| "output.mp4".to_string());
                         let output_path = output_dir.join(&file_name);
-                        
+
                         // Process with intro/outro if specified
                         match process_single_file_with_intro_outro(
                             path.clone(),
@@ -389,7 +422,7 @@ fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, in
                             &editor,
                             &duration_getter,
                             intro.clone(),
-                            outro.clone()
+                            outro.clone(),
                         ) {
                             Ok(_) => {
                                 println!("[DONE] Processed: {:?}", path);
@@ -410,15 +443,15 @@ fn run_watch_mode(watch_dir: &PathBuf, output_dir: &PathBuf, config: &Config, in
 
 /// Pick a random music file from a directory
 fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
-    use std::fs;
     use rand::prelude::*;
-    
+    use std::fs;
+
     if !music_dir.exists() {
         anyhow::bail!("Music directory does not exist: {:?}", music_dir);
     }
-    
+
     let music_extensions = ["mp3", "wav", "m4a", "aac", "ogg", "flac"];
-    
+
     let music_files: Vec<PathBuf> = fs::read_dir(music_dir)?
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.path())
@@ -429,12 +462,12 @@ fn pick_random_music_file(music_dir: &PathBuf) -> Result<Option<PathBuf>> {
                 .unwrap_or(false)
         })
         .collect();
-    
+
     if music_files.is_empty() {
         eprintln!("Warning: No music files found in {:?}", music_dir);
         return Ok(None);
     }
-    
+
     let mut rng = rand::rng();
     Ok(music_files.choose(&mut rng).cloned())
 }
@@ -448,11 +481,17 @@ fn handle_dry_run(cli: &Cli, config: &Config) -> Result<()> {
     let analyzer = FfmpegAnalyzer;
     let duration_getter = FfmpegDurationGetter;
 
-    let input_path = cli.input_file.as_ref()
+    let input_path = cli
+        .input_file
+        .as_ref()
         .or(cli.input_dir.as_ref())
         .ok_or_else(|| anyhow::anyhow!("Input file or directory required"))?;
 
-    let silences = analyzer.detect_silence(input_path, config.silence.threshold_db, config.silence.min_duration)?;
+    let silences = analyzer.detect_silence(
+        input_path,
+        config.silence.threshold_db,
+        config.silence.min_duration,
+    )?;
     let video_duration = duration_getter.get_duration(input_path)?;
 
     // Calculate total silence duration
@@ -484,24 +523,51 @@ fn handle_dry_run(cli: &Cli, config: &Config) -> Result<()> {
     } else {
         println!("\n=== DRY RUN ANALYSIS ===");
         println!("Input: {:?}", input_path);
-        println!("Input duration: {:.1}s ({:.1} min)", video_duration, video_duration / 60.0);
+        println!(
+            "Input duration: {:.1}s ({:.1} min)",
+            video_duration,
+            video_duration / 60.0
+        );
         println!("Silent segments detected: {}", silences.len());
-        println!("Total silence: {:.1}s ({:.1} min)", total_silence, total_silence / 60.0);
+        println!(
+            "Total silence: {:.1}s ({:.1} min)",
+            total_silence,
+            total_silence / 60.0
+        );
         println!("\nWould produce:");
-        println!("  Output duration: {:.1}s ({:.1} min)", output_duration, output_duration / 60.0);
-        println!("  Time saved: {:.1}s ({:.1} min)", video_duration - output_duration, (video_duration - output_duration) / 60.0);
+        println!(
+            "  Output duration: {:.1}s ({:.1} min)",
+            output_duration,
+            output_duration / 60.0
+        );
+        println!(
+            "  Time saved: {:.1}s ({:.1} min)",
+            video_duration - output_duration,
+            (video_duration - output_duration) / 60.0
+        );
         println!("\nOperations:");
         println!("  - Silence mode: {:?}", config.silence.mode);
         if config.audio.enhance {
-            println!("  - Audio enhancement: enabled (target {} LUFS)", config.audio.target_lufs);
+            println!(
+                "  - Audio enhancement: enabled (target {} LUFS)",
+                config.audio.target_lufs
+            );
         }
         if config.audio.music_file.is_some() {
             println!("  - Background music: {:?}", config.audio.music_file);
         }
-        if config.export.subtitles { println!("  - Export SRT subtitles"); }
-        if config.export.chapters { println!("  - Export YouTube chapters"); }
-        if config.export.fcpxml { println!("  - Export FCPXML"); }
-        if config.export.edl { println!("  - Export EDL"); }
+        if config.export.subtitles {
+            println!("  - Export SRT subtitles");
+        }
+        if config.export.chapters {
+            println!("  - Export YouTube chapters");
+        }
+        if config.export.fcpxml {
+            println!("  - Export FCPXML");
+        }
+        if config.export.edl {
+            println!("  - Export EDL");
+        }
     }
 
     Ok(())

@@ -9,8 +9,8 @@ pub mod utils;
 
 pub use analyzer::FfmpegAnalyzer;
 pub use batch_processor::{
-    process_batch_dir, process_single_file, process_single_file_with_intro_outro,
-    FfmpegDurationGetter,
+    FfmpegDurationGetter, process_batch_dir, process_single_file,
+    process_single_file_with_intro_outro,
 };
 pub use config::{
     Config, FolderSettings, JoinMode, Preset, ProcessingConfig, SilenceMode, WatchFolder,

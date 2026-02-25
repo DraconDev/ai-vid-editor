@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use candle_core::{DType, Device, Tensor};
-use candle_transformers::models::whisper::{model::Whisper, Config};
-use hf_hub::{api::sync::Api, Repo, RepoType};
+use candle_transformers::models::whisper::{Config, model::Whisper};
+use hf_hub::{Repo, RepoType, api::sync::Api};
 use std::path::Path;
 use tokenizers::Tokenizer;
 
