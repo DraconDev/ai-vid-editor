@@ -715,33 +715,33 @@ impl App {
 
             ui.add_space(16.0);
 
-            // Folder selector
+            // Folder selector - pill buttons
             ui.label(label_secondary("Configure Folder"));
-            ui.add_space(4.0);
+            ui.add_space(8.0);
             let folder_names: Vec<String> = self
                 .state
                 .folders
                 .iter()
                 .enumerate()
-                .map(|(i, f)| format!("{}. {}", i + 1, f.input.to_string_lossy()))
+                .map(|(i, f)| {
+                    format!(
+                        "{}. {}",
+                        i + 1,
+                        f.input.file_name().unwrap_or_default().to_string_lossy()
+                    )
+                })
                 .collect();
 
-            egui::ComboBox::from_id_salt("folder_selector")
-                .selected_text(
-                    RichText::new(&folder_names[self.state.selected_folder_idx])
-                        .color(TEXT_PRIMARY)
-                        .size(13.0),
-                )
-                .width(ui.available_width())
-                .show_ui(ui, |ui| {
-                    for (idx, name) in folder_names.iter().enumerate() {
-                        ui.selectable_value(
-                            &mut self.state.selected_folder_idx,
-                            idx,
-                            RichText::new(name).color(TEXT_PRIMARY).size(13.0),
-                        );
+            ui.horizontal_wrapped(|ui| {
+                for (idx, name) in folder_names.iter().enumerate() {
+                    if ui
+                        .add(button_pill(idx == self.state.selected_folder_idx, name))
+                        .clicked()
+                    {
+                        self.state.selected_folder_idx = idx;
                     }
-                });
+                }
+            });
 
             ui.add_space(8.0);
 
@@ -896,10 +896,7 @@ impl App {
             ui.label(label_secondary("Silence Threshold (dB)"));
             ui.add_space(4.0);
             let mut threshold = threshold_val;
-            if ui
-                .add(egui::Slider::new(&mut threshold, -60.0..=-10.0).step_by(1.0))
-                .changed()
-            {
+            if slider_filled(&mut threshold, -60.0..=-10.0, ui).changed() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.silence_threshold_db = Some(threshold);
                     needs_save = true;
@@ -911,10 +908,7 @@ impl App {
             ui.label(label_secondary("Target LUFS"));
             ui.add_space(4.0);
             let mut lufs = lufs_val;
-            if ui
-                .add(egui::Slider::new(&mut lufs, -24.0..=-6.0).step_by(1.0))
-                .changed()
-            {
+            if slider_filled(&mut lufs, -24.0..=-6.0, ui).changed() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.target_lufs = Some(lufs);
                     needs_save = true;
