@@ -23,6 +23,10 @@ pub const ERROR_BG: egui::Color32 = egui::Color32::from_rgb(55, 20, 20);
 pub const WARNING: egui::Color32 = egui::Color32::from_rgb(255, 193, 7);
 pub const PROCESSING: egui::Color32 = egui::Color32::from_rgb(100, 149, 237);
 pub const PROCESSING_BG: egui::Color32 = egui::Color32::from_rgb(25, 40, 60);
+pub const SETTINGS_PANEL_BG: egui::Color32 = egui::Color32::from_rgb(18, 18, 22);
+pub const SETTINGS_SECTION_BG: egui::Color32 = egui::Color32::from_rgb(24, 24, 30);
+pub const SETTINGS_SECTION_BG_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(34, 20, 24);
+pub const SETTINGS_SECTION_BORDER_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(95, 40, 47);
 
 pub const CORNER_RADIUS: f32 = 12.0;
 pub const CORNER_RADIUS_SMALL: f32 = 8.0;
@@ -41,6 +45,47 @@ pub fn panel_frame() -> egui::Frame {
         .corner_radius(CORNER_RADIUS)
         .inner_margin(20.0)
         .stroke(egui::Stroke::new(1.0, BORDER))
+}
+
+pub fn settings_panel_frame() -> egui::Frame {
+    egui::Frame::NONE
+        .fill(SETTINGS_PANEL_BG)
+        .corner_radius(CORNER_RADIUS)
+        .inner_margin(22.0)
+        .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+        .shadow(egui::epaint::Shadow {
+            offset: [0, 6],
+            blur: 20,
+            spread: 0,
+            color: egui::Color32::from_black_alpha(100),
+        })
+}
+
+pub fn settings_section_frame(highlight: bool) -> egui::Frame {
+    let (bg, border) = if highlight {
+        (SETTINGS_SECTION_BG_HIGHLIGHT, SETTINGS_SECTION_BORDER_HIGHLIGHT)
+    } else {
+        (SETTINGS_SECTION_BG, BORDER_LIGHT)
+    };
+    egui::Frame::NONE
+        .fill(bg)
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .inner_margin(14.0)
+        .stroke(egui::Stroke::new(1.0, border))
+}
+
+pub fn settings_toggle_frame(enabled: bool) -> egui::Frame {
+    let border = if enabled { ACCENT_DARK } else { BORDER_LIGHT };
+    let bg = if enabled {
+        egui::Color32::from_rgb(46, 24, 28)
+    } else {
+        SETTINGS_SECTION_BG
+    };
+    egui::Frame::NONE
+        .fill(bg)
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .inner_margin(egui::vec2(12.0, 10.0))
+        .stroke(egui::Stroke::new(1.0, border))
 }
 
 pub fn inner_panel() -> egui::Frame {
@@ -305,6 +350,22 @@ pub fn preset_badge(preset: &str, ui: &mut egui::Ui) {
         .show(ui, |ui| {
             ui.label(
                 egui::RichText::new(preset)
+                    .color(TEXT_PRIMARY)
+                    .size(10.0)
+                    .strong(),
+            );
+        });
+}
+
+pub fn settings_value_badge(ui: &mut egui::Ui, value: &str) {
+    egui::Frame::NONE
+        .fill(egui::Color32::from_rgb(46, 24, 28))
+        .corner_radius(4.0)
+        .inner_margin(egui::vec2(8.0, 4.0))
+        .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
+        .show(ui, |ui| {
+            ui.label(
+                egui::RichText::new(value)
                     .color(TEXT_PRIMARY)
                     .size(10.0)
                     .strong(),
