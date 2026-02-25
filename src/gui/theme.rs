@@ -100,7 +100,7 @@ pub fn button_small(text: impl Into<String>) -> egui::Button<'static> {
         .fill(PANEL_BG_LIGHT)
         .stroke(egui::Stroke::new(1.0, BORDER))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(50.0, 28.0))
+        .min_size(egui::vec2(60.0, 30.0))
 }
 
 #[allow(dead_code)]
@@ -137,66 +137,60 @@ pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
 }
 
 pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
-    if is_active {
+    let btn = if is_active {
         egui::Button::new(
             egui::RichText::new(text)
                 .color(TEXT_PRIMARY)
-                .size(12.0)
+                .size(11.0)
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
         .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
-        .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(60.0, 28.0))
     } else {
-        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(12.0))
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHT)
             .stroke(egui::Stroke::new(1.0, BORDER))
-            .corner_radius(CORNER_RADIUS_SMALL)
-            .min_size(egui::vec2(60.0, 28.0))
-    }
+    };
+    btn.corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(50.0, 26.0))
 }
 
 pub fn button_tab(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
-    if is_active {
+    let btn = if is_active {
         egui::Button::new(
             egui::RichText::new(text)
                 .color(TEXT_PRIMARY)
-                .size(14.0)
+                .size(13.0)
                 .strong(),
         )
         .fill(PANEL_BG_LIGHTER)
         .stroke(egui::Stroke::new(0.0, egui::Color32::TRANSPARENT))
-        .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(90.0, 36.0))
     } else {
-        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(14.0))
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(13.0))
             .fill(PANEL_BG)
             .stroke(egui::Stroke::new(0.0, egui::Color32::TRANSPARENT))
-            .corner_radius(CORNER_RADIUS_SMALL)
-            .min_size(egui::vec2(90.0, 36.0))
-    }
+    };
+    btn.corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(80.0, 32.0))
 }
 
 pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
-    if is_active {
+    let btn = if is_active {
         egui::Button::new(
             egui::RichText::new(text)
                 .color(TEXT_PRIMARY)
-                .size(12.0)
+                .size(11.0)
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
         .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
-        .corner_radius(CORNER_RADIUS_PILL)
-        .min_size(egui::vec2(60.0, 28.0))
     } else {
-        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(12.0))
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHTER)
             .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
-            .corner_radius(CORNER_RADIUS_PILL)
-            .min_size(egui::vec2(60.0, 28.0))
-    }
+    };
+    btn.corner_radius(CORNER_RADIUS_PILL)
+        .min_size(egui::vec2(50.0, 26.0))
 }
 
 pub fn slider_filled(
