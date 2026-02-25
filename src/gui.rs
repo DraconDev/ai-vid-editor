@@ -769,33 +769,32 @@ impl App {
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
                         ui.label(
-                            RichText::new("Settings Studio")
-                                .size(17.0)
+                            RichText::new("Pipeline Control")
+                                .size(18.0)
                                 .color(TEXT_PRIMARY)
                                 .strong(),
                         );
                         ui.label(label_secondary(
-                            "Shape how this folder is processed before export.",
+                            "Modern editing controls for this folder profile.",
                         ));
                     });
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         preset_badge(&preset_name, ui);
-                        ui.add_space(6.0);
-                        ui.label(label_muted("Preset"));
+                        ui.add_space(8.0);
+                        Self::draw_settings_metric(
+                            ui,
+                            "Active Modules",
+                            &format!("{enabled_modules}/6"),
+                            ACCENT_PRIMARY,
+                        );
                     });
                 });
             });
 
-            ui.add_space(12.0);
+            ui.add_space(10.0);
 
             settings_section_frame(false).show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    Self::draw_settings_metric(
-                        ui,
-                        "Modules Enabled",
-                        &format!("{enabled_modules}/6"),
-                        ACCENT_PRIMARY,
-                    );
                     Self::draw_settings_metric(
                         ui,
                         "Silence Gate",
@@ -821,7 +820,7 @@ impl App {
                         .strong(),
                 );
                 ui.add_space(6.0);
-                ui.label(label_muted("Select the folder configuration to edit."));
+                ui.label(label_muted("Select which watcher profile to tune."));
                 ui.add_space(10.0);
 
                 ui.horizontal_wrapped(|ui| {
@@ -848,13 +847,15 @@ impl App {
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
-                ui.add_space(8.0);
+                ui.add_space(4.0);
+                ui.label(label_muted("Enable only what this profile actually needs."));
+                ui.add_space(10.0);
 
                 let mut enhance = enhance_val;
                 if Self::draw_settings_toggle(
                     ui,
                     "Enhance Audio",
-                    "Normalize and improve dialogue clarity.",
+                    "Normalize speech and improve presence.",
                     &mut enhance,
                 ) {
                     if let Some(folder) = self.state.folders.get_mut(folder_idx) {
@@ -862,13 +863,13 @@ impl App {
                         needs_save = true;
                     }
                 }
-                ui.add_space(6.0);
+                ui.add_space(8.0);
 
                 let mut remove_silence = remove_silence_val;
                 if Self::draw_settings_toggle(
                     ui,
                     "Remove Silence",
-                    "Trim dead air and tighten pacing.",
+                    "Cut dead air for tighter pacing.",
                     &mut remove_silence,
                 ) {
                     if let Some(folder) = self.state.folders.get_mut(folder_idx) {
@@ -876,7 +877,7 @@ impl App {
                         needs_save = true;
                     }
                 }
-                ui.add_space(6.0);
+                ui.add_space(8.0);
 
                 let mut stabilize = stabilize_val;
                 if Self::draw_settings_toggle(
@@ -890,7 +891,7 @@ impl App {
                         needs_save = true;
                     }
                 }
-                ui.add_space(6.0);
+                ui.add_space(8.0);
 
                 let mut color_correct = color_correct_val;
                 if Self::draw_settings_toggle(
@@ -904,7 +905,7 @@ impl App {
                         needs_save = true;
                     }
                 }
-                ui.add_space(6.0);
+                ui.add_space(8.0);
 
                 let mut reframe = reframe_val;
                 if Self::draw_settings_toggle(
@@ -918,7 +919,7 @@ impl App {
                         needs_save = true;
                     }
                 }
-                ui.add_space(6.0);
+                ui.add_space(8.0);
 
                 let mut blur = blur_val;
                 if Self::draw_settings_toggle(
@@ -943,39 +944,77 @@ impl App {
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
-                ui.add_space(8.0);
+                ui.add_space(4.0);
+                ui.label(label_muted("Fine tune the audio response envelope."));
+                ui.add_space(10.0);
 
-                let mut threshold = threshold_val;
-                let threshold_label = format!("{threshold:.0} dB");
-                if Self::draw_advanced_slider(
-                    ui,
-                    "Silence Threshold (dB)",
-                    "Lower values are more conservative.",
-                    &mut threshold,
-                    -60.0..=-10.0,
-                    threshold_label,
-                ) {
-                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                        folder.settings.silence_threshold_db = Some(threshold);
-                        needs_save = true;
+                if ui.available_width() > 620.0 {
+                    ui.columns(2, |cols| {
+                        let mut threshold = threshold_val;
+                        let threshold_label = format!("{threshold:.0} dB");
+                        if Self::draw_advanced_slider(
+                            &mut cols[0],
+                            "Silence Threshold (dB)",
+                            "Lower values keep more ambient speech.",
+                            &mut threshold,
+                            -60.0..=-10.0,
+                            threshold_label,
+                        ) {
+                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                                folder.settings.silence_threshold_db = Some(threshold);
+                                needs_save = true;
+                            }
+                        }
+
+                        let mut lufs = lufs_val;
+                        let lufs_label = format!("{lufs:.0} LUFS");
+                        if Self::draw_advanced_slider(
+                            &mut cols[1],
+                            "Target LUFS",
+                            "Final loudness target for exports.",
+                            &mut lufs,
+                            -24.0..=-6.0,
+                            lufs_label,
+                        ) {
+                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                                folder.settings.target_lufs = Some(lufs);
+                                needs_save = true;
+                            }
+                        }
+                    });
+                } else {
+                    let mut threshold = threshold_val;
+                    let threshold_label = format!("{threshold:.0} dB");
+                    if Self::draw_advanced_slider(
+                        ui,
+                        "Silence Threshold (dB)",
+                        "Lower values keep more ambient speech.",
+                        &mut threshold,
+                        -60.0..=-10.0,
+                        threshold_label,
+                    ) {
+                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                            folder.settings.silence_threshold_db = Some(threshold);
+                            needs_save = true;
+                        }
                     }
-                }
 
-                ui.add_space(8.0);
+                    ui.add_space(8.0);
 
-                let mut lufs = lufs_val;
-                let lufs_label = format!("{lufs:.0} LUFS");
-                if Self::draw_advanced_slider(
-                    ui,
-                    "Target LUFS",
-                    "Audio loudness target for final export.",
-                    &mut lufs,
-                    -24.0..=-6.0,
-                    lufs_label,
-                ) {
-                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                        folder.settings.target_lufs = Some(lufs);
-                        needs_save = true;
+                    let mut lufs = lufs_val;
+                    let lufs_label = format!("{lufs:.0} LUFS");
+                    if Self::draw_advanced_slider(
+                        ui,
+                        "Target LUFS",
+                        "Final loudness target for exports.",
+                        &mut lufs,
+                        -24.0..=-6.0,
+                        lufs_label,
+                    ) {
+                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                            folder.settings.target_lufs = Some(lufs);
+                            needs_save = true;
+                        }
                     }
                 }
             });
@@ -1021,12 +1060,12 @@ impl App {
         egui::Frame::NONE
             .fill(bg)
             .corner_radius(6.0)
-            .inner_margin(egui::vec2(10.0, 8.0))
+            .inner_margin(egui::vec2(10.0, 9.0))
             .stroke(egui::Stroke::new(1.0, color))
             .show(ui, |ui| {
                 ui.vertical(|ui| {
-                    ui.label(RichText::new(label).size(10.0).color(TEXT_MUTED).strong());
-                    ui.label(RichText::new(value).size(12.0).color(TEXT_PRIMARY).strong());
+                    ui.label(RichText::new(label).size(10.0).color(TEXT_MUTED));
+                    ui.label(RichText::new(value).size(13.0).color(TEXT_PRIMARY).strong());
                 });
             });
     }
@@ -1040,27 +1079,22 @@ impl App {
         let mut changed = false;
         settings_toggle_frame(*value).show(ui, |ui| {
             ui.horizontal(|ui| {
-                if ui
-                    .checkbox(
-                        value,
-                        RichText::new(label).color(TEXT_PRIMARY).size(12.0).strong(),
-                    )
-                    .changed()
-                {
-                    changed = true;
-                }
+                let dot_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
+                let (dot_rect, _) =
+                    ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+                ui.painter()
+                    .circle_filled(dot_rect.center(), 3.5, dot_color);
+                ui.add_space(6.0);
+                ui.label(RichText::new(label).color(TEXT_PRIMARY).size(12.0).strong());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let status_text = if *value { "ENABLED" } else { "DISABLED" };
-                    let status_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
-                    ui.label(
-                        RichText::new(status_text)
-                            .size(10.0)
-                            .color(status_color)
-                            .strong(),
-                    );
+                    let switch_text = if *value { "ON" } else { "OFF" };
+                    if ui.add(button_toggle(*value, switch_text)).clicked() {
+                        *value = !*value;
+                        changed = true;
+                    }
                 });
             });
-            ui.add_space(2.0);
+            ui.add_space(3.0);
             ui.label(label_muted(help_text));
         });
         changed
@@ -1075,18 +1109,18 @@ impl App {
         value_label: String,
     ) -> bool {
         let mut changed = false;
-        settings_section_frame(false).show(ui, |ui| {
+        settings_toggle_frame(true).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(label_secondary(title));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     settings_value_badge(ui, &value_label);
                 });
             });
-            ui.add_space(6.0);
+            ui.add_space(8.0);
             if slider_filled(value, range, ui).changed() {
                 changed = true;
             }
-            ui.add_space(3.0);
+            ui.add_space(4.0);
             ui.label(label_muted(help_text));
         });
         changed

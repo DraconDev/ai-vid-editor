@@ -23,10 +23,10 @@ pub const ERROR_BG: egui::Color32 = egui::Color32::from_rgb(55, 20, 20);
 pub const WARNING: egui::Color32 = egui::Color32::from_rgb(255, 193, 7);
 pub const PROCESSING: egui::Color32 = egui::Color32::from_rgb(100, 149, 237);
 pub const PROCESSING_BG: egui::Color32 = egui::Color32::from_rgb(25, 40, 60);
-pub const SETTINGS_PANEL_BG: egui::Color32 = egui::Color32::from_rgb(18, 18, 22);
-pub const SETTINGS_SECTION_BG: egui::Color32 = egui::Color32::from_rgb(24, 24, 30);
-pub const SETTINGS_SECTION_BG_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(34, 20, 24);
-pub const SETTINGS_SECTION_BORDER_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(95, 40, 47);
+pub const SETTINGS_PANEL_BG: egui::Color32 = egui::Color32::from_rgb(14, 17, 23);
+pub const SETTINGS_SECTION_BG: egui::Color32 = egui::Color32::from_rgb(20, 24, 33);
+pub const SETTINGS_SECTION_BG_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(35, 24, 31);
+pub const SETTINGS_SECTION_BORDER_HIGHLIGHT: egui::Color32 = egui::Color32::from_rgb(112, 54, 66);
 
 pub const CORNER_RADIUS: f32 = 12.0;
 pub const CORNER_RADIUS_SMALL: f32 = 8.0;
@@ -80,9 +80,9 @@ pub fn settings_section_frame(highlight: bool) -> egui::Frame {
 pub fn settings_toggle_frame(enabled: bool) -> egui::Frame {
     let border = if enabled { ACCENT_DARK } else { BORDER_LIGHT };
     let bg = if enabled {
-        egui::Color32::from_rgb(46, 24, 28)
+        egui::Color32::from_rgb(43, 29, 36)
     } else {
-        SETTINGS_SECTION_BG
+        egui::Color32::from_rgb(23, 28, 38)
     };
     egui::Frame::NONE
         .fill(bg)
