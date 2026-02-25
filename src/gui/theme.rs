@@ -277,8 +277,8 @@ pub fn slider_glow(
 ) -> egui::Response {
     let spacing = ui.spacing();
     let slider_width = spacing.slider_width;
-    let rail_height = 6.0;
-    let handle_radius = 9.0;
+    let rail_height = 4.0;
+    let handle_radius = 7.0;
 
     let available_width = ui.available_width();
     let width = slider_width.min(available_width).max(100.0);
@@ -301,40 +301,20 @@ pub fn slider_glow(
 
     let painter = ui.painter();
 
-    painter.rect_filled(track_rect, 3.0, egui::Color32::from_rgb(30, 30, 30));
+    painter.rect_filled(track_rect, 2.0, egui::Color32::from_rgb(40, 40, 40));
 
     if fraction > 0.0 {
         let filled_width = (handle_x - rect.left()).max(0.0);
         let filled_rect =
             egui::Rect::from_min_size(track_rect.left_top(), egui::vec2(filled_width, rail_height));
-
-        for i in 1..=2 {
-            let glow_alpha = 30 - (i * 10);
-            painter.rect_filled(
-                filled_rect.expand(i as f32 * 2.0),
-                3.0 + i as f32,
-                egui::Color32::from_rgba_unmultiplied(230, 57, 70, glow_alpha as u8),
-            );
-        }
-
-        painter.rect_filled(filled_rect, 3.0, ACCENT_PRIMARY);
-    }
-
-    for i in 1..=2 {
-        let glow_alpha = 20 - (i * 6);
-        let glow_radius = handle_radius + i as f32 * 3.0;
-        painter.circle_filled(
-            handle_center,
-            glow_radius,
-            egui::Color32::from_rgba_unmultiplied(230, 57, 70, glow_alpha as u8),
-        );
+        painter.rect_filled(filled_rect, 2.0, ACCENT_PRIMARY);
     }
 
     painter.circle_filled(handle_center, handle_radius, ACCENT_PRIMARY);
     painter.circle_filled(
         handle_center,
-        handle_radius - 2.0,
-        egui::Color32::from_rgb(255, 100, 110),
+        handle_radius - 2.5,
+        egui::Color32::from_rgb(255, 120, 130),
     );
 
     if response.clicked() || response.dragged() {
