@@ -301,6 +301,25 @@ impl AppState {
         }
     }
 
+    fn auto_save_config(&mut self) {
+        self.config.paths.watch_folders = self.folders.iter().map(|f| f.clone().into()).collect();
+
+        let path = if let Some(ref p) = self.config_path {
+            Some(p.clone())
+        } else {
+            Config::default_config_path()
+        };
+
+        if let Some(path) = path {
+            if let Err(e) = self.config.to_file(&path) {
+                self.activity_log.push(ActivityEntry::simple(
+                    format!("Failed to auto-save config: {}", e),
+                    false,
+                ));
+            }
+        }
+    }
+
     fn add_folder_from_modal(&mut self) {
         let folder = FolderState {
             input: self.modal.input.clone(),
@@ -311,6 +330,7 @@ impl AppState {
         self.folders.push(folder);
         self.activity_log
             .push(ActivityEntry::simple("Added new watch folder", true));
+        self.auto_save_config();
     }
 
     fn update_folder_from_modal(&mut self, idx: usize) {
@@ -321,6 +341,7 @@ impl AppState {
             folder.enabled = self.modal.enabled;
             self.activity_log
                 .push(ActivityEntry::simple("Updated watch folder", true));
+            self.auto_save_config();
         }
     }
 
@@ -329,6 +350,7 @@ impl AppState {
             self.folders.remove(index);
             self.activity_log
                 .push(ActivityEntry::simple("Removed watch folder", true));
+            self.auto_save_config();
         }
     }
 
@@ -406,25 +428,6 @@ impl App {
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(button_secondary("Save")).clicked() {
-                    if let Some(path) = FileDialog::new()
-                        .add_filter("TOML", &["toml"])
-                        .set_file_name("ai-vid-editor.toml")
-                        .save_file()
-                    {
-                        self.state.save_config(&path);
-                    }
-                }
-                ui.add_space(8.0);
-                if ui.add(button_secondary("Load")).clicked() {
-                    if let Some(path) = FileDialog::new().add_filter("TOML", &["toml"]).pick_file()
-                    {
-                        self.state.load_config(&path);
-                    }
-                }
-            });
         });
 
         ui.add_space(12.0);
