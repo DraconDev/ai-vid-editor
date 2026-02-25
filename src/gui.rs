@@ -621,10 +621,7 @@ impl App {
                     ui.horizontal_wrapped(|ui| {
                         for preset in &["youtube", "shorts", "podcast"] {
                             if ui
-                                .add(button_pill(
-                                    self.state.modal.preset == *preset,
-                                    *preset,
-                                ))
+                                .add(button_pill(self.state.modal.preset == *preset, *preset))
                                 .clicked()
                             {
                                 self.state.modal.preset = preset.to_string();
@@ -765,7 +762,8 @@ impl App {
                     ui.add_space(6.0);
 
                     let mut remove_silence = remove_silence_val;
-                    if Self::draw_settings_toggle_compact(ui, "Remove Silence", &mut remove_silence) {
+                    if Self::draw_settings_toggle_compact(ui, "Remove Silence", &mut remove_silence)
+                    {
                         if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                             folder.settings.remove_silence = Some(remove_silence);
                             needs_save = true;
@@ -808,17 +806,6 @@ impl App {
                         }
                     }
                 });
-            });
-                    ui,
-                    "Blur Background",
-                    "Fill side space when reframing to portrait.",
-                    &mut blur,
-                ) {
-                    if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                        folder.settings.blur_background = Some(blur);
-                        needs_save = true;
-                    }
-                }
             });
 
             ui.add_space(12.0);
@@ -980,7 +967,8 @@ impl App {
         ui.horizontal(|ui| {
             let dot_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
             let (dot_rect, _) = ui.allocate_exact_size(egui::vec2(6.0, 6.0), egui::Sense::hover());
-            ui.painter().circle_filled(dot_rect.center(), 3.0, dot_color);
+            ui.painter()
+                .circle_filled(dot_rect.center(), 3.0, dot_color);
             ui.add_space(4.0);
             ui.label(RichText::new(label).color(TEXT_PRIMARY).size(11.0));
             ui.add_space(4.0);
