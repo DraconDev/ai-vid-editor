@@ -557,12 +557,6 @@ impl App {
     }
 
     fn draw_modal(&mut self, ctx: &egui::Context) {
-        let title = if self.state.modal.editing_idx.is_some() {
-            "Edit Folder"
-        } else {
-            "Add Folder"
-        };
-
         let mut should_close = false;
         let mut should_save = false;
         let mut should_delete = false;
@@ -584,22 +578,14 @@ impl App {
             .interactable(true)
             .show(ctx, |ui| {
                 modal_dialog().show(ui, |ui| {
-                    ui.set_min_width(380.0);
-
-                    ui.label(
-                        RichText::new(title)
-                            .size(16.0)
-                            .color(ACCENT_PRIMARY)
-                            .strong(),
-                    );
-                    ui.add_space(16.0);
+                    ui.set_min_width(320.0);
 
                     ui.label(label_secondary("Input Folder"));
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut input_str = self.state.modal.input.to_string_lossy().to_string();
                         ui.add_sized(
-                            egui::vec2(ui.available_width() - 80.0, 28.0),
+                            egui::vec2(ui.available_width() - 60.0, 36.0),
                             text_edit_style(&mut input_str),
                         );
                         self.state.modal.input = PathBuf::from(&input_str);
@@ -610,14 +596,14 @@ impl App {
                         }
                     });
 
-                    ui.add_space(10.0);
+                    ui.add_space(12.0);
 
                     ui.label(label_secondary("Output Folder"));
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut output_str = self.state.modal.output.to_string_lossy().to_string();
                         ui.add_sized(
-                            egui::vec2(ui.available_width() - 80.0, 28.0),
+                            egui::vec2(ui.available_width() - 60.0, 36.0),
                             text_edit_style(&mut output_str),
                         );
                         self.state.modal.output = PathBuf::from(&output_str);
@@ -628,36 +614,25 @@ impl App {
                         }
                     });
 
-                    ui.add_space(10.0);
+                    ui.add_space(12.0);
 
                     ui.label(label_secondary("Preset"));
                     ui.add_space(6.0);
-                    egui::ComboBox::from_id_salt("modal_preset")
-                        .selected_text(
-                            RichText::new(&self.state.modal.preset)
-                                .color(TEXT_PRIMARY)
-                                .size(12.0),
-                        )
-                        .width(ui.available_width())
-                        .show_ui(ui, |ui| {
-                            let presets = Config::available_presets();
-                            for preset in presets {
-                                ui.selectable_value(
-                                    &mut self.state.modal.preset,
-                                    preset.clone(),
-                                    RichText::new(&preset).color(TEXT_PRIMARY).size(12.0),
-                                );
+                    ui.horizontal_wrapped(|ui| {
+                        for preset in &["youtube", "shorts", "podcast"] {
+                            if ui
+                                .add(button_pill(
+                                    self.state.modal.preset == *preset,
+                                    *preset,
+                                ))
+                                .clicked()
+                            {
+                                self.state.modal.preset = preset.to_string();
                             }
-                        });
+                        }
+                    });
 
-                    ui.add_space(10.0);
-
-                    ui.checkbox(
-                        &mut self.state.modal.enabled,
-                        RichText::new("Enabled").color(TEXT_PRIMARY).size(13.0),
-                    );
-
-                    ui.add_space(20.0);
+                    ui.add_space(16.0);
 
                     ui.horizontal(|ui| {
                         if let Some(_idx) = self.state.modal.editing_idx {
@@ -677,10 +652,6 @@ impl App {
                             };
                             if ui.add(button_secondary(btn_text)).clicked() {
                                 should_save = true;
-                                should_close = true;
-                            }
-                            ui.add_space(8.0);
-                            if ui.add(button_small("Cancel")).clicked() {
                                 should_close = true;
                             }
                         });
