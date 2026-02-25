@@ -196,6 +196,7 @@ pub struct AppState {
     config_path: Option<PathBuf>,
     current_tab: Tab,
     modal: ModalState,
+    selected_folder_idx: usize,
 }
 
 fn join_mode_display(mode: &JoinMode) -> String {
