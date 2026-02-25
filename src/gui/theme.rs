@@ -204,33 +204,34 @@ pub fn slider_filled(
     range: std::ops::RangeInclusive<f32>,
     ui: &mut egui::Ui,
 ) -> egui::Response {
-    let range_size = *range.end() - *range.start();
-    let fraction = (*value - *range.start()) / range_size;
-
-    let slider = egui::Slider::new(value, range)
-        .step_by(1.0)
-        .fill(ACCENT_PRIMARY);
-
-    ui.add(slider)
+    ui.scope(|ui| {
+        ui.style_mut().visuals.selection.bg_fill = ACCENT_PRIMARY;
+        let slider = egui::Slider::new(value, range)
+            .step_by(1.0)
+            .trailing_fill(true);
+        ui.add(slider)
+    })
+    .inner
 }
 
 pub fn slider_with_ticks(value: &mut f32, range: std::ops::RangeInclusive<f32>, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
+        ui.style_mut().visuals.selection.bg_fill = ACCENT_PRIMARY;
         let slider = egui::Slider::new(value, range)
             .step_by(1.0)
-            .fill(ACCENT_PRIMARY);
+            .trailing_fill(true);
         ui.add(slider);
     });
 
     ui.horizontal(|ui| {
         ui.label(
-            RichText::new(&format!("{}", range.start()))
+            egui::RichText::new(&format!("{}", range.start()))
                 .color(TEXT_MUTED)
                 .size(10.0),
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.label(
-                RichText::new(&format!("{}", range.end()))
+                egui::RichText::new(&format!("{}", range.end()))
                     .color(TEXT_MUTED)
                     .size(10.0),
             );
