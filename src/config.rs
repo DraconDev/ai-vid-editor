@@ -312,6 +312,7 @@ impl Default for WatchFolder {
             output: PathBuf::from("videos/output"),
             preset: default_preset(),
             enabled: true,
+            settings: FolderSettings::default(),
         }
     }
 }

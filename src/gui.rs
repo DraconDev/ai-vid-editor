@@ -7,7 +7,7 @@ use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
 
-use ai_vid_editor::{Config, FolderSettings, JoinMode, SilenceMode, WatchFolder};
+use ai_vid_editor::{Config, FolderSettings, JoinMode, WatchFolder};
 use theme::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
