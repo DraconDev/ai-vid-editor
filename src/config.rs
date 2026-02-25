@@ -256,6 +256,26 @@ impl Default for ExportConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FolderSettings {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enhance_audio: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remove_silence: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub silence_threshold_db: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_lufs: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stabilize: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color_correct: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reframe: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blur_background: Option<bool>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WatchFolder {
     pub input: PathBuf,
@@ -264,6 +284,21 @@ pub struct WatchFolder {
     pub preset: String,
     #[serde(default = "default_true")]
     pub enabled: bool,
+    #[serde(default, skip_serializing_if = "FolderSettings::is_default")]
+    pub settings: FolderSettings,
+}
+
+impl FolderSettings {
+    fn is_default(&self) -> bool {
+        self.enhance_audio.is_none()
+            && self.remove_silence.is_none()
+            && self.silence_threshold_db.is_none()
+            && self.target_lufs.is_none()
+            && self.stabilize.is_none()
+            && self.color_correct.is_none()
+            && self.reframe.is_none()
+            && self.blur_background.is_none()
+    }
 }
 
 fn default_preset() -> String {
