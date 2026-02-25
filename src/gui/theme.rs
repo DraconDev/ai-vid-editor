@@ -85,6 +85,7 @@ pub fn text_edit_style(text: &mut String) -> egui::TextEdit<'_> {
         .background_color(PANEL_BG_LIGHTER)
         .desired_width(f32::INFINITY)
         .cursor_at_end(true)
+        .min_size(egui::vec2(0.0, 28.0))
 }
 
 pub fn button_secondary(text: impl Into<String>) -> egui::Button<'static> {
@@ -256,11 +257,12 @@ pub fn folder_card_compact(enabled: bool) -> egui::Frame {
     } else {
         PANEL_BG_LIGHT
     };
+    let border = if enabled { BORDER_LIGHT } else { BORDER };
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(egui::vec2(12.0, 10.0))
-        .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+        .inner_margin(egui::vec2(14.0, 10.0))
+        .stroke(egui::Stroke::new(1.0, border))
 }
 
 pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
