@@ -299,12 +299,12 @@ pub fn preset_badge(preset: &str, ui: &mut egui::Ui) {
     egui::Frame::NONE
         .fill(color)
         .corner_radius(4.0)
-        .inner_margin(egui::vec2(8.0, 4.0))
+        .inner_margin(egui::vec2(10.0, 5.0))
         .show(ui, |ui| {
             ui.label(
                 egui::RichText::new(preset)
                     .color(TEXT_PRIMARY)
-                    .size(11.0)
+                    .size(10.0)
                     .strong(),
             );
         });
@@ -314,27 +314,34 @@ pub fn truncate_path(path: &str, max_len: usize) -> String {
     if path.len() <= max_len {
         path.to_string()
     } else {
-        let start = &path[..max_len / 2 - 1];
-        let end = &path[path.len() - max_len / 2 + 1..];
-        format!("{}…{}", start, end)
+        let start = &path[..max_len / 2 - 2];
+        let end = &path[path.len() - max_len / 2 + 2..];
+        format!("{}...{}", start, end)
     }
 }
 
 pub fn status_badge_with_bg(
     ui: &mut egui::Ui,
     status: &str,
-    icon: &str,
-    color: egui::Color32,
+    dot_color: egui::Color32,
     bg: egui::Color32,
 ) {
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(egui::vec2(16.0, 10.0))
+        .inner_margin(egui::vec2(14.0, 8.0))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(icon).size(16.0));
-                ui.label(egui::RichText::new(status).color(color).size(14.0).strong());
+                let (rect, _) =
+                    ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
+                ui.painter().circle_filled(rect.center(), 4.0, dot_color);
+                ui.add_space(4.0);
+                ui.label(
+                    egui::RichText::new(status)
+                        .color(dot_color)
+                        .size(13.0)
+                        .strong(),
+                );
             });
         });
 }
@@ -348,13 +355,15 @@ pub fn log_entry_success(
 ) {
     card_frame(SUCCESS_BG).show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new("✓").color(SUCCESS).size(18.0));
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+            ui.painter().circle_filled(rect.center(), 5.0, SUCCESS);
+            ui.add_space(2.0);
             ui.label(label_muted(timestamp));
             ui.label(label_primary(filename));
         });
         ui.horizontal(|ui| {
-            ui.add_space(26.0);
-            ui.label(label_muted(&format!("{} • {}", size, duration)));
+            ui.add_space(20.0);
+            ui.label(label_muted(&format!("{} - {}", size, duration)));
         });
     });
 }
@@ -362,13 +371,15 @@ pub fn log_entry_success(
 pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, progress: f32) {
     card_frame(PROCESSING_BG).show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new("⏳").color(PROCESSING).size(16.0));
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+            ui.painter().circle_filled(rect.center(), 5.0, PROCESSING);
+            ui.add_space(2.0);
             ui.label(label_muted(timestamp));
             ui.label(label_primary(filename));
         });
-        ui.add_space(8.0);
+        ui.add_space(6.0);
         ui.horizontal(|ui| {
-            ui.add_space(26.0);
+            ui.add_space(20.0);
             ui.add(
                 egui::ProgressBar::new(progress)
                     .text(format!("{:.0}%", progress * 100.0))
@@ -383,32 +394,36 @@ pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, 
 pub fn log_entry_error(ui: &mut egui::Ui, timestamp: &str, filename: &str, message: &str) {
     card_frame(ERROR_BG).show(ui, |ui| {
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new("✗").color(ERROR).size(18.0));
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+            ui.painter().circle_filled(rect.center(), 5.0, ERROR);
+            ui.add_space(2.0);
             ui.label(label_muted(timestamp));
             ui.label(label_primary(filename));
         });
         ui.horizontal(|ui| {
-            ui.add_space(26.0);
+            ui.add_space(20.0);
             ui.label(egui::RichText::new(message).color(ERROR).size(12.0));
         });
     });
 }
 
 pub fn log_entry_simple(ui: &mut egui::Ui, timestamp: &str, message: &str, success: bool) {
-    let (icon, bg) = if success {
-        ("✓", SUCCESS_BG)
+    let (color, bg) = if success {
+        (SUCCESS, SUCCESS_BG)
     } else {
-        ("✗", ERROR_BG)
+        (ERROR, ERROR_BG)
     };
-    let color = if success { SUCCESS } else { ERROR };
 
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(egui::vec2(14.0, 10.0))
+        .inner_margin(egui::vec2(12.0, 8.0))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(icon).color(color).size(16.0));
+                let (rect, _) =
+                    ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+                ui.painter().circle_filled(rect.center(), 5.0, color);
+                ui.add_space(2.0);
                 ui.label(label_muted(timestamp));
                 ui.label(label_secondary(message));
             });
