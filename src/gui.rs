@@ -429,23 +429,23 @@ impl eframe::App for App {
 impl App {
     fn draw_header(&mut self, ui: &mut egui::Ui) {
         accent_bar().show(ui, |_ui| {});
-        ui.add_space(12.0);
+        ui.add_space(10.0);
 
         ui.horizontal(|ui| {
             ui.label(
                 RichText::new("AI Video Processor")
-                    .size(22.0)
+                    .size(18.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
         });
 
-        ui.add_space(12.0);
+        ui.add_space(10.0);
 
         egui::Frame::NONE
             .fill(PANEL_BG_LIGHT)
             .corner_radius(CORNER_RADIUS_SMALL)
-            .inner_margin(egui::vec2(8.0, 4.0))
+            .inner_margin(egui::vec2(6.0, 4.0))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     let tabs = [
@@ -470,8 +470,8 @@ impl App {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new("Watch Folders")
-                        .size(18.0)
+                    RichText::new("Folders")
+                        .size(16.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
@@ -793,7 +793,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut enhance,
-                    RichText::new("Enhance Audio").color(TEXT_PRIMARY).size(12.0),
+                    RichText::new("Enhance Audio")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -807,7 +809,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut remove_silence,
-                    RichText::new("Remove Silence").color(TEXT_PRIMARY).size(12.0),
+                    RichText::new("Remove Silence")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -821,7 +825,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut stabilize,
-                    RichText::new("Stabilize Video").color(TEXT_PRIMARY).size(12.0),
+                    RichText::new("Stabilize Video")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -835,9 +841,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut color_correct,
-                    RichText::new("Color Correct").color(TEXT_PRIMARY).size(12.0),
-                )
-                        .size(14.0),
+                    RichText::new("Color Correct")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -851,7 +857,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut reframe,
-                    RichText::new("Auto-Reframe (9:16)").color(TEXT_PRIMARY).size(12.0),
+                    RichText::new("Auto-Reframe (9:16)")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -865,7 +873,9 @@ impl App {
             if ui
                 .checkbox(
                     &mut blur,
-                    RichText::new("Blur Background").color(TEXT_PRIMARY).size(12.0),
+                    RichText::new("Blur Background")
+                        .color(TEXT_PRIMARY)
+                        .size(12.0),
                 )
                 .changed()
             {
@@ -903,10 +913,7 @@ impl App {
 
             ui.add_space(12.0);
 
-            if ui
-                .add(button_small("Reset to Defaults"))
-                .clicked()
-            {
+            if ui.add(button_small("Reset to Defaults")).clicked() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings = FolderSettings::default();
                     needs_save = true;
