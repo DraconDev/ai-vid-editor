@@ -476,17 +476,17 @@ impl App {
                         .strong(),
                 );
 
-                let (status_text, status_color, bg_color, icon) = match &self.state.status {
-                    ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT, "○"),
-                    ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG, "●"),
-                    ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT, "◐"),
-                    ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG, "✗"),
+                let (status_text, status_color, bg_color) = match &self.state.status {
+                    ProcessingStatus::Idle => ("Paused", TEXT_SECONDARY, PANEL_BG_LIGHT),
+                    ProcessingStatus::Watching => ("Watching", SUCCESS, SUCCESS_BG),
+                    ProcessingStatus::Processing(_) => ("Processing", WARNING, PANEL_BG_LIGHT),
+                    ProcessingStatus::Error(_) => ("Error", ERROR, ERROR_BG),
                 };
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    status_badge_with_bg(ui, status_text, icon, status_color, bg_color);
+                    status_badge_with_bg(ui, status_text, status_color, bg_color);
                     ui.add_space(8.0);
-                    if ui.add(button_add("+ Add Folder")).clicked() {
+                    if ui.add(button_add("+ Add")).clicked() {
                         self.state.modal.reset_for_add();
                     }
                 });

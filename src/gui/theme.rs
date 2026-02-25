@@ -264,11 +264,11 @@ pub fn folder_card_compact(enabled: bool) -> egui::Frame {
 }
 
 pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(13.0))
+    egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(12.0))
         .fill(PANEL_BG)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(100.0, 32.0))
+        .min_size(egui::vec2(60.0, 28.0))
 }
 
 pub fn modal_overlay() -> egui::Frame {
