@@ -246,6 +246,7 @@ impl AppState {
             config_path: None,
             current_tab: Tab::All,
             modal: ModalState::default(),
+            selected_folder_idx: 0,
         };
 
         if let Some(path) = Config::default_config_path() {
