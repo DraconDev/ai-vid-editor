@@ -237,12 +237,6 @@ pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'st
         )
         .fill(ACCENT_PRIMARY)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 0],
-            blur: GLOW_RADIUS,
-            spread: 0,
-            color: GLOW_COLOR,
-        })
     } else {
         egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHTER)
@@ -258,12 +252,6 @@ pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
         .corner_radius(CORNER_RADIUS_SMALL)
         .min_size(egui::vec2(60.0, 28.0))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 0],
-            blur: 10.0,
-            spread: 0,
-            color: egui::Color32::from_rgba_unmultiplied(230, 57, 70, 40),
-        })
 }
 
 pub fn slider_glow(
