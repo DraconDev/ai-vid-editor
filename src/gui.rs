@@ -708,16 +708,15 @@ impl App {
         panel_frame().show(ui, |ui| {
             ui.label(
                 RichText::new("Settings")
-                    .size(18.0)
+                    .size(16.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
 
-            ui.add_space(16.0);
+            ui.add_space(12.0);
 
-            // Folder selector - pill buttons
             ui.label(label_secondary("Configure Folder"));
-            ui.add_space(8.0);
+            ui.add_space(6.0);
             let folder_names: Vec<String> = self
                 .state
                 .folders
@@ -743,9 +742,8 @@ impl App {
                 }
             });
 
-            ui.add_space(8.0);
+            ui.add_space(6.0);
 
-            // Show which preset this folder uses
             let preset_name = self
                 .state
                 .folders
@@ -753,19 +751,18 @@ impl App {
                 .map(|f| f.preset.clone())
                 .unwrap_or_default();
             ui.horizontal(|ui| {
-                ui.label(label_secondary("Preset:"));
+                ui.label(label_muted("Preset:"));
+                ui.add_space(4.0);
                 preset_badge(&preset_name, ui);
             });
 
-            ui.add_space(16.0);
-            ui.label(label_muted("--- Processing ---"));
             ui.add_space(12.0);
+            ui.label(label_muted("Processing"));
+            ui.add_space(8.0);
 
-            // Track if we need to save
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
 
-            // Get current values
             let (
                 enhance_val,
                 remove_silence_val,
@@ -792,14 +789,11 @@ impl App {
                 }
             };
 
-            // Display and get new values
             let mut enhance = enhance_val;
             if ui
                 .checkbox(
                     &mut enhance,
-                    RichText::new("Enhance Audio")
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
+                    RichText::new("Enhance Audio").color(TEXT_PRIMARY).size(12.0),
                 )
                 .changed()
             {
@@ -813,9 +807,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut remove_silence,
-                    RichText::new("Remove Silence")
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
+                    RichText::new("Remove Silence").color(TEXT_PRIMARY).size(12.0),
                 )
                 .changed()
             {
@@ -829,9 +821,7 @@ impl App {
             if ui
                 .checkbox(
                     &mut stabilize,
-                    RichText::new("Stabilize Video")
-                        .color(TEXT_PRIMARY)
-                        .size(14.0),
+                    RichText::new("Stabilize Video").color(TEXT_PRIMARY).size(12.0),
                 )
                 .changed()
             {
@@ -845,8 +835,8 @@ impl App {
             if ui
                 .checkbox(
                     &mut color_correct,
-                    RichText::new("Color Correct")
-                        .color(TEXT_PRIMARY)
+                    RichText::new("Color Correct").color(TEXT_PRIMARY).size(12.0),
+                )
                         .size(14.0),
                 )
                 .changed()
