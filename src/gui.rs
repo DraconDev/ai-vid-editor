@@ -333,6 +333,7 @@ impl AppState {
             output: self.modal.output.clone(),
             preset: self.modal.preset.clone(),
             enabled: self.modal.enabled,
+            settings: FolderSettings::default(),
         };
         self.folders.push(folder);
         self.activity_log
