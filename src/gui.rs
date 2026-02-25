@@ -859,8 +859,6 @@ impl App {
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
-                ui.add_space(4.0);
-                ui.label(label_muted("Fine tune the audio response envelope."));
                 ui.add_space(10.0);
 
                 if ui.available_width() > 620.0 {
