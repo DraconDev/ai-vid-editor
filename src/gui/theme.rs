@@ -111,6 +111,20 @@ pub fn card_frame(bg: egui::Color32) -> egui::Frame {
         .stroke(egui::Stroke::new(1.0, BORDER))
 }
 
+pub fn folder_card_compact(enabled: bool) -> egui::Frame {
+    let bg = if enabled {
+        PANEL_BG_LIGHTER
+    } else {
+        PANEL_BG_LIGHT
+    };
+    let border = if enabled { BORDER_LIGHT } else { BORDER };
+    egui::Frame::NONE
+        .fill(bg)
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .inner_margin(egui::vec2(14.0, 10.0))
+        .stroke(egui::Stroke::new(1.0, border))
+}
+
 #[allow(dead_code)]
 pub fn section_header(text: &str) -> egui::RichText {
     egui::RichText::new(text)
