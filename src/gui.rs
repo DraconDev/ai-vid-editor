@@ -979,6 +979,7 @@ impl App {
         });
     }
 
+    #[allow(dead_code)]
     fn draw_settings_metric(ui: &mut egui::Ui, label: &str, value: &str, color: egui::Color32) {
         let bg = egui::Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 24);
         egui::Frame::NONE
