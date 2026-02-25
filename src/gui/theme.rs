@@ -152,7 +152,8 @@ pub fn text_edit_style(text: &mut String) -> egui::TextEdit<'_> {
         .background_color(PANEL_BG_LIGHTER)
         .desired_width(f32::INFINITY)
         .cursor_at_end(true)
-        .min_size(egui::vec2(0.0, 28.0))
+        .min_size(egui::vec2(0.0, 36.0))
+        .vertical_align(egui::Align::Center)
 }
 
 pub fn button_secondary(text: impl Into<String>) -> egui::Button<'static> {
