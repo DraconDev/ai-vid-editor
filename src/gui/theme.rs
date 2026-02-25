@@ -214,7 +214,9 @@ pub fn slider_filled(
     .inner
 }
 
+#[allow(dead_code)]
 pub fn slider_with_ticks(value: &mut f32, range: std::ops::RangeInclusive<f32>, ui: &mut egui::Ui) {
+    let range_clone = range.clone();
     ui.horizontal(|ui| {
         ui.style_mut().visuals.selection.bg_fill = ACCENT_PRIMARY;
         let slider = egui::Slider::new(value, range)
@@ -225,13 +227,13 @@ pub fn slider_with_ticks(value: &mut f32, range: std::ops::RangeInclusive<f32>, 
 
     ui.horizontal(|ui| {
         ui.label(
-            egui::RichText::new(&format!("{}", range.start()))
+            egui::RichText::new(&format!("{}", range_clone.start()))
                 .color(TEXT_MUTED)
                 .size(10.0),
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.label(
-                egui::RichText::new(&format!("{}", range.end()))
+                egui::RichText::new(&format!("{}", range_clone.end()))
                     .color(TEXT_MUTED)
                     .size(10.0),
             );
