@@ -572,7 +572,7 @@ impl App {
             .order(egui::Order::Foreground)
             .interactable(true)
             .show(ctx, |ui| {
-                let (rect, response) =
+                let (_rect, response) =
                     ui.allocate_exact_size(screen_rect.size(), egui::Sense::click());
                 modal_overlay().show(ui, |ui| {
                     ui.allocate_space(screen_rect.size());
