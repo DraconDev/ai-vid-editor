@@ -957,7 +957,6 @@ impl App {
             });
     }
 
-    #[allow(dead_code)]
     fn draw_settings_toggle(
         ui: &mut egui::Ui,
         label: &str,
