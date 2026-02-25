@@ -726,6 +726,44 @@ impl App {
             .map(|f| f.preset.clone())
             .unwrap_or_default();
 
+        let (
+            enhance_val,
+            remove_silence_val,
+            stabilize_val,
+            color_correct_val,
+            reframe_val,
+            blur_val,
+            threshold_val,
+            lufs_val,
+        ) = {
+            if let Some(folder) = self.state.folders.get(self.state.selected_folder_idx) {
+                (
+                    folder.settings.enhance_audio.unwrap_or(true),
+                    folder.settings.remove_silence.unwrap_or(true),
+                    folder.settings.stabilize.unwrap_or(false),
+                    folder.settings.color_correct.unwrap_or(false),
+                    folder.settings.reframe.unwrap_or(false),
+                    folder.settings.blur_background.unwrap_or(false),
+                    folder.settings.silence_threshold_db.unwrap_or(-30.0),
+                    folder.settings.target_lufs.unwrap_or(-14.0),
+                )
+            } else {
+                (true, true, false, false, false, false, -30.0, -14.0)
+            }
+        };
+
+        let enabled_modules = [
+            enhance_val,
+            remove_silence_val,
+            stabilize_val,
+            color_correct_val,
+            reframe_val,
+            blur_val,
+        ]
+        .into_iter()
+        .filter(|is_enabled| *is_enabled)
+        .count();
+
         settings_panel_frame().show(ui, |ui| {
             settings_section_frame(true).show(ui, |ui| {
                 ui.horizontal(|ui| {
@@ -745,6 +783,31 @@ impl App {
                         ui.add_space(6.0);
                         ui.label(label_muted("Preset"));
                     });
+                });
+            });
+
+            ui.add_space(12.0);
+
+            settings_section_frame(false).show(ui, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    Self::draw_settings_metric(
+                        ui,
+                        "Modules Enabled",
+                        &format!("{enabled_modules}/6"),
+                        ACCENT_PRIMARY,
+                    );
+                    Self::draw_settings_metric(
+                        ui,
+                        "Silence Gate",
+                        &format!("{threshold_val:.0} dB"),
+                        WARNING,
+                    );
+                    Self::draw_settings_metric(
+                        ui,
+                        "Target Loudness",
+                        &format!("{lufs_val:.0} LUFS"),
+                        PROCESSING,
+                    );
                 });
             });
 
@@ -777,32 +840,6 @@ impl App {
 
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
-
-            let (
-                enhance_val,
-                remove_silence_val,
-                stabilize_val,
-                color_correct_val,
-                reframe_val,
-                blur_val,
-                threshold_val,
-                lufs_val,
-            ) = {
-                if let Some(folder) = self.state.folders.get(folder_idx) {
-                    (
-                        folder.settings.enhance_audio.unwrap_or(true),
-                        folder.settings.remove_silence.unwrap_or(true),
-                        folder.settings.stabilize.unwrap_or(false),
-                        folder.settings.color_correct.unwrap_or(false),
-                        folder.settings.reframe.unwrap_or(false),
-                        folder.settings.blur_background.unwrap_or(false),
-                        folder.settings.silence_threshold_db.unwrap_or(-30.0),
-                        folder.settings.target_lufs.unwrap_or(-14.0),
-                    )
-                } else {
-                    (true, true, false, false, false, false, -30.0, -14.0)
-                }
-            };
 
             settings_section_frame(false).show(ui, |ui| {
                 ui.label(
@@ -977,6 +1014,21 @@ impl App {
                 self.state.auto_save_config();
             }
         });
+    }
+
+    fn draw_settings_metric(ui: &mut egui::Ui, label: &str, value: &str, color: egui::Color32) {
+        let bg = egui::Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 24);
+        egui::Frame::NONE
+            .fill(bg)
+            .corner_radius(6.0)
+            .inner_margin(egui::vec2(10.0, 8.0))
+            .stroke(egui::Stroke::new(1.0, color))
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    ui.label(RichText::new(label).size(10.0).color(TEXT_MUTED).strong());
+                    ui.label(RichText::new(value).size(12.0).color(TEXT_PRIMARY).strong());
+                });
+            });
     }
 
     fn draw_settings_toggle(
