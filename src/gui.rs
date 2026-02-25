@@ -563,13 +563,23 @@ impl App {
 
         let screen_rect = ctx.screen_rect();
 
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            should_close = true;
+        }
+
         egui::Area::new(egui::Id::new("modal_overlay"))
             .anchor(egui::Align2::LEFT_TOP, egui::vec2(0.0, 0.0))
             .order(egui::Order::Foreground)
+            .interactable(true)
             .show(ctx, |ui| {
+                let (rect, response) =
+                    ui.allocate_exact_size(screen_rect.size(), egui::Sense::click());
                 modal_overlay().show(ui, |ui| {
                     ui.allocate_space(screen_rect.size());
                 });
+                if response.clicked() {
+                    should_close = true;
+                }
             });
 
         egui::Area::new(egui::Id::new("modal_dialog"))
@@ -579,15 +589,13 @@ impl App {
             .show(ctx, |ui| {
                 modal_dialog().show(ui, |ui| {
                     ui.set_min_width(320.0);
+                    ui.set_max_width(320.0);
 
                     ui.label(label_secondary("Input Folder"));
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut input_str = self.state.modal.input.to_string_lossy().to_string();
-                        ui.add_sized(
-                            egui::vec2(ui.available_width() - 60.0, 36.0),
-                            text_edit_style(&mut input_str),
-                        );
+                        ui.add_sized(egui::vec2(240.0, 36.0), text_edit_style(&mut input_str));
                         self.state.modal.input = PathBuf::from(&input_str);
                         if ui.add(button_small("...")).clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
@@ -602,10 +610,7 @@ impl App {
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut output_str = self.state.modal.output.to_string_lossy().to_string();
-                        ui.add_sized(
-                            egui::vec2(ui.available_width() - 60.0, 36.0),
-                            text_edit_style(&mut output_str),
-                        );
+                        ui.add_sized(egui::vec2(240.0, 36.0), text_edit_style(&mut output_str));
                         self.state.modal.output = PathBuf::from(&output_str);
                         if ui.add(button_small("...")).clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
@@ -649,6 +654,10 @@ impl App {
                             };
                             if ui.add(button_secondary(btn_text)).clicked() {
                                 should_save = true;
+                                should_close = true;
+                            }
+                            ui.add_space(8.0);
+                            if ui.add(button_small("Cancel")).clicked() {
                                 should_close = true;
                             }
                         });
