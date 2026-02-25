@@ -1117,7 +1117,7 @@ impl App {
                 });
             });
             ui.add_space(8.0);
-            if slider_filled(value, range, ui).changed() {
+            if slider_glow(value, range, ui).changed() {
                 changed = true;
             }
             ui.add_space(4.0);
