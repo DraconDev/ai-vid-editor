@@ -271,6 +271,97 @@ pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
         })
 }
 
+pub fn slider_glow(
+    value: &mut f32,
+    range: std::ops::RangeInclusive<f32>,
+    ui: &mut egui::Ui,
+) -> egui::Response {
+    let spacing = ui.spacing();
+    let slider_width = spacing.slider_width;
+    let rail_height = 6.0;
+    let handle_radius = 9.0;
+
+    let available_width = ui.available_width();
+    let width = slider_width.min(available_width).max(100.0);
+
+    let (rect, mut response) = ui.allocate_exact_size(
+        egui::vec2(width, handle_radius * 2.0 + 4.0),
+        egui::Sense::click_and_drag(),
+    );
+
+    let range_size = *range.end() - *range.start();
+    let fraction = (*value - *range.start()) / range_size;
+
+    let handle_x = egui::lerp(rect.left()..=rect.right(), fraction);
+    let handle_center = egui::pos2(handle_x, rect.center().y);
+
+    let track_rect = egui::Rect::from_min_size(
+        egui::pos2(rect.left(), rect.center().y - rail_height / 2.0),
+        egui::vec2(rect.width(), rail_height),
+    );
+
+    let painter = ui.painter();
+
+    painter.rect_filled(track_rect, 3.0, egui::Color32::from_rgb(30, 30, 30));
+
+    if fraction > 0.0 {
+        let filled_width = (handle_x - rect.left()).max(0.0);
+        let filled_rect =
+            egui::Rect::from_min_size(track_rect.left_top(), egui::vec2(filled_width, rail_height));
+
+        for i in 1..=3 {
+            let glow_alpha = 60 - (i * 15);
+            painter.rect_filled(
+                filled_rect.expand(i as f32 * 2.0),
+                3.0 + i as f32,
+                egui::Color32::from_rgba_unmultiplied(230, 57, 70, glow_alpha as u8),
+            );
+        }
+
+        painter.rect_filled(filled_rect, 3.0, ACCENT_PRIMARY);
+    }
+
+    for i in 1..=4 {
+        let glow_alpha = 40 - (i * 8);
+        let glow_radius = handle_radius + i as f32 * 3.0;
+        painter.circle_filled(
+            handle_center,
+            glow_radius,
+            egui::Color32::from_rgba_unmultiplied(230, 57, 70, glow_alpha as u8),
+        );
+    }
+
+    painter.circle_filled(handle_center, handle_radius, ACCENT_PRIMARY);
+    painter.circle_filled(
+        handle_center,
+        handle_radius - 2.0,
+        egui::Color32::from_rgb(255, 100, 110),
+    );
+
+    if response.clicked() || response.dragged() {
+        let pointer_pos = ui.input(|i| i.pointer.interact_pos());
+        if let Some(pos) = pointer_pos {
+            let new_fraction = ((pos.x - rect.left()) / rect.width()).clamp(0.0, 1.0);
+            let new_value = *range.start() + new_fraction * range_size;
+            let stepped = (new_value / 1.0).round() * 1.0;
+            *value = stepped.clamp(*range.start(), *range.end());
+            response.mark_changed();
+        }
+    }
+
+    let value_text = format!("{}", *value as i32);
+    let text_color = TEXT_SECONDARY;
+    let font_id = egui::FontId::proportional(11.0);
+    let text_galley = painter.layout_no_wrap(value_text, font_id, text_color);
+    let text_pos = egui::pos2(
+        rect.right() + 12.0,
+        rect.center().y - text_galley.size().y / 2.0,
+    );
+    painter.galley(text_pos, text_galley, text_color);
+
+    response
+}
+
 pub fn modal_overlay() -> egui::Frame {
     egui::Frame::NONE.fill(egui::Color32::from_rgba_unmultiplied(0, 0, 0, 200))
 }
