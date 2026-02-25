@@ -713,10 +713,10 @@ impl App {
                     .strong(),
             );
 
-            ui.add_space(12.0);
+            ui.add_space(16.0);
 
             ui.label(label_secondary("Configure Folder"));
-            ui.add_space(6.0);
+            ui.add_space(8.0);
             let folder_names: Vec<String> = self
                 .state
                 .folders
@@ -742,7 +742,7 @@ impl App {
                 }
             });
 
-            ui.add_space(6.0);
+            ui.add_space(10.0);
 
             let preset_name = self
                 .state
@@ -756,9 +756,9 @@ impl App {
                 preset_badge(&preset_name, ui);
             });
 
-            ui.add_space(12.0);
+            ui.add_space(20.0);
             ui.label(label_muted("Processing"));
-            ui.add_space(8.0);
+            ui.add_space(10.0);
 
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
@@ -804,6 +804,7 @@ impl App {
                     needs_save = true;
                 }
             }
+            ui.add_space(4.0);
 
             let mut remove_silence = remove_silence_val;
             if ui
@@ -820,6 +821,7 @@ impl App {
                     needs_save = true;
                 }
             }
+            ui.add_space(4.0);
 
             let mut stabilize = stabilize_val;
             if ui
@@ -836,6 +838,7 @@ impl App {
                     needs_save = true;
                 }
             }
+            ui.add_space(4.0);
 
             let mut color_correct = color_correct_val;
             if ui
@@ -852,6 +855,7 @@ impl App {
                     needs_save = true;
                 }
             }
+            ui.add_space(4.0);
 
             let mut reframe = reframe_val;
             if ui
@@ -868,6 +872,7 @@ impl App {
                     needs_save = true;
                 }
             }
+            ui.add_space(4.0);
 
             let mut blur = blur_val;
             if ui
@@ -885,12 +890,12 @@ impl App {
                 }
             }
 
-            ui.add_space(12.0);
+            ui.add_space(20.0);
             ui.label(label_muted("Advanced"));
-            ui.add_space(8.0);
+            ui.add_space(10.0);
 
             ui.label(label_secondary("Silence Threshold (dB)"));
-            ui.add_space(4.0);
+            ui.add_space(6.0);
             let mut threshold = threshold_val;
             if slider_filled(&mut threshold, -60.0..=-10.0, ui).changed() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
@@ -899,10 +904,10 @@ impl App {
                 }
             }
 
-            ui.add_space(8.0);
+            ui.add_space(12.0);
 
             ui.label(label_secondary("Target LUFS"));
-            ui.add_space(4.0);
+            ui.add_space(6.0);
             let mut lufs = lufs_val;
             if slider_filled(&mut lufs, -24.0..=-6.0, ui).changed() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
@@ -911,7 +916,7 @@ impl App {
                 }
             }
 
-            ui.add_space(12.0);
+            ui.add_space(16.0);
 
             if ui.add(button_small("Reset to Defaults")).clicked() {
                 if let Some(folder) = self.state.folders.get_mut(folder_idx) {
