@@ -7,7 +7,7 @@ use egui::RichText;
 use rfd::FileDialog;
 use std::path::PathBuf;
 
-use ai_vid_editor::{Config, JoinMode, SilenceMode, WatchFolder};
+use ai_vid_editor::{Config, FolderSettings, JoinMode, SilenceMode, WatchFolder};
 use theme::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -113,6 +113,7 @@ struct FolderState {
     output: PathBuf,
     preset: String,
     enabled: bool,
+    settings: FolderSettings,
 }
 
 impl From<WatchFolder> for FolderState {
@@ -122,6 +123,7 @@ impl From<WatchFolder> for FolderState {
             output: folder.output,
             preset: folder.preset,
             enabled: folder.enabled,
+            settings: folder.settings,
         }
     }
 }
@@ -133,6 +135,7 @@ impl From<FolderState> for WatchFolder {
             output: state.output,
             preset: state.preset,
             enabled: state.enabled,
+            settings: state.settings,
         }
     }
 }
@@ -144,6 +147,7 @@ impl Default for FolderState {
             output: PathBuf::from("videos/output"),
             preset: "youtube".to_string(),
             enabled: true,
+            settings: FolderSettings::default(),
         }
     }
 }
