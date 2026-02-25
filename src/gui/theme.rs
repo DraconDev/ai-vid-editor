@@ -199,12 +199,6 @@ pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'
         )
         .fill(ACCENT_PRIMARY)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
-        .shadow(egui::epaint::Shadow {
-            offset: [0, 0],
-            blur: GLOW_RADIUS,
-            spread: 0,
-            color: GLOW_COLOR,
-        })
     } else {
         egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
             .fill(PANEL_BG_LIGHT)
