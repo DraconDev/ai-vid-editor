@@ -742,71 +742,96 @@ impl App {
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
 
-            settings_section_frame(false).show(ui, |ui| {
-                ui.label(
-                    RichText::new("Processing")
-                        .size(13.0)
-                        .color(ACCENT_PRIMARY)
-                        .strong(),
-                );
-                ui.add_space(10.0);
+            ui.label(
+                RichText::new("Processing")
+                    .size(13.0)
+                    .color(ACCENT_PRIMARY)
+                    .strong(),
+            );
+            ui.add_space(10.0);
 
-                ui.horizontal_wrapped(|ui| {
-                    let mut enhance = enhance_val;
-                    if Self::draw_settings_toggle_compact(ui, "Enhance Audio", &mut enhance) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.enhance_audio = Some(enhance);
-                            needs_save = true;
-                        }
-                    }
-                    ui.add_space(6.0);
+            let mut enhance = enhance_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Enhance Audio",
+                "Normalize speech and improve presence.",
+                &mut enhance,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.enhance_audio = Some(enhance);
+                    needs_save = true;
+                }
+            }
+            ui.add_space(6.0);
 
-                    let mut remove_silence = remove_silence_val;
-                    if Self::draw_settings_toggle_compact(ui, "Remove Silence", &mut remove_silence)
-                    {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.remove_silence = Some(remove_silence);
-                            needs_save = true;
-                        }
-                    }
-                    ui.add_space(6.0);
+            let mut remove_silence = remove_silence_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Remove Silence",
+                "Cut dead air for tighter pacing.",
+                &mut remove_silence,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.remove_silence = Some(remove_silence);
+                    needs_save = true;
+                }
+            }
+            ui.add_space(6.0);
 
-                    let mut stabilize = stabilize_val;
-                    if Self::draw_settings_toggle_compact(ui, "Stabilize", &mut stabilize) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.stabilize = Some(stabilize);
-                            needs_save = true;
-                        }
-                    }
-                    ui.add_space(6.0);
+            let mut stabilize = stabilize_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Stabilize Video",
+                "Reduce camera shake in moving clips.",
+                &mut stabilize,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.stabilize = Some(stabilize);
+                    needs_save = true;
+                }
+            }
+            ui.add_space(6.0);
 
-                    let mut color_correct = color_correct_val;
-                    if Self::draw_settings_toggle_compact(ui, "Color", &mut color_correct) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.color_correct = Some(color_correct);
-                            needs_save = true;
-                        }
-                    }
-                    ui.add_space(6.0);
+            let mut color_correct = color_correct_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Color Correct",
+                "Auto-balance contrast and white levels.",
+                &mut color_correct,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.color_correct = Some(color_correct);
+                    needs_save = true;
+                }
+            }
+            ui.add_space(6.0);
 
-                    let mut reframe = reframe_val;
-                    if Self::draw_settings_toggle_compact(ui, "Reframe", &mut reframe) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.reframe = Some(reframe);
-                            needs_save = true;
-                        }
-                    }
-                    ui.add_space(6.0);
+            let mut reframe = reframe_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Auto-Reframe (9:16)",
+                "Center content for vertical output.",
+                &mut reframe,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.reframe = Some(reframe);
+                    needs_save = true;
+                }
+            }
+            ui.add_space(6.0);
 
-                    let mut blur = blur_val;
-                    if Self::draw_settings_toggle_compact(ui, "Blur", &mut blur) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
-                            folder.settings.blur_background = Some(blur);
-                            needs_save = true;
-                        }
-                    }
-                });
-            });
+            let mut blur = blur_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Blur Background",
+                "Fill side space when reframing to portrait.",
+                &mut blur,
+            ) {
+                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    folder.settings.blur_background = Some(blur);
+                    needs_save = true;
+                }
+            }
 
             ui.add_space(12.0);
 
