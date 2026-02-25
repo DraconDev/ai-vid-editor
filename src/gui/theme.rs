@@ -308,7 +308,7 @@ pub fn slider_glow(
             egui::Rect::from_min_size(track_rect.left_top(), egui::vec2(filled_width, rail_height));
 
         for i in 1..=3 {
-            let glow_alpha = 60 - (i * 15);
+            let glow_alpha = 30 - (i * 8);
             painter.rect_filled(
                 filled_rect.expand(i as f32 * 2.0),
                 3.0 + i as f32,
@@ -320,7 +320,7 @@ pub fn slider_glow(
     }
 
     for i in 1..=4 {
-        let glow_alpha = 40 - (i * 8);
+        let glow_alpha = 20 - (i * 4);
         let glow_radius = handle_radius + i as f32 * 3.0;
         painter.circle_filled(
             handle_center,
