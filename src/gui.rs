@@ -489,6 +489,8 @@ impl App {
                 let input = folder.input.clone();
                 let output = folder.output.clone();
                 let preset = folder.preset.clone();
+                let muted_color = if enabled { TEXT_SECONDARY } else { TEXT_MUTED };
+                let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
 
                 let response = folder_card_compact(enabled).show(ui, |ui| {
                     ui.horizontal(|ui| {
@@ -499,19 +501,28 @@ impl App {
                             toggle_idx = Some(idx);
                         }
 
-                        ui.add_space(8.0);
-
-                        let path_display = format!(
-                            "{} → {}",
-                            truncate_path(&input.to_string_lossy(), 25),
-                            truncate_path(&output.to_string_lossy(), 20)
-                        );
-                        let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
-                        ui.label(RichText::new(path_display).color(text_color).size(13.0));
-
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             preset_badge(&preset, ui);
                         });
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.add_space(8.0);
+                        ui.label(RichText::new("Input:  ").color(muted_color).size(11.0));
+                        ui.label(
+                            RichText::new(truncate_path(&input.to_string_lossy(), 35))
+                                .color(text_color)
+                                .size(11.0),
+                        );
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add_space(8.0);
+                        ui.label(RichText::new("Output: ").color(muted_color).size(11.0));
+                        ui.label(
+                            RichText::new(truncate_path(&output.to_string_lossy(), 35))
+                                .color(text_color)
+                                .size(11.0),
+                        );
                     });
                 });
 
