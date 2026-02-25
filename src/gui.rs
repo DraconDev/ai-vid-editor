@@ -909,13 +909,14 @@ impl App {
                 ui.add_space(8.0);
 
                 let mut threshold = threshold_val;
+                let threshold_label = format!("{threshold:.0} dB");
                 if Self::draw_advanced_slider(
                     ui,
                     "Silence Threshold (dB)",
                     "Lower values are more conservative.",
                     &mut threshold,
                     -60.0..=-10.0,
-                    format!("{threshold:.0} dB"),
+                    threshold_label,
                 ) {
                     if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                         folder.settings.silence_threshold_db = Some(threshold);
@@ -926,13 +927,14 @@ impl App {
                 ui.add_space(8.0);
 
                 let mut lufs = lufs_val;
+                let lufs_label = format!("{lufs:.0} LUFS");
                 if Self::draw_advanced_slider(
                     ui,
                     "Target LUFS",
                     "Audio loudness target for final export.",
                     &mut lufs,
                     -24.0..=-6.0,
-                    format!("{lufs:.0} LUFS"),
+                    lufs_label,
                 ) {
                     if let Some(folder) = self.state.folders.get_mut(folder_idx) {
                         folder.settings.target_lufs = Some(lufs);
