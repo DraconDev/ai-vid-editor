@@ -152,24 +152,24 @@ pub fn text_edit_style(text: &mut String) -> egui::TextEdit<'_> {
         .background_color(PANEL_BG_LIGHTER)
         .desired_width(f32::INFINITY)
         .cursor_at_end(true)
-        .min_size(egui::vec2(0.0, 36.0))
+        .min_size(egui::vec2(0.0, 40.0))
         .vertical_align(egui::Align::Center)
 }
 
 pub fn button_secondary(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(TEXT_PRIMARY).size(13.0))
+    egui::Button::new(egui::RichText::new(text).color(TEXT_PRIMARY).size(15.0))
         .fill(PANEL_BG_LIGHTER)
         .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(80.0, 34.0))
+        .min_size(egui::vec2(80.0, 38.0))
 }
 
 pub fn button_small(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(12.0))
+    egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(14.0))
         .fill(PANEL_BG_LIGHT)
         .stroke(egui::Stroke::new(1.0, BORDER))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(60.0, 30.0))
+        .min_size(egui::vec2(60.0, 34.0))
 }
 
 #[allow(dead_code)]
