@@ -1081,7 +1081,7 @@ impl App {
                 });
             } else {
                 egui::ScrollArea::vertical()
-                    .max_height(300.0)
+                    .max_height(200.0)
                     .show(ui, |ui| {
                         for entry in self.state.activity_log.iter().rev().take(15) {
                             match entry.status {
