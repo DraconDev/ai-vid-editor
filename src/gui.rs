@@ -521,20 +521,20 @@ impl App {
 
                     ui.horizontal(|ui| {
                         ui.add_space(8.0);
-                        ui.label(RichText::new("Input:  ").color(muted_color).size(11.0));
+                        ui.label(RichText::new("Input:  ").color(muted_color).size(13.0));
                         ui.label(
                             RichText::new(truncate_path(&input.to_string_lossy(), 35))
                                 .color(text_color)
-                                .size(11.0),
+                                .size(13.0),
                         );
                     });
                     ui.horizontal(|ui| {
                         ui.add_space(8.0);
-                        ui.label(RichText::new("Output: ").color(muted_color).size(11.0));
+                        ui.label(RichText::new("Output: ").color(muted_color).size(13.0));
                         ui.label(
                             RichText::new(truncate_path(&output.to_string_lossy(), 35))
                                 .color(text_color)
-                                .size(11.0),
+                                .size(13.0),
                         );
                     });
                 });
