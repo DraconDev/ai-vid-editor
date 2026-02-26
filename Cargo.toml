@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.264"
+version = "0.1.265"
 edition = "2024"
 
 [dependencies]
@@ -29,7 +29,7 @@ notify-rust = { version = "4", optional = true }
 
 [features]
 default = ["cli"]
-cli = ["clap"]
+cli = ["clap", "notify-rust"]
 gui = ["eframe", "egui", "rfd", "chrono", "notify-rust"]
 
 [dev-dependencies]
