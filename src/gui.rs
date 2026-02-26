@@ -403,9 +403,10 @@ impl eframe::App for App {
                     Tab::All => {
                         ui.horizontal(|ui| {
                             ui.vertical(|ui| {
-                                ui.set_min_width(ui.available_width() * 0.5);
+                                ui.set_min_width(ui.available_width() * 0.48);
                                 self.draw_folders_panel(ui);
                             });
+                            ui.add_space(12.0);
                             ui.vertical(|ui| {
                                 self.draw_activity_log(ui);
                             });
