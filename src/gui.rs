@@ -715,13 +715,11 @@ impl App {
             .state
             .folders
             .iter()
-            .enumerate()
-            .map(|(i, f)| {
-                format!(
-                    "{}. {}",
-                    i + 1,
-                    f.input.file_name().unwrap_or_default().to_string_lossy()
-                )
+            .map(|f| {
+                f.input
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "Folder".to_string())
             })
             .collect();
 
