@@ -350,16 +350,36 @@ fn main() -> Result<()> {
     if let Some(input) = input_file {
         // Single file processing logic
         let out = output_file.ok_or_else(|| anyhow::anyhow!("Output file must be specified"))?;
-        process_single_file_with_intro_outro(
-            input,
-            out,
+
+        if cli.notify {
+            notify_processing(&input);
+        }
+
+        let result = process_single_file_with_intro_outro(
+            input.clone(),
+            out.clone(),
             &config,
             &analyzer,
             &editor,
             &duration_getter,
             intro,
             outro,
-        )?;
+        );
+
+        match &result {
+            Ok(_) => {
+                if cli.notify {
+                    notify_complete(&input, &out);
+                }
+            }
+            Err(e) => {
+                if cli.notify {
+                    notify_error(&input, &e.to_string());
+                }
+            }
+        }
+
+        result?;
     } else if let Some(in_dir) = input_dir {
         // Batch processing logic
         let out_dir =
