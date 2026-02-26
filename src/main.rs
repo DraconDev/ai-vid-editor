@@ -150,6 +150,35 @@ pub struct Cli {
     pub notify: bool,
 }
 
+#[cfg(feature = "notify-rust")]
+fn send_notification(summary: &str, body: &str) {
+    let _ = notify_rust::Notification::new()
+        .summary(summary)
+        .body(body)
+        .show();
+}
+
+#[cfg(not(feature = "notify-rust"))]
+fn send_notification(_summary: &str, _body: &str) {}
+
+fn notify_processing(input: &std::path::Path) {
+    send_notification("Processing Started", &format!("{}", input.display()));
+}
+
+fn notify_complete(input: &std::path::Path, output: &std::path::Path) {
+    send_notification(
+        "Processing Complete",
+        &format!("{}\n→ {}", input.display(), output.display()),
+    );
+}
+
+fn notify_error(input: &std::path::Path, error: &str) {
+    send_notification(
+        "Processing Error",
+        &format!("{}\nError: {}", input.display(), error),
+    );
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
