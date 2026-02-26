@@ -499,15 +499,13 @@ impl App {
 
             if self.state.folders.is_empty() {
                 inner_panel().show(ui, |ui| {
-                    ui.vertical_centered(|ui| {
-                        ui.add_space(20.0);
-                        ui.label(label_muted("No folders configured"));
-                        ui.add_space(8.0);
-                        if ui.add(button_secondary("+ Add Folder")).clicked() {
-                            self.state.modal.reset_for_add();
-                        }
-                        ui.add_space(20.0);
-                    });
+                    ui.add_space(12.0);
+                    ui.label(label_muted("No folders configured"));
+                    ui.add_space(8.0);
+                    if ui.add(button_secondary("+ Add Folder")).clicked() {
+                        self.state.modal.reset_for_add();
+                    }
+                    ui.add_space(12.0);
                 });
             } else {
                 for (idx, folder) in self.state.folders.iter().enumerate() {
