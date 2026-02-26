@@ -775,7 +775,7 @@ impl App {
                 });
             });
 
-            ui.add_space(16.0);
+            ui.add_space(14.0);
 
             let mut needs_save = false;
             let folder_idx = self.state.selected_folder_idx;
