@@ -144,6 +144,10 @@ pub struct Cli {
     /// Blur background while keeping speaker sharp
     #[arg(long)]
     pub blur_background: bool,
+
+    /// Send desktop notifications on processing events
+    #[arg(long)]
+    pub notify: bool,
 }
 
 fn main() -> Result<()> {
