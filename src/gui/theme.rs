@@ -330,7 +330,7 @@ pub fn slider_glow(
 
     let value_text = format!("{}", *value as i32);
     let text_color = TEXT_SECONDARY;
-    let font_id = egui::FontId::proportional(11.0);
+    let font_id = egui::FontId::proportional(13.0);
     let text_galley = painter.layout_no_wrap(value_text, font_id, text_color);
     let text_pos = egui::pos2(
         rect.right() + 12.0,
@@ -369,12 +369,12 @@ pub fn preset_badge(preset: &str, ui: &mut egui::Ui) {
     egui::Frame::NONE
         .fill(color)
         .corner_radius(4.0)
-        .inner_margin(egui::vec2(10.0, 5.0))
+        .inner_margin(egui::vec2(12.0, 6.0))
         .show(ui, |ui| {
             ui.label(
                 egui::RichText::new(preset)
                     .color(TEXT_PRIMARY)
-                    .size(10.0)
+                    .size(12.0)
                     .strong(),
             );
         });
@@ -384,13 +384,13 @@ pub fn settings_value_badge(ui: &mut egui::Ui, value: &str) {
     egui::Frame::NONE
         .fill(egui::Color32::from_rgb(46, 24, 28))
         .corner_radius(4.0)
-        .inner_margin(egui::vec2(8.0, 4.0))
+        .inner_margin(egui::vec2(10.0, 5.0))
         .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
         .show(ui, |ui| {
             ui.label(
                 egui::RichText::new(value)
                     .color(TEXT_PRIMARY)
-                    .size(10.0)
+                    .size(12.0)
                     .strong(),
             );
         });
