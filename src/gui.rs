@@ -759,7 +759,7 @@ impl App {
         };
 
         settings_panel_frame().show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (idx, name) in folder_names.iter().enumerate() {
                         if ui
