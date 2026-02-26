@@ -16,3 +16,4 @@ pub use config::{
     Config, FolderSettings, JoinMode, Preset, ProcessingConfig, SilenceMode, WatchFolder,
 };
 pub use editor::FfmpegEditor;
+pub use ml::{AutoReframeProcessor, FaceDetector, FrameExtractor, PersonSegmenter};
