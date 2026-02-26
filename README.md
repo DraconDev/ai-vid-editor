@@ -1,12 +1,12 @@
-# AI Video Editor (CLI + GUI)
+# AI Video Editor
 
 A command-line and GUI tool for automated video editing using AI. Designed for content creators who want to drop in raw footage and get polished results without manual editing.
 
 ## Quick Start
 
-**GUI (recommended):**
+**GUI:**
 ```bash
-cargo run --features gui --bin ai-vid-editor-gui
+cargo run -- --gui
 ```
 
 **CLI:**
@@ -14,7 +14,7 @@ cargo run --features gui --bin ai-vid-editor-gui
 cargo run --release -- -i input.mp4 -o output.mp4 --preset youtube
 ```
 
-**Using just (optional):**
+**Using just:**
 ```bash
 just gui      # Run GUI
 just build    # Build release
@@ -39,70 +39,9 @@ cd ai-vid-editor
 nix-shell  # or: nix develop
 ```
 
-## Features
-
-### ✅ Fully Working
-
-- **Silence Detection & Trimming** - Automatically detect and remove silent segments
-- **Speedup Mode** - Speed through silences instead of cutting (configurable speed)
-- **Batch Processing** - Process entire directories of videos
-- **TOML Configuration** - Customizable settings via config files
-- **Audio Enhancement** - Loudness normalization + EQ (`--enhance`)
-- **Noise Reduction** - Remove background noise (`--noise-reduction`)
-- **Music Mixing** - Auto-ducking background music (`--music` or `--music-dir`)
-- **Intro/Outro** - Prepend/append videos (`--intro`, `--outro`)
-- **Video Stabilization** - Remove camera shake (`--stabilize`)
-- **Auto Color Correction** - Enhance contrast, brightness, saturation (`--color-correct`)
-- **Auto-Reframe** - Convert horizontal to vertical (9:16) following speaker's face (`--reframe`)
-- **Background Blur** - Blur background while keeping speaker sharp (`--blur-background`)
-- **Export Formats** - FCPXML, EDL, SRT subtitles, YouTube chapters
-- **Preset Profiles** - One-command setups for YouTube, Shorts, Podcasts
-- **Watch Mode** - Daemon that auto-processes new videos
-- **Dry Run** - Preview changes without processing
-- **JSON Output** - For scripting and CI/CD integration
-- **Whisper STT** - Speech-to-text using Candle (HuggingFace model)
-- **Filler Word Removal** - Remove "um", "uh", etc. (`--remove-fillers`)
-
-## GUI
-
-The GUI provides a visual interface for managing watch folders and settings:
-
-**Navigation:**
-- **All** - Shows Folders, Settings, and Activity stacked
-- **Folders** - Manage watch folders only
-- **Settings** - Configure processing options
-- **Activity** - View processing log
-
-**Watch Folders:**
-- Add multiple input/output folder pairs
-- Each folder has its own preset (YouTube, Shorts, Podcast, Minimal)
-- Toggle folders on/off without deleting
-- Click any folder card to edit
-
-**Layout:**
-```
-┌─────────────────────────────────────────────┐
-│ █ AI Video Processor      [Save] [Load]     │
-│ [All] [Folders] [Settings] [Activity]       │
-├─────────────────────────────────────────────┤
-│ Watch Folders              ● Watching       │
-│ ┌─────────────────────────────────────────┐ │
-│ │ [ON] videos → videos/output    youtube  │ │
-│ └─────────────────────────────────────────┘ │
-│ [+ Add Folder]                              │
-├─────────────────────────────────────────────┤
-│ Settings                                    │
-│ [x] Enhance Audio    [x] Remove Silence     │
-│ ...                                         │
-├─────────────────────────────────────────────┤
-│ Activity Log                        [Clear] │
-│ ✓ 14:32 Added new watch folder              │
-└─────────────────────────────────────────────┘
-```
-
 ## Usage
 
-### Quick Examples
+### CLI Mode (Default)
 
 ```bash
 # Basic silence removal
@@ -124,13 +63,21 @@ ai-vid-editor -i input.mp4 -o output.mp4 \
 ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
 
 # Watch folder (auto-process new videos)
-ai-vid-editor --watch ./incoming -O ./processed
+ai-vid-editor --watch ./incoming -O ./processed --notify
 
 # Preview without processing
 ai-vid-editor -i input.mp4 --dry-run
 ```
 
-### CLI Options
+### GUI Mode
+
+```bash
+ai-vid-editor --gui
+```
+
+The GUI provides a visual interface for managing watch folders and settings.
+
+## CLI Options
 
 | Flag | Description |
 |------|-------------|
@@ -140,6 +87,17 @@ ai-vid-editor -i input.mp4 --dry-run
 | `-O, --output-dir <DIR>` | Output directory (batch mode) |
 | `-P, --preset <PRESET>` | Preset: `youtube`, `shorts`, `podcast`, `minimal` |
 | `-c, --config <FILE>` | Path to TOML config file |
+| `--gui` | Launch graphical interface |
+| `--notify` | Send desktop notifications |
+| `-w, --watch <DIR>` | Watch folder for new videos |
+| `-n, --dry-run` | Preview without processing |
+| `-j, --json` | JSON output for scripting |
+| `--generate-config` | Output sample config |
+
+### Processing Options
+
+| Flag | Description |
+|------|-------------|
 | `-t, --threshold <dB>` | Silence threshold (default: -30.0) |
 | `-d, --duration <SEC>` | Min silence duration (default: 0.5) |
 | `-p, --padding <SEC>` | Padding around cuts (default: 0.1) |
@@ -155,16 +113,17 @@ ai-vid-editor -i input.mp4 --dry-run
 | `--reframe` | Auto-reframe to vertical (9:16) |
 | `--blur-background` | Blur background behind speaker |
 | `--remove-fillers` | Remove filler words (um, uh, etc.) |
+
+### Export Options
+
+| Flag | Description |
+|------|-------------|
 | `--export-srt` | Generate SRT subtitles |
 | `--export-chapters` | Generate YouTube chapters |
 | `--export-fcpxml` | Generate FCPXML |
 | `--export-edl` | Generate EDL |
-| `-n, --dry-run` | Preview without processing |
-| `-j, --json` | JSON output for scripting |
-| `-w, --watch <DIR>` | Watch folder for new videos |
-| `--generate-config` | Output sample config |
 
-### Presets
+## Presets
 
 | Preset | Description |
 |--------|-------------|
@@ -199,6 +158,8 @@ duck_volume = 0.2
 [video]
 stabilize = false
 color_correct = false
+reframe = false
+blur_background = false
 
 [export]
 subtitles = false
@@ -207,31 +168,45 @@ fcpxml = false
 edl = false
 ```
 
+## Build Options
+
+```bash
+# Build everything (CLI + GUI) - default
+cargo build --release
+
+# Build CLI only (smaller binary, no GUI dependencies)
+cargo build --release --no-default-features --features cli
+
+# Build with specific features
+cargo build --features cli,gui
+```
+
 ## Project Status
 
 | Feature | Status |
 |---------|--------|
-| Silence detection | ✅ Done |
-| Silence trimming | ✅ Done |
-| Speedup mode | ✅ Done |
-| Batch processing | ✅ Done |
-| TOML config | ✅ Done |
-| Audio enhancement | ✅ Done |
-| Noise reduction | ✅ Done |
-| Music mixing | ✅ Done |
-| Intro/Outro | ✅ Done |
-| Video stabilization | ✅ Done |
-| Auto color correction | ✅ Done |
-| Preset profiles | ✅ Done |
-| Watch mode | ✅ Done |
-| Dry run | ✅ Done |
-| JSON output | ✅ Done |
-| Export formats | ✅ Done |
-| Whisper STT | ✅ Done |
-| Filler word removal | ✅ Done |
-| Auto-reframe | ✅ Done |
-| Background blur | ✅ Done |
-| GUI (egui) | ✅ Done |
+| Silence detection | Done |
+| Silence trimming | Done |
+| Speedup mode | Done |
+| Batch processing | Done |
+| TOML config | Done |
+| Audio enhancement | Done |
+| Noise reduction | Done |
+| Music mixing | Done |
+| Intro/Outro | Done |
+| Video stabilization | Done |
+| Auto color correction | Done |
+| Preset profiles | Done |
+| Watch mode | Done |
+| Dry run | Done |
+| JSON output | Done |
+| Export formats | Done |
+| Whisper STT | Done |
+| Filler word removal | Done |
+| Auto-reframe | Done |
+| Background blur | Done |
+| GUI (egui) | Done |
+| Desktop notifications | Done |
 
 ## License
 
