@@ -340,7 +340,7 @@ fn main() -> Result<()> {
         let out_dir = output_dir
             .clone()
             .ok_or_else(|| anyhow::anyhow!("Output directory required for watch mode"))?;
-        return run_watch_mode(&watch_path, &out_dir, &config, &intro, &outro);
+        return run_watch_mode(&watch_path, &out_dir, &config, &intro, &outro, cli.notify);
     }
 
     let analyzer = FfmpegAnalyzer;
