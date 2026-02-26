@@ -415,17 +415,17 @@ pub fn status_badge_with_bg(
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(egui::vec2(14.0, 8.0))
+        .inner_margin(egui::vec2(14.0, 10.0))
         .show(ui, |ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 let (rect, _) =
-                    ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
-                ui.painter().circle_filled(rect.center(), 4.0, dot_color);
-                ui.add_space(6.0);
+                    ui.allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
+                ui.painter().circle_filled(rect.center(), 5.0, dot_color);
+                ui.add_space(8.0);
                 ui.label(
                     egui::RichText::new(status)
                         .color(dot_color)
-                        .size(13.0)
+                        .size(15.0)
                         .strong(),
                 );
             });
