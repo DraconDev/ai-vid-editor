@@ -510,12 +510,13 @@ pub fn log_entry_simple(ui: &mut egui::Ui, timestamp: &str, message: &str, succe
         .corner_radius(CORNER_RADIUS_SMALL)
         .inner_margin(egui::vec2(12.0, 8.0))
         .show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 let (rect, _) =
                     ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
                 ui.painter().circle_filled(rect.center(), 5.0, color);
-                ui.add_space(2.0);
+                ui.add_space(6.0);
                 ui.label(label_muted(timestamp));
+                ui.add_space(8.0);
                 ui.label(label_secondary(message));
             });
         });
