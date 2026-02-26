@@ -506,7 +506,7 @@ impl App {
                 let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
 
                 let response = folder_card_compact(enabled).show(ui, |ui| {
-                    ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         if ui
                             .add(button_toggle(enabled, if enabled { "ON" } else { "OFF" }))
                             .clicked()
@@ -519,7 +519,7 @@ impl App {
                         });
                     });
 
-                    ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         ui.add_space(8.0);
                         ui.label(RichText::new("Input:  ").color(muted_color).size(11.0));
                         ui.label(
@@ -528,7 +528,7 @@ impl App {
                                 .size(11.0),
                         );
                     });
-                    ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         ui.add_space(8.0);
                         ui.label(RichText::new("Output: ").color(muted_color).size(11.0));
                         ui.label(
