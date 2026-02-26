@@ -541,7 +541,7 @@ impl App {
                             );
                         });
 
-                        ui.add_space(6.0);
+                        ui.add_space(3.0);
 
                         ui.horizontal(|ui| {
                             ui.label(RichText::new("Input:").color(muted_color).size(13.0));
@@ -615,7 +615,7 @@ impl App {
                     ui.set_max_width(320.0);
 
                     ui.label(label_secondary("Input Folder"));
-                    ui.add_space(6.0);
+                    ui.add_space(3.0);
                     ui.horizontal(|ui| {
                         let mut input_str = self.state.modal.input.to_string_lossy().to_string();
                         ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut input_str));
@@ -630,7 +630,7 @@ impl App {
                     ui.add_space(12.0);
 
                     ui.label(label_secondary("Output Folder"));
-                    ui.add_space(6.0);
+                    ui.add_space(3.0);
                     ui.horizontal(|ui| {
                         let mut output_str = self.state.modal.output.to_string_lossy().to_string();
                         ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut output_str));
@@ -645,7 +645,7 @@ impl App {
                     ui.add_space(12.0);
 
                     ui.label(label_secondary("Preset"));
-                    ui.add_space(6.0);
+                    ui.add_space(3.0);
                     ui.horizontal_wrapped(|ui| {
                         for preset in &["youtube", "shorts", "podcast"] {
                             if ui
@@ -1123,7 +1123,7 @@ impl App {
                                     );
                                 }
                             }
-                            ui.add_space(6.0);
+                            ui.add_space(3.0);
                         }
                     });
             }
