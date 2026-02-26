@@ -186,6 +186,18 @@ fn notify_error(input: &std::path::Path, error: &str) {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    // Handle --gui flag
+    if cli.gui {
+        #[cfg(feature = "gui")]
+        {
+            return run_gui();
+        }
+        #[cfg(not(feature = "gui"))]
+        {
+            anyhow::bail!("GUI not compiled in. Build with --features gui to enable.");
+        }
+    }
+
     // If no input specified and not a special command, show help
     if cli.input_file.is_none()
         && cli.input_dir.is_none()
