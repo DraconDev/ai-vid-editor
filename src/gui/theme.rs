@@ -129,21 +129,21 @@ pub fn folder_card_compact(enabled: bool) -> egui::Frame {
 #[allow(dead_code)]
 pub fn section_header(text: &str) -> egui::RichText {
     egui::RichText::new(text)
-        .size(15.0)
+        .size(17.0)
         .color(ACCENT_PRIMARY)
         .strong()
 }
 
 pub fn label_primary(text: &str) -> egui::RichText {
-    egui::RichText::new(text).color(TEXT_PRIMARY).size(14.0)
+    egui::RichText::new(text).color(TEXT_PRIMARY).size(16.0)
 }
 
 pub fn label_secondary(text: &str) -> egui::RichText {
-    egui::RichText::new(text).color(TEXT_SECONDARY).size(13.0)
+    egui::RichText::new(text).color(TEXT_SECONDARY).size(15.0)
 }
 
 pub fn label_muted(text: &str) -> egui::RichText {
-    egui::RichText::new(text).color(TEXT_MUTED).size(12.0)
+    egui::RichText::new(text).color(TEXT_MUTED).size(14.0)
 }
 
 pub fn text_edit_style(text: &mut String) -> egui::TextEdit<'_> {
