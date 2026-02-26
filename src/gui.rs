@@ -716,10 +716,12 @@ impl App {
             .folders
             .iter()
             .map(|f| {
-                f.input
+                let name = f
+                    .input
                     .file_name()
                     .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "Folder".to_string())
+                    .unwrap_or_else(|| "Folder".to_string());
+                truncate_path(&name, 20)
             })
             .collect();
 
