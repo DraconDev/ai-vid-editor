@@ -248,18 +248,17 @@ pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'st
         egui::Button::new(
             egui::RichText::new(text)
                 .color(TEXT_PRIMARY)
-                .size(13.0)
+                .size(14.0)
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
-        .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
+        .stroke(egui::Stroke::new(1.0, ACCENT_DARK))
     } else {
-        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(13.0))
-            .fill(PANEL_BG_LIGHTER)
-            .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(14.0))
+            .fill(PANEL_BG_LIGHT)
+            .stroke(egui::Stroke::new(1.0, BORDER))
     };
-    btn.corner_radius(CORNER_RADIUS_PILL)
-        .min_size(egui::vec2(55.0, 30.0))
+    btn.corner_radius(16.0).min_size(egui::vec2(60.0, 32.0))
 }
 
 pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
