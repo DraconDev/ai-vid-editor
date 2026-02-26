@@ -458,14 +458,15 @@ pub fn log_entry_success(
 
 pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, progress: f32) {
     card_frame(PROCESSING_BG).show(ui, |ui| {
-        ui.horizontal(|ui| {
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
             let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
             ui.painter().circle_filled(rect.center(), 5.0, PROCESSING);
-            ui.add_space(2.0);
+            ui.add_space(6.0);
             ui.label(label_muted(timestamp));
+            ui.add_space(8.0);
             ui.label(label_primary(filename));
         });
-        ui.add_space(6.0);
+        ui.add_space(8.0);
         ui.horizontal(|ui| {
             ui.add_space(20.0);
             ui.add(
