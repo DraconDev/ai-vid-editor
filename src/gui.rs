@@ -478,7 +478,7 @@ impl App {
 
     fn draw_folders_panel(&mut self, ui: &mut egui::Ui) {
         panel_frame().show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 ui.label(
                     RichText::new("Watch Folders")
                         .size(18.0)
