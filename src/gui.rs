@@ -847,7 +847,7 @@ impl App {
             settings_section_frame(false).show(ui, |ui| {
                 ui.label(
                     RichText::new("Advanced")
-                        .size(13.0)
+                        .size(16.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
