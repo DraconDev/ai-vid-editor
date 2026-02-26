@@ -1059,7 +1059,7 @@ impl App {
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new("Activity")
-                        .size(16.0)
+                        .size(18.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
@@ -1070,45 +1070,63 @@ impl App {
                 });
             });
 
-            ui.add_space(10.0);
+            ui.add_space(12.0);
 
             if self.state.activity_log.is_empty() {
                 inner_panel().show(ui, |ui| {
-                    ui.label(label_secondary("No activity yet"));
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(16.0);
+                        ui.label(label_muted("No activity yet"));
+                        ui.add_space(16.0);
+                    });
                 });
             } else {
-                for entry in self.state.activity_log.iter().rev().take(20) {
-                    match entry.status {
-                        EntryStatus::Success => {
-                            if entry.filename.is_empty() {
-                                log_entry_simple(ui, &entry.timestamp, &entry.message, true);
-                            } else {
-                                log_entry_success(
-                                    ui,
-                                    &entry.timestamp,
-                                    &entry.filename,
-                                    &format_file_size(entry.file_size),
-                                    &entry
-                                        .duration
-                                        .map(|d| format_duration(d))
-                                        .unwrap_or_default(),
-                                );
+                egui::ScrollArea::vertical()
+                    .max_height(300.0)
+                    .show(ui, |ui| {
+                        for entry in self.state.activity_log.iter().rev().take(15) {
+                            match entry.status {
+                                EntryStatus::Success => {
+                                    if entry.filename.is_empty() {
+                                        log_entry_simple(
+                                            ui,
+                                            &entry.timestamp,
+                                            &entry.message,
+                                            true,
+                                        );
+                                    } else {
+                                        log_entry_success(
+                                            ui,
+                                            &entry.timestamp,
+                                            &entry.filename,
+                                            &format_file_size(entry.file_size),
+                                            &entry
+                                                .duration
+                                                .map(|d| format_duration(d))
+                                                .unwrap_or_default(),
+                                        );
+                                    }
+                                }
+                                EntryStatus::Processing => {
+                                    log_entry_processing(
+                                        ui,
+                                        &entry.timestamp,
+                                        &entry.filename,
+                                        entry.progress.unwrap_or(0.0),
+                                    );
+                                }
+                                EntryStatus::Error => {
+                                    log_entry_error(
+                                        ui,
+                                        &entry.timestamp,
+                                        &entry.filename,
+                                        &entry.message,
+                                    );
+                                }
                             }
+                            ui.add_space(6.0);
                         }
-                        EntryStatus::Processing => {
-                            log_entry_processing(
-                                ui,
-                                &entry.timestamp,
-                                &entry.filename,
-                                entry.progress.unwrap_or(0.0),
-                            );
-                        }
-                        EntryStatus::Error => {
-                            log_entry_error(ui, &entry.timestamp, &entry.filename, &entry.message);
-                        }
-                    }
-                    ui.add_space(6.0);
-                }
+                    });
             }
         });
     }
