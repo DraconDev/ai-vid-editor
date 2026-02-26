@@ -415,6 +415,7 @@ impl eframe::App for App {
                             });
                         });
 
+                        ui.add_space(12.0);
                         self.draw_settings_panel(ui);
                     }
                     Tab::Folders => {
