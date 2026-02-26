@@ -981,7 +981,7 @@ impl App {
                 ui.painter()
                     .circle_filled(dot_rect.center(), 3.5, dot_color);
                 ui.add_space(6.0);
-                ui.label(RichText::new(label).color(TEXT_PRIMARY).size(13.0).strong());
+                ui.label(RichText::new(label).color(TEXT_PRIMARY).size(15.0).strong());
                 ui.add_space(8.0);
                 ui.label(label_muted(help_text));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
