@@ -1,10 +1,9 @@
 mod common;
 
-use ai_vid_editor::Config;
 use ai_vid_editor::FfmpegAnalyzer;
 use ai_vid_editor::FfmpegEditor;
-use ai_vid_editor::VideoAnalyzer;
-use ai_vid_editor::VideoEditor;
+use ai_vid_editor::analyzer::VideoAnalyzer;
+use ai_vid_editor::editor::VideoEditor;
 use common::*;
 
 fn check_ffmpeg() {
