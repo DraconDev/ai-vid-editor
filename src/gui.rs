@@ -471,7 +471,7 @@ impl App {
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new("Folders")
-                        .size(16.0)
+                        .size(18.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
                 );
