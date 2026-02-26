@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.286"
+version = "0.1.287"
 edition = "2024"
 
 [dependencies]
