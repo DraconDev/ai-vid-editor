@@ -960,8 +960,8 @@ impl App {
             .stroke(egui::Stroke::new(1.0, color))
             .show(ui, |ui| {
                 ui.vertical(|ui| {
-                    ui.label(RichText::new(label).size(10.0).color(TEXT_MUTED));
-                    ui.label(RichText::new(value).size(13.0).color(TEXT_PRIMARY).strong());
+                    ui.label(RichText::new(label).size(12.0).color(TEXT_MUTED));
+                    ui.label(RichText::new(value).size(15.0).color(TEXT_PRIMARY).strong());
                 });
             });
     }
