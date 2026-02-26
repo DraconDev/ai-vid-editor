@@ -434,7 +434,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.label(
                 RichText::new("AI Video Processor")
-                    .size(18.0)
+                    .size(20.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
