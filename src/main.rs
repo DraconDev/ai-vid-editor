@@ -408,6 +408,7 @@ fn run_watch_mode(
     config: &Config,
     intro: &Option<PathBuf>,
     outro: &Option<PathBuf>,
+    notify: bool,
 ) -> Result<()> {
     use std::collections::HashSet;
     use std::time::Duration;
@@ -466,8 +467,12 @@ fn run_watch_mode(
                             .unwrap_or_else(|| "output.mp4".to_string());
                         let output_path = output_dir.join(&file_name);
 
+                        if notify {
+                            notify_processing(&path);
+                        }
+
                         // Process with intro/outro if specified
-                        match process_single_file_with_intro_outro(
+                        let result = process_single_file_with_intro_outro(
                             path.clone(),
                             output_path.clone(),
                             config,
@@ -476,13 +481,21 @@ fn run_watch_mode(
                             &duration_getter,
                             intro.clone(),
                             outro.clone(),
-                        ) {
+                        );
+
+                        match &result {
                             Ok(_) => {
                                 println!("[DONE] Processed: {:?}", path);
+                                if notify {
+                                    notify_complete(&path, &output_path);
+                                }
                                 processed.insert(path);
                             }
                             Err(e) => {
                                 eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                                if notify {
+                                    notify_error(&path, &e.to_string());
+                                }
                                 // Still mark as processed to avoid retrying
                                 processed.insert(path);
                             }
