@@ -148,6 +148,10 @@ pub struct Cli {
     /// Send desktop notifications on processing events
     #[arg(long)]
     pub notify: bool,
+
+    /// Launch graphical interface
+    #[arg(long)]
+    pub gui: bool,
 }
 
 #[cfg(feature = "notify-rust")]
