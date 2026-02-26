@@ -470,7 +470,7 @@ impl App {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new("Folders")
+                    RichText::new("Watch Folders")
                         .size(18.0)
                         .color(ACCENT_PRIMARY)
                         .strong(),
@@ -484,66 +484,83 @@ impl App {
                 };
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    status_badge_with_bg(ui, status_text, status_color, bg_color);
-                    ui.add_space(8.0);
                     if ui.add(button_add("+ Add")).clicked() {
                         self.state.modal.reset_for_add();
                     }
+                    ui.add_space(12.0);
+                    status_badge_with_bg(ui, status_text, status_color, bg_color);
                 });
             });
 
-            ui.add_space(16.0);
+            ui.add_space(12.0);
 
             let mut toggle_idx: Option<usize> = None;
             let mut edit_idx: Option<usize> = None;
 
-            for (idx, folder) in self.state.folders.iter().enumerate() {
-                let enabled = folder.enabled;
-                let input = folder.input.clone();
-                let output = folder.output.clone();
-                let preset = folder.preset.clone();
-                let muted_color = if enabled { TEXT_SECONDARY } else { TEXT_MUTED };
-                let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
-
-                let response = folder_card_compact(enabled).show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        if ui
-                            .add(button_toggle(enabled, if enabled { "ON" } else { "OFF" }))
-                            .clicked()
-                        {
-                            toggle_idx = Some(idx);
+            if self.state.folders.is_empty() {
+                inner_panel().show(ui, |ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(20.0);
+                        ui.label(label_muted("No folders configured"));
+                        ui.add_space(8.0);
+                        if ui.add(button_secondary("+ Add Folder")).clicked() {
+                            self.state.modal.reset_for_add();
                         }
+                        ui.add_space(20.0);
+                    });
+                });
+            } else {
+                for (idx, folder) in self.state.folders.iter().enumerate() {
+                    let enabled = folder.enabled;
+                    let input = folder.input.clone();
+                    let output = folder.output.clone();
+                    let preset = folder.preset.clone();
+                    let muted_color = if enabled { TEXT_SECONDARY } else { TEXT_MUTED };
+                    let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
 
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            preset_badge(&preset, ui);
+                    let response = folder_card_compact(enabled).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            if ui
+                                .add(button_toggle(enabled, if enabled { "ON" } else { "OFF" }))
+                                .clicked()
+                            {
+                                toggle_idx = Some(idx);
+                            }
+
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    preset_badge(&preset, ui);
+                                },
+                            );
+                        });
+
+                        ui.add_space(6.0);
+
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("Input:").color(muted_color).size(13.0));
+                            ui.label(
+                                RichText::new(truncate_path(&input.to_string_lossy(), 40))
+                                    .color(text_color)
+                                    .size(13.0),
+                            );
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("Output:").color(muted_color).size(13.0));
+                            ui.label(
+                                RichText::new(truncate_path(&output.to_string_lossy(), 40))
+                                    .color(text_color)
+                                    .size(13.0),
+                            );
                         });
                     });
 
-                    ui.horizontal(|ui| {
-                        ui.add_space(8.0);
-                        ui.label(RichText::new("Input:  ").color(muted_color).size(13.0));
-                        ui.label(
-                            RichText::new(truncate_path(&input.to_string_lossy(), 35))
-                                .color(text_color)
-                                .size(13.0),
-                        );
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add_space(8.0);
-                        ui.label(RichText::new("Output: ").color(muted_color).size(13.0));
-                        ui.label(
-                            RichText::new(truncate_path(&output.to_string_lossy(), 35))
-                                .color(text_color)
-                                .size(13.0),
-                        );
-                    });
-                });
+                    if response.response.clicked() {
+                        edit_idx = Some(idx);
+                    }
 
-                if response.response.clicked() {
-                    edit_idx = Some(idx);
+                    ui.add_space(8.0);
                 }
-
-                ui.add_space(6.0);
             }
 
             if let Some(idx) = toggle_idx {
