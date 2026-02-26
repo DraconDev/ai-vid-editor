@@ -493,7 +493,7 @@ pub fn log_entry_error(ui: &mut egui::Ui, timestamp: &str, filename: &str, messa
         ui.add_space(4.0);
         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
             ui.add_space(20.0);
-            ui.label(egui::RichText::new(message).color(ERROR).size(12.0));
+            ui.label(egui::RichText::new(message).color(ERROR).size(14.0));
         });
     });
 }
