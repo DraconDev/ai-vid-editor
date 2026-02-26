@@ -482,14 +482,16 @@ pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, 
 
 pub fn log_entry_error(ui: &mut egui::Ui, timestamp: &str, filename: &str, message: &str) {
     card_frame(ERROR_BG).show(ui, |ui| {
-        ui.horizontal(|ui| {
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
             let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
             ui.painter().circle_filled(rect.center(), 5.0, ERROR);
-            ui.add_space(2.0);
+            ui.add_space(6.0);
             ui.label(label_muted(timestamp));
+            ui.add_space(8.0);
             ui.label(label_primary(filename));
         });
-        ui.horizontal(|ui| {
+        ui.add_space(4.0);
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
             ui.add_space(20.0);
             ui.label(egui::RichText::new(message).color(ERROR).size(12.0));
         });
