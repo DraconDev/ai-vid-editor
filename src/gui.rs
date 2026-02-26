@@ -401,16 +401,20 @@ impl eframe::App for App {
 
                 egui::ScrollArea::vertical().show(ui, |ui| match self.state.current_tab {
                     Tab::All => {
+                        let available_width = ui.available_width();
+                        let left_width = (available_width * 0.48).min(400.0);
+
                         ui.horizontal_top(|ui| {
                             ui.vertical(|ui| {
-                                ui.set_min_width(ui.available_width() * 0.45);
+                                ui.set_min_width(left_width);
+                                ui.set_max_width(left_width);
                                 self.draw_folders_panel(ui);
                             });
                             ui.vertical(|ui| {
                                 self.draw_activity_log(ui);
                             });
                         });
-                        ui.add_space(12.0);
+
                         self.draw_settings_panel(ui);
                     }
                     Tab::Folders => {
