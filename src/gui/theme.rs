@@ -108,7 +108,7 @@ pub fn card_frame(bg: egui::Color32) -> egui::Frame {
     egui::Frame::NONE
         .fill(bg)
         .corner_radius(CORNER_RADIUS_SMALL)
-        .inner_margin(14.0)
+        .inner_margin(egui::vec2(10.0, 6.0))
         .stroke(egui::Stroke::new(1.0, BORDER))
 }
 
