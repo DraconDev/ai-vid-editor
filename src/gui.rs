@@ -519,7 +519,7 @@ impl App {
                     let text_color = if enabled { TEXT_PRIMARY } else { TEXT_MUTED };
 
                     let response = folder_card_compact(enabled).show(ui, |ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.horizontal(|ui| {
                             if ui
                                 .add(button_toggle(enabled, if enabled { "ON" } else { "OFF" }))
                                 .clicked()
@@ -537,18 +537,16 @@ impl App {
 
                         ui.add_space(6.0);
 
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.horizontal(|ui| {
                             ui.label(RichText::new("Input:").color(muted_color).size(13.0));
-                            ui.add_space(4.0);
                             ui.label(
                                 RichText::new(truncate_path(&input.to_string_lossy(), 40))
                                     .color(text_color)
                                     .size(13.0),
                             );
                         });
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.horizontal(|ui| {
                             ui.label(RichText::new("Output:").color(muted_color).size(13.0));
-                            ui.add_space(4.0);
                             ui.label(
                                 RichText::new(truncate_path(&output.to_string_lossy(), 40))
                                     .color(text_color)
