@@ -1065,11 +1065,9 @@ impl App {
 
             if self.state.activity_log.is_empty() {
                 inner_panel().show(ui, |ui| {
-                    ui.vertical_centered(|ui| {
-                        ui.add_space(16.0);
-                        ui.label(label_muted("No activity yet"));
-                        ui.add_space(16.0);
-                    });
+                    ui.add_space(12.0);
+                    ui.label(label_muted("No activity yet"));
+                    ui.add_space(12.0);
                 });
             } else {
                 egui::ScrollArea::vertical()
