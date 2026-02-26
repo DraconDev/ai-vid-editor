@@ -1,20 +1,24 @@
 # AI Video Editor - Common Commands
 
-# Run the GUI (recommended)
+# Run the GUI
 gui:
-    cargo run --features gui --bin ai-vid-editor-gui
-
-# Build release with GUI
-build:
-    cargo build --release --features gui
-
-# Run tests
-test:
-    cargo test
+    cargo run -- --gui
 
 # Run CLI with a file
 cli input output:
     cargo run --release -- -i {{input}} -o {{output}}
+
+# Build release (includes both CLI and GUI)
+build:
+    cargo build --release
+
+# Build CLI only (smaller binary)
+build-cli:
+    cargo build --release --no-default-features --features cli
+
+# Run tests
+test:
+    cargo test --lib
 
 # Generate default config
 config:
