@@ -2,7 +2,6 @@ mod common;
 
 use ai_vid_editor::ml::{AutoReframeProcessor, FaceDetector, FrameExtractor, PersonSegmenter};
 use common::*;
-use std::path::PathBuf;
 
 fn check_ffmpeg() {
     if !has_ffmpeg() || !has_ffprobe() {
