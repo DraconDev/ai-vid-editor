@@ -440,18 +440,16 @@ pub fn log_entry_success(
     duration: &str,
 ) {
     card_frame(SUCCESS_BG).show(ui, |ui| {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-            let (rect, _) = ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
-            ui.painter().circle_filled(rect.center(), 5.0, SUCCESS);
+        ui.horizontal(|ui| {
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
+            ui.painter().circle_filled(rect.center(), 4.0, SUCCESS);
             ui.add_space(6.0);
             ui.label(label_muted(timestamp));
-            ui.add_space(8.0);
+            ui.add_space(6.0);
             ui.label(label_primary(filename));
-        });
-        ui.add_space(4.0);
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-            ui.add_space(20.0);
-            ui.label(label_muted(&format!("{} - {}", size, duration)));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(label_muted(&format!("{} - {}", size, duration)));
+            });
         });
     });
 }
