@@ -209,10 +209,81 @@ impl FaceDetector {
 
     /// Parse model output into face boxes
     fn parse_output(output: &[TValue]) -> Result<Vec<FaceBox>> {
-        // This depends on the specific model output format
-        // Placeholder implementation
-        let _ = output;
-        Ok(vec![])
+        // Ultra-light-face-detector outputs:
+        // - scores: [1, num_anchors] or [1, num_anchors, 1]
+        // - boxes: [1, num_anchors, 4] in [x1, y1, x2, y2] normalized format
+
+        if output.len() < 2 {
+            return Ok(vec![]);
+        }
+
+        let scores = output[0].to_array_view::<f32>()?;
+        let boxes = output[1].to_array_view::<f32>()?;
+
+        let confidence_threshold = 0.5;
+        let mut faces = Vec::new();
+
+        // Determine score tensor shape
+        let score_dims = scores.shape();
+        let num_faces = if score_dims.len() == 2 {
+            score_dims[1]
+        } else if score_dims.len() == 3 {
+            score_dims[1]
+        } else {
+            return Ok(vec![]);
+        };
+
+        // Boxes shape: [1, num_faces, 4] or flattened
+        let box_dims = boxes.shape();
+        let boxes_are_flat = box_dims.len() == 2 && box_dims[1] == num_faces * 4;
+
+        for i in 0..num_faces {
+            let score = scores[i];
+            if score < confidence_threshold {
+                continue;
+            }
+
+            let (x1, y1, x2, y2) = if boxes_are_flat {
+                (
+                    boxes[i * 4],
+                    boxes[i * 4 + 1],
+                    boxes[i * 4 + 2],
+                    boxes[i * 4 + 3],
+                )
+            } else if box_dims.len() == 3 {
+                (
+                    boxes[i * 4],
+                    boxes[i * 4 + 1],
+                    boxes[i * 4 + 2],
+                    boxes[i * 4 + 3],
+                )
+            } else {
+                continue;
+            };
+
+            // Convert [x1, y1, x2, y2] to [x, y, width, height] normalized
+            let x = x1.clamp(0.0, 1.0);
+            let y = y1.clamp(0.0, 1.0);
+            let width = (x2 - x1).clamp(0.0, 1.0 - x);
+            let height = (y2 - y1).clamp(0.0, 1.0 - y);
+
+            faces.push(FaceBox {
+                x,
+                y,
+                width,
+                height,
+                confidence: score,
+            });
+        }
+
+        // Sort by confidence (highest first)
+        faces.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        Ok(faces)
     }
 }
 
