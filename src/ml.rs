@@ -382,9 +382,59 @@ impl PersonSegmenter {
     }
 
     fn parse_output(output: &[TValue], width: u32, height: u32) -> Result<SegmentationMask> {
-        let _ = output;
+        // MODNet outputs a matte/mask tensor: [1, 1, H, W] or [1, H, W]
+        // Values are 0.0 (background) to 1.0 (foreground/person)
+
+        if output.is_empty() {
+            return Ok(SegmentationMask {
+                data: vec![0.0; (width * height) as usize],
+                width,
+                height,
+            });
+        }
+
+        let mask_tensor = output[0].to_array_view::<f32>()?;
+        let dims = mask_tensor.shape();
+
+        // Determine mask dimensions from tensor
+        let (mask_h, mask_w) = match dims.len() {
+            4 => (dims[2], dims[3]),
+            3 => (dims[1], dims[2]),
+            2 => (dims[0], dims[1]),
+            _ => {
+                return Ok(SegmentationMask {
+                    data: vec![0.0; (width * height) as usize],
+                    width,
+                    height,
+                });
+            }
+        };
+
+        // Resize mask to original frame dimensions
+        // Simple bilinear interpolation
+        let mut data = vec![0.0; (width * height) as usize];
+
+        let scale_x = mask_w as f32 / width as f32;
+        let scale_y = mask_h as f32 / height as f32;
+
+        for y in 0..height {
+            for x in 0..width {
+                let src_x = (x as f32 * scale_x).min(mask_w as f32 - 1.0) as usize;
+                let src_y = (y as f32 * scale_y).min(mask_h as f32 - 1.0) as usize;
+
+                let src_idx = src_y * mask_w + src_x;
+                let value = if src_idx < mask_tensor.len() {
+                    mask_tensor[src_idx]
+                } else {
+                    0.0
+                };
+
+                data[(y * width + x) as usize] = value.clamp(0.0, 1.0);
+            }
+        }
+
         Ok(SegmentationMask {
-            data: vec![0.0; (width * height) as usize],
+            data,
             width,
             height,
         })
