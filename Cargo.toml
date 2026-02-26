@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.274"
+version = "0.1.275"
 edition = "2024"
 
 [dependencies]
@@ -28,7 +28,7 @@ chrono = { version = "0.4", optional = true }
 notify-rust = { version = "4", optional = true }
 
 [features]
-default = ["cli"]
+default = ["cli", "gui"]
 cli = ["clap", "notify-rust"]
 gui = ["eframe", "egui", "rfd", "chrono", "notify-rust"]
 
@@ -38,9 +38,3 @@ tempfile = "3.25.0"
 [[bin]]
 name = "ai-vid-editor"
 path = "src/main.rs"
-required-features = ["cli"]
-
-[[bin]]
-name = "ai-vid-editor-gui"
-path = "src/gui_main.rs"
-required-features = ["gui"]
