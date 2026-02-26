@@ -753,7 +753,7 @@ impl App {
 
             ui.label(
                 RichText::new("Processing")
-                    .size(13.0)
+                    .size(16.0)
                     .color(ACCENT_PRIMARY)
                     .strong(),
             );
