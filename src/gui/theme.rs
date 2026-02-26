@@ -248,26 +248,26 @@ pub fn button_pill(is_active: bool, text: impl Into<String>) -> egui::Button<'st
         egui::Button::new(
             egui::RichText::new(text)
                 .color(TEXT_PRIMARY)
-                .size(11.0)
+                .size(13.0)
                 .strong(),
         )
         .fill(ACCENT_PRIMARY)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
     } else {
-        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(11.0))
+        egui::Button::new(egui::RichText::new(text).color(TEXT_SECONDARY).size(13.0))
             .fill(PANEL_BG_LIGHTER)
             .stroke(egui::Stroke::new(1.0, BORDER_LIGHT))
     };
     btn.corner_radius(CORNER_RADIUS_PILL)
-        .min_size(egui::vec2(50.0, 26.0))
+        .min_size(egui::vec2(55.0, 30.0))
 }
 
 pub fn button_add(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(12.0))
+    egui::Button::new(egui::RichText::new(text).color(ACCENT_PRIMARY).size(14.0))
         .fill(PANEL_BG)
         .stroke(egui::Stroke::new(1.0, ACCENT_PRIMARY))
         .corner_radius(CORNER_RADIUS_SMALL)
-        .min_size(egui::vec2(60.0, 28.0))
+        .min_size(egui::vec2(65.0, 32.0))
 }
 
 pub fn slider_glow(
