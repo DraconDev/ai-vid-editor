@@ -1006,7 +1006,7 @@ impl App {
     ) -> bool {
         let mut changed = false;
         settings_toggle_frame(true).show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 ui.label(label_secondary(title));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     settings_value_badge(ui, &value_label);
