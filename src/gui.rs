@@ -595,7 +595,7 @@ impl App {
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut input_str = self.state.modal.input.to_string_lossy().to_string();
-                        ui.add_sized(egui::vec2(240.0, 36.0), text_edit_style(&mut input_str));
+                        ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut input_str));
                         self.state.modal.input = PathBuf::from(&input_str);
                         if ui.add(button_small("...")).clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
@@ -610,7 +610,7 @@ impl App {
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let mut output_str = self.state.modal.output.to_string_lossy().to_string();
-                        ui.add_sized(egui::vec2(240.0, 36.0), text_edit_style(&mut output_str));
+                        ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut output_str));
                         self.state.modal.output = PathBuf::from(&output_str);
                         if ui.add(button_small("...")).clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
