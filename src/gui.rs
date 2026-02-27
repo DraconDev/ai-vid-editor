@@ -704,6 +704,15 @@ impl App {
         }
     }
 
+    fn is_default_path(path: &PathBuf, preset: &str) -> bool {
+        let default_input = format!("videos/{}", preset);
+        let default_output = format!("videos/{}/output", preset);
+        path.to_string_lossy() == default_input
+            || path.to_string_lossy() == default_output
+            || path.to_string_lossy() == "videos"
+            || path.to_string_lossy() == "videos/output"
+    }
+
     fn draw_settings_panel(&mut self, ui: &mut egui::Ui) {
         let folder_names: Vec<String> = self
             .state
