@@ -1,5 +1,3 @@
-#![cfg(feature = "gui")]
-
 mod theme;
 
 use eframe::egui;
