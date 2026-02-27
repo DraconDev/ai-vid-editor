@@ -11,6 +11,7 @@ use image::GenericImageView;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
+use tracing::info;
 use tract_onnx::prelude::*;
 
 /// Frame extraction utilities
