@@ -4,29 +4,39 @@ A command-line and GUI tool for automated video editing using AI. Designed for c
 
 ## Quick Start
 
-**GUI:**
+**GUI** (default when launched from desktop):
 ```bash
-cargo run -- --gui
+cargo run
 ```
 
-**CLI:**
+**CLI** (from terminal with arguments):
 ```bash
 cargo run --release -- -i input.mp4 -o output.mp4 --preset youtube
 ```
 
 **Using just:**
 ```bash
-just gui      # Run GUI
+just gui      # Run GUI explicitly
 just build    # Build release
 just test     # Run tests
 ```
 
 ## Installation
 
+### From Source
+
 ```bash
 git clone https://github.com/DraconDev/ai-vid-editor.git
 cd ai-vid-editor
+./install.sh --user    # Install to ~/.local/bin (no sudo)
+# or
+sudo ./install.sh      # Install to /usr/local/bin
 ```
+
+The install script will:
+- Build and install the binary
+- Install the application icon and desktop entry (shows in app menu)
+- Optionally set up a systemd service for daemon mode
 
 ### Requirements
 
@@ -41,7 +51,17 @@ nix-shell  # or: nix develop
 
 ## Usage
 
-### CLI Mode (Default)
+### GUI Mode
+
+Launch without arguments from desktop or run:
+```bash
+ai-vid-editor
+ai-vid-editor --gui    # Explicit
+```
+
+The GUI provides a visual interface for managing watch folders and settings.
+
+### CLI Mode
 
 ```bash
 # Basic silence removal
