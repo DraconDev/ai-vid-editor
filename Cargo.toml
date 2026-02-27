@@ -1,7 +1,13 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.382"
+version = "0.1.383"
 edition = "2024"
+authors = ["DraconDev"]
+description = "AI-powered video editor for content creators"
+license = "MIT"
+repository = "https://github.com/DraconDev/ai-vid-editor"
+keywords = ["video", "editor", "ai", "ffmpeg", "automation"]
+categories = ["command-line-utilities", "multimedia::video"]
 
 [dependencies]
 anyhow = "1.0.102"
