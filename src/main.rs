@@ -677,12 +677,13 @@ fn run_gui() -> Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1150.0, 820.0])
             .with_min_inner_size([1000.0, 700.0])
-            .with_title("AI Video Processor"),
+            .with_title("AI Video Editor")
+            .with_app_id("ai-vid-editor"),
         ..Default::default()
     };
 
     eframe::run_native(
-        "AI Video Processor",
+        "AI Video Editor",
         options,
         Box::new(|cc| {
             configure_dark_theme(&cc.egui_ctx);
