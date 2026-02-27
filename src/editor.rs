@@ -4,6 +4,7 @@ use crate::stt_analyzer::TranscriptSegment;
 use anyhow::{Context, Result};
 use std::path::Path;
 use std::process::Command;
+use tracing::{info, warn};
 
 /// Calculate segments to keep after processing silences
 ///
@@ -353,7 +354,7 @@ impl VideoEditor for FfmpegEditor {
         // Auto-reframe: Convert horizontal (16:9) to vertical (9:16)
         // Uses ML face detection to follow the speaker
 
-        println!("Auto-reframe: Analyzing video for face tracking...");
+        info!("Auto-reframe: Analyzing video for face tracking...");
 
         // Try to use ML-powered reframe
         let filter = match crate::ml::AutoReframeProcessor::new() {
@@ -368,21 +369,18 @@ impl VideoEditor for FfmpegEditor {
                         processor.generate_crop_filter(&crop_regions, w, h)
                     }
                     Err(e) => {
-                        eprintln!("Warning: Face detection failed ({}), using center crop", e);
+                        warn!(error = %e, "Face detection failed, using center crop");
                         "crop=ih*9/16:ih,scale=1080:1920".to_string()
                     }
                 }
             }
             Err(e) => {
-                eprintln!(
-                    "Warning: Could not load face detection model ({}), using center crop",
-                    e
-                );
+                warn!(error = %e, "Could not load face detection model, using center crop");
                 "crop=ih*9/16:ih,scale=1080:1920".to_string()
             }
         };
 
-        println!("Applying crop filter: {}", filter);
+        info!(filter = %filter, "Applying crop filter");
 
         let status = Command::new("ffmpeg")
             .args([
