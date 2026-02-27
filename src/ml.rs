@@ -162,7 +162,7 @@ impl FaceDetector {
             std::fs::create_dir_all(parent)?;
         }
 
-        println!("Downloading face detection model from HuggingFace...");
+        info!("Downloading face detection model from HuggingFace...");
 
         // Use hf-hub to download the model
         let api = hf_hub::api::sync::Api::new()?;
@@ -172,7 +172,7 @@ impl FaceDetector {
         // Copy to cache location
         std::fs::copy(&downloaded, path)?;
 
-        println!("Model downloaded to: {:?}", path);
+        info!(path = ?path, "Model downloaded");
         Ok(())
     }
 
