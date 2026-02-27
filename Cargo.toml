@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.383"
+version = "0.1.384"
 edition = "2024"
 authors = ["DraconDev"]
 description = "AI-powered video editor for content creators"
@@ -18,12 +18,15 @@ clap = { version = "4.5.60", features = ["derive"], optional = true }
 directories = "5.0"
 hf-hub = "0.5.0"
 image = "0.25"
+indicatif = "0.17"
 libc = "0.2"
 rand = "0.10.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.149"
 tokenizers = "0.22.2"
 toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tract-onnx = "0.21"
 walkdir = "2.5.0"
 
