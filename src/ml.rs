@@ -225,9 +225,7 @@ impl FaceDetector {
 
         // Determine score tensor shape
         let score_dims = scores.shape();
-        let num_faces = if score_dims.len() == 2 {
-            score_dims[1]
-        } else if score_dims.len() == 3 {
+        let num_faces = if score_dims.len() == 2 || score_dims.len() == 3 {
             score_dims[1]
         } else {
             return Ok(vec![]);
