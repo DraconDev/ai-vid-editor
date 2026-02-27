@@ -6,7 +6,11 @@ pub fn fixtures_dir() -> PathBuf {
 }
 
 pub fn test_video_path() -> PathBuf {
-    fixtures_dir().join("blur_test.mp4")
+    let path = fixtures_dir().join("test_video_temp.mp4");
+    if !path.exists() {
+        create_test_video_with_silence(&path, 6);
+    }
+    path
 }
 
 pub fn create_test_video_with_silence(output_path: &std::path::Path, duration_secs: u32) -> bool {
