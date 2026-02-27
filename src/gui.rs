@@ -571,6 +571,9 @@ impl App {
             if let Some(idx) = toggle_idx {
                 self.state.toggle_folder(idx);
             }
+            if let Some(idx) = delete_idx {
+                self.state.remove_folder(idx);
+            }
             if let Some(idx) = edit_idx {
                 let folder = &self.state.folders[idx];
                 self.state.modal.set_for_edit(idx, folder);
