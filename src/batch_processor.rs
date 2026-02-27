@@ -360,9 +360,8 @@ where
     E: VideoEditor,
     D: DurationGetter,
 {
-    println!("Processing directory: {:?}", input_dir);
-    println!("Output directory: {:?}", output_dir);
-    println!("Silence mode: {:?}", config.silence.mode);
+    info!(dir = ?input_dir, "Processing directory");
+    debug!(output = ?output_dir, mode = ?config.silence.mode, "Batch config");
 
     fs::create_dir_all(&output_dir).context(format!(
         "Failed to create output directory {:?}",
