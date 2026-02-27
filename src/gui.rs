@@ -1163,7 +1163,7 @@ impl App {
         }
     }
 
-    fn draw_activity_log(&mut self, ui: &mut egui::Ui) {
+    fn draw_activity_log(&mut self, ui: &mut egui::Ui, full_height: bool) {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -1188,52 +1188,52 @@ impl App {
                     ui.add_space(12.0);
                 });
             } else {
-                egui::ScrollArea::vertical()
-                    .max_height(200.0)
-                    .show(ui, |ui| {
-                        for entry in self.state.activity_log.iter().rev().take(15) {
-                            match entry.status {
-                                EntryStatus::Success => {
-                                    if entry.filename.is_empty() {
-                                        log_entry_simple(
-                                            ui,
-                                            &entry.timestamp,
-                                            &entry.message,
-                                            true,
-                                        );
-                                    } else {
-                                        log_entry_success(
-                                            ui,
-                                            &entry.timestamp,
-                                            &entry.filename,
-                                            &format_file_size(entry.file_size),
-                                            &entry
-                                                .duration
-                                                .map(|d| format_duration(d))
-                                                .unwrap_or_default(),
-                                        );
-                                    }
-                                }
-                                EntryStatus::Processing => {
-                                    log_entry_processing(
+                let scroll_area = egui::ScrollArea::vertical();
+                let scroll_area = if full_height {
+                    scroll_area.auto_shrink([false, false])
+                } else {
+                    scroll_area.max_height(200.0)
+                };
+
+                scroll_area.show(ui, |ui| {
+                    for entry in self.state.activity_log.iter().rev().take(15) {
+                        match entry.status {
+                            EntryStatus::Success => {
+                                if entry.filename.is_empty() {
+                                    log_entry_simple(ui, &entry.timestamp, &entry.message, true);
+                                } else {
+                                    log_entry_success(
                                         ui,
                                         &entry.timestamp,
                                         &entry.filename,
-                                        entry.progress.unwrap_or(0.0),
-                                    );
-                                }
-                                EntryStatus::Error => {
-                                    log_entry_error(
-                                        ui,
-                                        &entry.timestamp,
-                                        &entry.filename,
-                                        &entry.message,
+                                        &format_file_size(entry.file_size),
+                                        &entry
+                                            .duration
+                                            .map(|d| format_duration(d))
+                                            .unwrap_or_default(),
                                     );
                                 }
                             }
-                            ui.add_space(3.0);
+                            EntryStatus::Processing => {
+                                log_entry_processing(
+                                    ui,
+                                    &entry.timestamp,
+                                    &entry.filename,
+                                    entry.progress.unwrap_or(0.0),
+                                );
+                            }
+                            EntryStatus::Error => {
+                                log_entry_error(
+                                    ui,
+                                    &entry.timestamp,
+                                    &entry.filename,
+                                    &entry.message,
+                                );
+                            }
                         }
-                    });
+                        ui.add_space(3.0);
+                    }
+                });
             }
         });
     }
