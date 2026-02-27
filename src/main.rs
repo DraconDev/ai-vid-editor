@@ -155,6 +155,14 @@ pub struct Cli {
     /// Launch graphical interface
     #[arg(long)]
     pub gui: bool,
+
+    /// Verbose output (-v, -vv, -vvv)
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    pub verbose: u8,
+
+    /// Quiet mode (suppress non-error output)
+    #[arg(short, long, conflicts_with = "verbose")]
+    pub quiet: bool,
 }
 
 #[cfg(feature = "notify-rust")]
