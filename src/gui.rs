@@ -661,12 +661,13 @@ impl App {
                     ui.add_space(20.0);
 
                     ui.horizontal(|ui| {
-                        if ui.add(button_danger("Remove")).clicked() {
-                            should_delete = true;
-                            should_close = true;
-                        }
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.add(button_secondary("Keep")).clicked() {
+                            if ui.add(button_danger("Remove")).clicked() {
+                                should_delete = true;
+                                should_close = true;
+                            }
+                            ui.add_space(8.0);
+                            if ui.add(button_small("Cancel")).clicked() {
                                 should_close = true;
                             }
                         });
