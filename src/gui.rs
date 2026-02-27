@@ -586,13 +586,92 @@ impl App {
                 self.state.toggle_folder(idx);
             }
             if let Some(idx) = delete_idx {
-                self.state.remove_folder(idx);
+                self.state.modal.prompt_delete(idx);
             }
             if let Some(idx) = edit_idx {
                 let folder = &self.state.folders[idx];
                 self.state.modal.set_for_edit(idx, folder);
             }
         });
+    }
+
+    fn draw_delete_confirm_modal(&mut self, ctx: &egui::Context) {
+        let mut should_delete = false;
+        let mut should_close = false;
+
+        let screen_rect = ctx.screen_rect();
+
+        egui::Area::new(egui::Id::new("delete_overlay"))
+            .anchor(egui::Align2::LEFT_TOP, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .interactable(true)
+            .show(ctx, |ui| {
+                let (_rect, response) =
+                    ui.allocate_exact_size(screen_rect.size(), egui::Sense::click());
+                modal_overlay().show(ui, |ui| {
+                    ui.allocate_space(screen_rect.size());
+                });
+                if response.clicked() {
+                    should_close = true;
+                }
+            });
+
+        egui::Area::new(egui::Id::new("delete_dialog"))
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .interactable(true)
+            .show(ctx, |ui| {
+                modal_dialog().show(ui, |ui| {
+                    ui.set_min_width(280.0);
+                    ui.set_max_width(280.0);
+
+                    ui.label(
+                        RichText::new("Remove Folder?")
+                            .size(16.0)
+                            .color(TEXT_PRIMARY)
+                            .strong(),
+                    );
+
+                    ui.add_space(12.0);
+
+                    if let Some(idx) = self.state.modal.delete_confirm_idx {
+                        if let Some(folder) = self.state.folders.get(idx) {
+                            ui.label(label_secondary(&format!(
+                                "Remove {}?",
+                                folder
+                                    .input
+                                    .file_name()
+                                    .map(|n| n.to_string_lossy())
+                                    .unwrap_or_else(|| "this folder".into())
+                            )));
+                        }
+                    }
+
+                    ui.add_space(20.0);
+
+                    ui.horizontal(|ui| {
+                        if ui.add(button_danger("Remove")).clicked() {
+                            should_delete = true;
+                            should_close = true;
+                        }
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.add(button_secondary("Cancel")).clicked() {
+                                should_close = true;
+                            }
+                        });
+                    });
+                });
+            });
+
+        if should_close {
+            if should_delete {
+                if let Some(idx) = self.state.modal.delete_confirm_idx {
+                    self.state.remove_folder(idx);
+                }
+            }
+            self.state.modal.delete_confirm_idx = None;
+        }
     }
 
     fn draw_modal(&mut self, ctx: &egui::Context) {
