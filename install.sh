@@ -77,6 +77,24 @@ if [ "$UNINSTALL" = true ]; then
         echo -e "${YELLOW}Binary not found at $PREFIX/bin/$BIN_NAME${NC}"
     fi
     
+    # Remove icon
+    for icon_path in "$HOME/.local/share/icons/hicolor/scalable/apps/$BIN_NAME.svg" \
+                     "/usr/share/icons/hicolor/scalable/apps/$BIN_NAME.svg"; do
+        if [ -f "$icon_path" ]; then
+            rm -f "$icon_path"
+            echo -e "${GREEN}✓ Removed icon from $icon_path${NC}"
+        fi
+    done
+    
+    # Remove desktop entry
+    for desktop_path in "$HOME/.local/share/applications/$BIN_NAME.desktop" \
+                        "/usr/share/applications/$BIN_NAME.desktop"; do
+        if [ -f "$desktop_path" ]; then
+            rm -f "$desktop_path"
+            echo -e "${GREEN}✓ Removed desktop entry from $desktop_path${NC}"
+        fi
+    done
+    
     # Remove systemd service (if exists and running as root)
     if [ -f "$SERVICE_FILE" ]; then
         if [ "$EUID" -eq 0 ]; then
