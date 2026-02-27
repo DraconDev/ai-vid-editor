@@ -429,6 +429,10 @@ impl eframe::App for App {
         if self.state.modal.show {
             self.draw_modal(ctx);
         }
+
+        if self.state.modal.delete_confirm_idx.is_some() {
+            self.draw_delete_confirm_modal(ctx);
+        }
     }
 }
 
