@@ -64,20 +64,21 @@ fn parse_ffmpeg_silence(output: &str) -> Vec<Segment> {
             }
         } else if line.contains("silence_end:")
             && let Some(start) = current_start.take()
-                && let Some(pos) = line.find("silence_end:") {
-                    let part = &line[pos + "silence_end:".len()..];
-                    if let Some(pipe_pos) = part.find('|') {
-                        let val_str = &part[..pipe_pos].trim();
-                        if let Ok(end) = val_str.parse::<f32>() {
-                            segments.push(Segment { start, end });
-                        }
-                    } else {
-                        let val_str = part.trim();
-                        if let Ok(end) = val_str.parse::<f32>() {
-                            segments.push(Segment { start, end });
-                        }
-                    }
+            && let Some(pos) = line.find("silence_end:")
+        {
+            let part = &line[pos + "silence_end:".len()..];
+            if let Some(pipe_pos) = part.find('|') {
+                let val_str = &part[..pipe_pos].trim();
+                if let Ok(end) = val_str.parse::<f32>() {
+                    segments.push(Segment { start, end });
                 }
+            } else {
+                let val_str = part.trim();
+                if let Ok(end) = val_str.parse::<f32>() {
+                    segments.push(Segment { start, end });
+                }
+            }
+        }
     }
     segments
 }

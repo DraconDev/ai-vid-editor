@@ -122,7 +122,7 @@ fn pcm_to_mel(config: &Config, pcm: &[f32], device: &Device) -> Result<Tensor> {
         for mel_bin in 0..n_mels {
             let freq_low = mel_bin * 8000 / n_mels; // Simplified mel scale
             let freq_high = (mel_bin + 1) * 8000 / n_mels;
-            let bin_low = freq_low * n_fft / 16000 ;
+            let bin_low = freq_low * n_fft / 16000;
             let bin_high = (freq_high * n_fft / 16000).min(n_fft);
 
             let mut energy = 0.0f32;
@@ -223,8 +223,8 @@ fn decode_greedy(
         }
 
         // Calculate time bounds
-        let time_start = chunk_start as f32 / 100.0 ;
-        let time_end = chunk_end as f32 / 100.0 ;
+        let time_start = chunk_start as f32 / 100.0;
+        let time_end = chunk_end as f32 / 100.0;
 
         // Average confidence
         let confidence = if token_probs.is_empty() {

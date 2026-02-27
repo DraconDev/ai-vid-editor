@@ -238,10 +238,11 @@ fn main() -> Result<()> {
 
     // Apply config file if specified
     if let Some(ref config_path) = cli.config
-        && config_path.exists() {
-            let file_config = Config::from_file(config_path)?;
-            config = config.merge(file_config);
-        }
+        && config_path.exists()
+    {
+        let file_config = Config::from_file(config_path)?;
+        config = config.merge(file_config);
+    }
 
     // Apply paths from config if not specified on CLI
     let input_file = cli.input_file.clone().or(config.paths.input.clone());
@@ -281,12 +282,13 @@ fn main() -> Result<()> {
     } else if let Some(ref music_dir_path) = music_dir {
         // Only try to pick music if the directory exists
         if music_dir_path.exists()
-            && let Some(random_music) = pick_random_music_file(music_dir_path)? {
-                if !cli.json {
-                    println!("Selected random music: {:?}", random_music);
-                }
-                config.audio.music_file = Some(random_music);
+            && let Some(random_music) = pick_random_music_file(music_dir_path)?
+        {
+            if !cli.json {
+                println!("Selected random music: {:?}", random_music);
             }
+            config.audio.music_file = Some(random_music);
+        }
     }
 
     if cli.export_srt {
@@ -446,9 +448,10 @@ fn run_watch_mode(
         let path = entry.path();
 
         if let Some(ext) = path.extension().and_then(|e| e.to_str())
-            && video_extensions.contains(&ext.to_lowercase().as_str()) {
-                processed.insert(path.clone());
-            }
+            && video_extensions.contains(&ext.to_lowercase().as_str())
+        {
+            processed.insert(path.clone());
+        }
     }
 
     println!(
@@ -470,50 +473,50 @@ fn run_watch_mode(
 
                 if let Some(ext) = path.extension().and_then(|e| e.to_str())
                     && video_extensions.contains(&ext.to_lowercase().as_str())
-                        && !processed.contains(&path)
-                    {
-                        println!("\n[NEW FILE] {:?}", path);
+                    && !processed.contains(&path)
+                {
+                    println!("\n[NEW FILE] {:?}", path);
 
-                        let file_name = path
-                            .file_name()
-                            .map(|n| n.to_string_lossy().to_string())
-                            .unwrap_or_else(|| "output.mp4".to_string());
-                        let output_path = output_dir.join(&file_name);
+                    let file_name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "output.mp4".to_string());
+                    let output_path = output_dir.join(&file_name);
 
-                        if notify {
-                            notify_processing(&path);
+                    if notify {
+                        notify_processing(&path);
+                    }
+
+                    // Process with intro/outro if specified
+                    let result = process_single_file_with_intro_outro(
+                        path.clone(),
+                        output_path.clone(),
+                        config,
+                        &analyzer,
+                        &editor,
+                        &duration_getter,
+                        intro.clone(),
+                        outro.clone(),
+                    );
+
+                    match &result {
+                        Ok(_) => {
+                            println!("[DONE] Processed: {:?}", path);
+                            if notify {
+                                notify_complete(&path, &output_path);
+                            }
+                            processed.insert(path);
                         }
-
-                        // Process with intro/outro if specified
-                        let result = process_single_file_with_intro_outro(
-                            path.clone(),
-                            output_path.clone(),
-                            config,
-                            &analyzer,
-                            &editor,
-                            &duration_getter,
-                            intro.clone(),
-                            outro.clone(),
-                        );
-
-                        match &result {
-                            Ok(_) => {
-                                println!("[DONE] Processed: {:?}", path);
-                                if notify {
-                                    notify_complete(&path, &output_path);
-                                }
-                                processed.insert(path);
+                        Err(e) => {
+                            eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                            if notify {
+                                notify_error(&path, &e.to_string());
                             }
-                            Err(e) => {
-                                eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
-                                if notify {
-                                    notify_error(&path, &e.to_string());
-                                }
-                                // Still mark as processed to avoid retrying
-                                processed.insert(path);
-                            }
+                            // Still mark as processed to avoid retrying
+                            processed.insert(path);
                         }
                     }
+                }
             }
         }
     }

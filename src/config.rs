@@ -226,8 +226,7 @@ impl Default for AudioConfig {
 }
 
 /// Configuration for export options
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ExportConfig {
     /// Generate SRT subtitles
     #[serde(default)]
@@ -245,7 +244,6 @@ pub struct ExportConfig {
     #[serde(default)]
     pub edl: bool,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FolderSettings {
@@ -394,8 +392,7 @@ impl Default for WatchConfig {
 }
 
 /// Configuration for video processing
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VideoConfig {
     /// Enable video stabilization (vidstab filter)
     #[serde(default)]
@@ -413,7 +410,6 @@ pub struct VideoConfig {
     #[serde(default)]
     pub blur_background: bool,
 }
-
 
 /// Join mode for combining processed videos
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
@@ -545,9 +541,10 @@ impl Config {
 
         // Try to load global config first
         if let Some(global_path) = Self::default_config_path()
-            && global_path.exists() {
-                config = Self::from_file(&global_path)?;
-            }
+            && global_path.exists()
+        {
+            config = Self::from_file(&global_path)?;
+        }
 
         // Then try project config (overrides global)
         let project_path = Self::project_config_path();
@@ -558,10 +555,11 @@ impl Config {
 
         // Then try explicitly specified config (overrides project)
         if let Some(path) = cli_config_path
-            && path.exists() {
-                let file_config = Self::from_file(path)?;
-                config = config.merge(file_config);
-            }
+            && path.exists()
+        {
+            let file_config = Self::from_file(path)?;
+            config = config.merge(file_config);
+        }
 
         // Finally, apply CLI overrides (highest precedence)
         if let Some(threshold) = cli_threshold {
@@ -706,9 +704,10 @@ impl Config {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().map(|e| e == "toml").unwrap_or(false)
-                    && let Some(stem) = path.file_stem() {
-                        presets.push(stem.to_string_lossy().to_string());
-                    }
+                    && let Some(stem) = path.file_stem()
+                {
+                    presets.push(stem.to_string_lossy().to_string());
+                }
             }
         }
         presets.sort();
