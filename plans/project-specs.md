@@ -6,14 +6,14 @@
 
 **Architecture**:
 - CLI: Full-featured command-line interface for scripting/automation
-- GUI: Visual management interface built with egui
-- Backend: FFmpeg for video processing, Candle for ML (Whisper STT)
+- GUI: Visual management interface built with egui (single binary with `--gui` flag)
+- Backend: FFmpeg for video processing, Candle/tract for ML
 
 **Tech Stack**:
 - Rust (edition 2024)
 - egui/wgpu for GUI
 - FFmpeg (external dependency)
-- Candle (Whisper STT, face detection)
+- tract (ONNX runtime for ML inference)
 - TOML for configuration
 
 ---
@@ -39,6 +39,8 @@
 | Watch mode | ✅ | - | Auto-process new videos |
 | Batch processing | ✅ | - | Directory processing |
 | Export (SRT, FCPXML, EDL) | ✅ | - | Subtitles, timelines |
+| Desktop notifications | ✅ | - | `--notify` flag |
+| Unified binary | ✅ | ✅ | `--gui` flag launches GUI |
 
 ### GUI Structure
 
@@ -49,18 +51,19 @@
 ├─────────────────────────────────────────────┤
 │ Watch Folders              ● Watching       │  ← Folder list
 │ ┌─────────────────────────────────────────┐ │
-│ │ [ON]                                     │ │
-│ │     Input:  videos                       │ │
-│ │     Output: videos/output         youtube│ │
+│ │ [ON]                              youtube│ │
+│ │     Input:  videos/youtube               │ │
+│ │     Output: videos/youtube/output        │ │
+│ │                              [Remove]    │ │
 │ └─────────────────────────────────────────┘ │
 │ [+ Add Folder]                              │
 ├─────────────────────────────────────────────┤
-│ Settings                                    │  ← Per-folder settings
-│ [Folder selector]                           │
+│ Processing                                  │  ← Per-folder settings
+│ [youtube] [shorts] [podcast]                │  ← Folder pills
 │ [x] Enhance Audio    [x] Remove Silence     │
 │ Silence Threshold: ━━━━○━━━ -30 dB          │
 ├─────────────────────────────────────────────┤
-│ Activity Log                        [Clear] │  ← Processing log
+│ Activity                            [Clear] │  ← Processing log
 │ ✓ 14:32 Added new watch folder              │
 └─────────────────────────────────────────────┘
 ```
@@ -100,81 +103,44 @@ Config
 
 ---
 
-## UI Improvements
+## Completed Phases
 
-### 1. Pill-Style Folder Selector
+### Phase 1: UI Polish ✅
+- [x] Two-line folder cards
+- [x] Remove Load/Save buttons
+- [x] Auto-save on changes
+- [x] Per-folder settings
+- [x] Pill-style folder selector
+- [x] Filled track sliders
+- [x] Bigger fonts
+- [x] Delete confirmation modal
+- [x] Default folder paths by preset
 
-**Current**: Dropdown/ComboBox
-```
-[ Configure Folder ▼ ]
-```
+### Phase 2: Unified Binary ✅
+- [x] Single binary with `--gui` flag
+- [x] Desktop notifications (`--notify`)
+- [x] Fixed ML stubs (face detection, segmentation)
 
-**New**: Horizontal pill buttons
-```
-[ 1. videos ] [ 2. shorts ] [ 3. podcast ]
-   ^selected    inactive       inactive
-```
-
-**Implementation**:
-- Use `button_toggle()` style for each folder
-- Wrap in horizontal scroll if too many folders
-- Show folder number + truncated input path
-
-### 2. Filled Track Sliders
-
-**Current**: Default egui slider (thin line, small handle)
-
-**New**: Filled track with accent color
-```
-Silence Threshold (dB)
-███████████████████░░░░░░░○░░░  -30
--60                              -10
-```
-
-**Implementation**:
-- Custom slider widget with filled background
-- Use ACCENT_PRIMARY for fill color
-- Add tick marks at range endpoints
-
-### 3. Theme Polish
-
-| Element | Current | New |
-|---------|---------|-----|
-| Folder selector | ComboBox | Pill buttons |
-| Sliders | Default | Filled track |
-| Section separators | `---` text | Subtle line |
-| Hover states | None | Lighter background |
+### Phase 3: Integration Tests ✅
+- [x] ML feature tests
+- [x] Video processing pipeline tests
 
 ---
 
 ## Future Roadmap
 
-### Phase 1: UI Polish (Current)
-- [x] Two-line folder cards
-- [x] Remove Load/Save buttons
-- [x] Auto-save on changes
-- [x] Per-folder settings
-- [ ] Pill-style folder selector
-- [ ] Filled track sliders
-- [ ] Hover states for cards
-
-### Phase 2: Watcher Integration
+### Phase 4: Watcher Integration
 - [ ] Spawn watcher threads from GUI
 - [ ] Real-time activity log updates
 - [ ] Progress indicators per folder
 - [ ] Processing queue visualization
 
-### Phase 3: Custom Presets
+### Phase 5: Custom Presets
 - [ ] Save folder settings as new preset
 - [ ] Preset management UI (rename, delete)
 - [ ] Preset library in `~/.config/ai-vid-editor/presets/`
 
-### Phase 4: Notifications
-- [ ] Desktop notifications on complete/error
-- [ ] Sound alerts (optional)
-- [ ] System tray integration
-
-### Phase 5: UX Enhancements
+### Phase 6: UX Enhancements
 - [ ] Drag-drop folder paths
 - [ ] File browser integration
 - [ ] Keyboard shortcuts
@@ -188,8 +154,8 @@ Silence Threshold (dB)
 
 ```
 src/
-├── main.rs           # CLI entry point
-├── gui_main.rs       # GUI entry point
+├── main.rs           # Entry point (CLI + GUI)
+├── lib.rs            # Library exports
 ├── gui.rs            # GUI components
 ├── gui/
 │   └── theme.rs      # Styling constants
@@ -198,7 +164,7 @@ src/
 ├── editor.rs         # FFmpeg edit commands
 ├── batch_processor.rs# Batch/watch processing
 ├── exporter.rs       # Export formats
-├── ml.rs             # Face detection
+├── ml.rs             # Face detection, segmentation
 ├── stt_analyzer.rs   # Whisper STT
 └── utils.rs          # Utilities
 ```
@@ -228,10 +194,6 @@ TOML file (~/.config/ai-vid-editor/config.toml)
 2. `~/.config/ai-vid-editor/config.toml` (user-global)
 3. `--config <path>` (explicit)
 
-### Preset Files
-
-Location: `presets/*.toml` (bundled) or `~/.config/ai-vid-editor/presets/*.toml` (custom)
-
 ---
 
 ## Design Principles
@@ -241,7 +203,7 @@ Location: `presets/*.toml` (bundled) or `~/.config/ai-vid-editor/presets/*.toml`
 3. **Clear hierarchy**: Tabs → Sections → Controls
 4. **Dark theme**: Black background (#101010), red accents (#e63946)
 5. **No color overload**: Primary palette is black/white/red only
-6. **Compact but readable**: Small fonts, tight spacing, but clear labels
+6. **Compact but readable**: Clear labels, consistent spacing
 
 ---
 
@@ -259,7 +221,7 @@ Location: `presets/*.toml` (bundled) or `~/.config/ai-vid-editor/presets/*.toml`
 | TEXT_PRIMARY | #fafafa | Main text |
 | TEXT_SECONDARY | #aaaaaa | Labels |
 | TEXT_MUTED | #646464 | Disabled text |
-| SUCCESS | #b45a5f | Status badges (muted red) |
+| SUCCESS | #b45a5f | Status badges |
 | ERROR | #ff4444 | Error states |
 
 ### Typography
@@ -267,30 +229,18 @@ Location: `presets/*.toml` (bundled) or `~/.config/ai-vid-editor/presets/*.toml`
 | Element | Size | Weight |
 |---------|------|--------|
 | Panel title | 18px | Bold |
-| Section label | 12px | Normal (muted) |
-| Primary text | 14px | Normal |
-| Secondary text | 13px | Normal |
-| Muted text | 12px | Normal |
-| Badge text | 11px | Bold |
+| Primary text | 16px | Normal |
+| Secondary text | 15px | Normal |
+| Muted text | 14px | Normal |
 
 ### Spacing
 
 | Element | Value |
 |---------|-------|
 | Panel padding | 20px |
-| Card padding | 12px |
-| Section gap | 16px |
-| Control gap | 12px |
-| Label gap | 4px |
-
-### Corner Radius
-
-| Element | Value |
-|---------|-------|
-| Panels | 12px |
-| Buttons, cards | 8px |
-| Pills | 24px |
-| Badges | 4px |
+| Card padding | 14px |
+| Section gap | 12-16px |
+| Control gap | 6-12px |
 
 ---
 
@@ -298,13 +248,14 @@ Location: `presets/*.toml` (bundled) or `~/.config/ai-vid-editor/presets/*.toml`
 
 ```bash
 # Development
-cargo run --features gui --bin ai-vid-editor-gui
+cargo run -- --gui          # Launch GUI
+cargo run -- -i in.mp4 ...  # CLI mode
 
 # Release build
-cargo build --release --features gui
+cargo build --release
 
 # Run tests
-cargo test
+cargo test --lib
 
 # Using just
 just gui
@@ -330,7 +281,7 @@ ai-vid-editor/
 │   └── minimal.toml
 ├── src/
 │   ├── main.rs
-│   ├── gui_main.rs
+│   ├── lib.rs
 │   ├── gui.rs
 │   ├── gui/
 │   │   └── theme.rs
@@ -342,5 +293,9 @@ ai-vid-editor/
 │   ├── ml.rs
 │   ├── stt_analyzer.rs
 │   └── utils.rs
-└── ai-vid-editor.example.toml
+├── tests/
+│   ├── common/mod.rs
+│   ├── ml_integration.rs
+│   └── pipeline_integration.rs
+└── blur_test.mp4              # Test fixture
 ```
