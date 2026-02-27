@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=AI Video Editor
+Comment=Automated video editing with AI
+Exec=ai-vid-editor
+Icon=ai-vid-editor
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;AudioVideoEditing;
+Keywords=video;editor;ai;automation;youtube;
+StartupWMClass=ai-vid-editor
