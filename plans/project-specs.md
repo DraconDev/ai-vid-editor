@@ -255,14 +255,18 @@ TOML file (~/.config/ai-vid-editor/config.toml)
 
 ```bash
 # Development
-cargo run -- --gui          # Launch GUI
-cargo run -- -i in.mp4 ...  # CLI mode
+cargo run                    # Launch GUI (or CLI with args)
+cargo run -- -i in.mp4 ...   # CLI mode
 
 # Release build
 cargo build --release
 
 # Run tests
 cargo test --lib
+
+# Install (with desktop integration)
+./install.sh --user          # User install
+sudo ./install.sh            # System install
 
 # Using just
 just gui
@@ -279,8 +283,12 @@ ai-vid-editor/
 ├── Cargo.toml
 ├── README.md
 ├── justfile
+├── install.sh               # Install script with desktop integration
+├── assets/
+│   ├── icon.svg             # Application icon
+│   └── ai-vid-editor.desktop # Desktop entry
 ├── plans/
-│   └── project-specs.md        # This file
+│   └── project-specs.md     # This file
 ├── presets/
 │   ├── youtube.toml
 │   ├── shorts.toml
@@ -304,5 +312,5 @@ ai-vid-editor/
 │   ├── common/mod.rs
 │   ├── ml_integration.rs
 │   └── pipeline_integration.rs
-└── blur_test.mp4              # Test fixture
+└── blur_test.mp4            # Test fixture
 ```
