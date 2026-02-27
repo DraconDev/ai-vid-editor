@@ -644,7 +644,17 @@ impl App {
                                 .add(button_pill(self.state.modal.preset == *preset, *preset))
                                 .clicked()
                             {
+                                let old_preset = self.state.modal.preset.clone();
                                 self.state.modal.preset = preset.to_string();
+
+                                if Self::is_default_path(&self.state.modal.input, &old_preset) {
+                                    self.state.modal.input =
+                                        PathBuf::from(format!("videos/{}", preset));
+                                }
+                                if Self::is_default_path(&self.state.modal.output, &old_preset) {
+                                    self.state.modal.output =
+                                        PathBuf::from(format!("videos/{}/output", preset));
+                                }
                             }
                         }
                     });
@@ -652,12 +662,10 @@ impl App {
                     ui.add_space(16.0);
 
                     ui.horizontal(|ui| {
-                        if let Some(_idx) = self.state.modal.editing_idx {
-                            if self.state.folders.len() > 1 {
-                                if ui.add(button_small("Delete")).clicked() {
-                                    should_delete = true;
-                                    should_close = true;
-                                }
+                        if self.state.modal.editing_idx.is_some() {
+                            if ui.add(button_danger("Delete")).clicked() {
+                                should_delete = true;
+                                should_close = true;
                             }
                         }
 
