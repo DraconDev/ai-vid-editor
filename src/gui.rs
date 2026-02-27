@@ -411,7 +411,7 @@ impl eframe::App for App {
                         ui.add_space(12.0);
                         self.draw_settings_panel(ui);
                         ui.add_space(12.0);
-                        self.draw_activity_log(ui);
+                        self.draw_activity_log(ui, false);
                     }
                     Tab::Folders => {
                         self.draw_folders_panel(ui);
@@ -420,7 +420,7 @@ impl eframe::App for App {
                         self.draw_settings_panel(ui);
                     }
                     Tab::Activity => {
-                        self.draw_activity_log(ui);
+                        self.draw_activity_log(ui, true);
                     }
                 });
             });
