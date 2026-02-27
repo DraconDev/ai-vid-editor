@@ -152,8 +152,8 @@ where
     E: VideoEditor,
     D: DurationGetter,
 {
-    println!("Analyzing video: {:?}", input_file);
-    println!("Silence mode: {:?}", config.silence.mode);
+    info!(file = ?input_file, "Analyzing video");
+    debug!(mode = ?config.silence.mode, "Silence mode");
 
     let silences = analyzer
         .detect_silence(
@@ -163,10 +163,10 @@ where
         )
         .context("Failed to detect silence")?;
 
-    println!("Detected {} silent segments.", silences.len());
+    info!(count = silences.len(), "Detected silent segments");
 
     let video_duration = duration_getter.get_duration(&input_file)?;
-    println!("Total duration: {}s", video_duration);
+    debug!(duration = video_duration, "Video duration");
 
     let processed_segments = calculate_keep_segments(
         &silences,
@@ -176,7 +176,7 @@ where
         config.silence.speedup_factor,
         config.silence.min_silence_for_speedup,
     );
-    println!("Segments to process: {}", processed_segments.len());
+    debug!(count = processed_segments.len(), "Segments to process");
 
     // Step 1: Trim video (silence removal/speedup)
     let trimmed_file = if config.audio.enhance
