@@ -626,28 +626,35 @@ impl App {
             .interactable(true)
             .show(ctx, |ui| {
                 modal_dialog().show(ui, |ui| {
-                    ui.set_min_width(280.0);
-                    ui.set_max_width(280.0);
+                    ui.set_min_width(320.0);
+                    ui.set_max_width(320.0);
 
-                    ui.label(
-                        RichText::new("Remove Folder?")
-                            .size(16.0)
-                            .color(TEXT_PRIMARY)
-                            .strong(),
-                    );
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("⚠").size(24.0).color(WARNING));
+                        ui.add_space(8.0);
+                        ui.label(
+                            RichText::new("Remove Folder")
+                                .size(18.0)
+                                .color(TEXT_PRIMARY)
+                                .strong(),
+                        );
+                    });
 
                     ui.add_space(12.0);
 
                     if let Some(idx) = self.state.modal.delete_confirm_idx {
                         if let Some(folder) = self.state.folders.get(idx) {
-                            ui.label(label_secondary(&format!(
-                                "Remove {}?",
-                                folder
-                                    .input
-                                    .file_name()
-                                    .map(|n| n.to_string_lossy())
-                                    .unwrap_or_else(|| "this folder".into())
-                            )));
+                            let folder_name = folder
+                                .input
+                                .file_name()
+                                .map(|n| n.to_string_lossy())
+                                .unwrap_or_else(|| "this folder".into());
+
+                            ui.label(label_secondary(&format!("Stop watching {}?", folder_name)));
+                            ui.add_space(4.0);
+                            ui.label(label_muted(
+                                "Videos in this folder will no longer be auto-processed.",
+                            ));
                         }
                     }
 
@@ -658,9 +665,8 @@ impl App {
                             should_delete = true;
                             should_close = true;
                         }
-
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.add(button_secondary("Cancel")).clicked() {
+                            if ui.add(button_secondary("Keep")).clicked() {
                                 should_close = true;
                             }
                         });
