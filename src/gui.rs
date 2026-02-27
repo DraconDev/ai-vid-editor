@@ -172,15 +172,6 @@ impl ModalState {
         self.enabled = true;
     }
 
-    fn reset_for_add_with_preset(&mut self, preset: &str) {
-        self.show = true;
-        self.editing_idx = None;
-        self.input = PathBuf::from(format!("videos/{}", preset));
-        self.output = PathBuf::from(format!("videos/{}/output", preset));
-        self.preset = preset.to_string();
-        self.enabled = true;
-    }
-
     fn set_for_edit(&mut self, idx: usize, folder: &FolderState) {
         self.show = true;
         self.editing_idx = Some(idx);
