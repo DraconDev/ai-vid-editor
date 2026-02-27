@@ -241,14 +241,7 @@ impl FaceDetector {
                 continue;
             }
 
-            let (x1, y1, x2, y2) = if boxes_are_flat {
-                (
-                    boxes[i * 4],
-                    boxes[i * 4 + 1],
-                    boxes[i * 4 + 2],
-                    boxes[i * 4 + 3],
-                )
-            } else if box_dims.len() == 3 {
+            let (x1, y1, x2, y2) = if boxes_are_flat || box_dims.len() == 3 {
                 (
                     boxes[i * 4],
                     boxes[i * 4 + 1],
