@@ -2,7 +2,7 @@
 Version=1.0
 Name=AI Video Editor
 Comment=Automated video editing with AI
-Exec=ai-vid-editor
+Exec=ai-vid-editor --gui
 Icon=ai-vid-editor
 Terminal=false
 Type=Application
