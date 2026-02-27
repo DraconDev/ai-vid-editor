@@ -338,7 +338,7 @@ impl PersonSegmenter {
             std::fs::create_dir_all(parent)?;
         }
 
-        println!("Downloading person segmentation model from HuggingFace...");
+        info!("Downloading person segmentation model from HuggingFace...");
 
         // Use hf-hub to download the model
         let api = hf_hub::api::sync::Api::new()?;
@@ -348,7 +348,7 @@ impl PersonSegmenter {
         // Copy to cache location
         std::fs::copy(&downloaded, path)?;
 
-        println!("Model downloaded to: {:?}", path);
+        info!(path = ?path, "Model downloaded");
         Ok(())
     }
 
