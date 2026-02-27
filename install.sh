@@ -151,6 +151,44 @@ else
     exit 1
 fi
 
+# Install icon and desktop entry (for GUI)
+if [ -d "assets" ]; then
+    ICON_DIR=""
+    DESKTOP_DIR=""
+    
+    if [ "$USER_INSTALL" = true ]; then
+        ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
+        DESKTOP_DIR="$HOME/.local/share/applications"
+    else
+        ICON_DIR="/usr/share/icons/hicolor/scalable/apps"
+        DESKTOP_DIR="/usr/share/applications"
+    fi
+    
+    # Install icon
+    if [ -f "assets/icon.svg" ]; then
+        mkdir -p "$ICON_DIR"
+        cp "assets/icon.svg" "$ICON_DIR/$BIN_NAME.svg"
+        echo -e "${GREEN}✓ Installed icon to $ICON_DIR/$BIN_NAME.svg${NC}"
+        
+        # Update icon cache
+        if command -v gtk-update-icon-cache &> /dev/null; then
+            gtk-update-icon-cache -q "$(dirname "$ICON_DIR")" 2>/dev/null || true
+        fi
+    fi
+    
+    # Install desktop entry
+    if [ -f "assets/$BIN_NAME.desktop" ]; then
+        mkdir -p "$DESKTOP_DIR"
+        cp "assets/$BIN_NAME.desktop" "$DESKTOP_DIR/"
+        echo -e "${GREEN}✓ Installed desktop entry to $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
+        
+        # Update desktop database
+        if command -v update-desktop-database &> /dev/null; then
+            update-desktop-database -q "$DESKTOP_DIR" 2>/dev/null || true
+        fi
+    fi
+fi
+
 # Install example config if not exists
 CONFIG_FILE="$CONFIG_DIR/config.toml"
 if [ -f "$CONFIG_FILE" ]; then
