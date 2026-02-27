@@ -1143,14 +1143,6 @@ impl App {
         changed
     }
 
-    #[allow(dead_code)]
-    fn get_preset_default(_preset: &str, _setting: &str) -> bool {
-        match _setting {
-            "enhance_audio" => true,
-            _ => false,
-        }
-    }
-
     fn draw_activity_log(&mut self, ui: &mut egui::Ui, full_height: bool) {
         panel_frame().show(ui, |ui| {
             ui.horizontal(|ui| {
