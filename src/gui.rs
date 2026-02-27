@@ -166,9 +166,18 @@ impl ModalState {
     fn reset_for_add(&mut self) {
         self.show = true;
         self.editing_idx = None;
-        self.input = PathBuf::from("videos");
-        self.output = PathBuf::from("videos/output");
+        self.input = PathBuf::from("videos/youtube");
+        self.output = PathBuf::from("videos/youtube/output");
         self.preset = "youtube".to_string();
+        self.enabled = true;
+    }
+
+    fn reset_for_add_with_preset(&mut self, preset: &str) {
+        self.show = true;
+        self.editing_idx = None;
+        self.input = PathBuf::from(format!("videos/{}", preset));
+        self.output = PathBuf::from(format!("videos/{}/output", preset));
+        self.preset = preset.to_string();
         self.enabled = true;
     }
 
