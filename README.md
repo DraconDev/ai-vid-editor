@@ -227,6 +227,8 @@ cargo build --features cli,gui
 | Background blur | Done |
 | GUI (egui) | Done |
 | Desktop notifications | Done |
+| Desktop entry / app menu | Done |
+| Unified binary (CLI + GUI) | Done |
 
 ## License
 
