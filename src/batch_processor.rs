@@ -371,7 +371,7 @@ where
     let video_files = find_video_files(&input_dir)?;
 
     if video_files.is_empty() {
-        println!("No supported video files found in {:?}", input_dir);
+        warn!(dir = ?input_dir, "No supported video files found");
         return Ok(());
     }
 
@@ -385,12 +385,7 @@ where
             .context(format!("Could not get file name for {:?}", input_file))?;
         let output_file = output_dir.join(file_name);
 
-        println!(
-            "\n--- Processing file {}/{} : {:?} ---",
-            index + 1,
-            total_files,
-            input_file
-        );
+        info!(current = index + 1, total = total_files, file = ?input_file, "Processing file");
         match process_single_file(
             input_file.clone(),
             output_file.clone(),
@@ -400,11 +395,11 @@ where
             duration_getter,
         ) {
             Ok(_) => {
-                println!("Successfully processed {:?}", input_file);
+                info!(file = ?input_file, "Successfully processed");
                 successful_files += 1;
             }
             Err(e) => {
-                eprintln!("Error processing {:?}: {}", input_file, e);
+                warn!(file = ?input_file, error = %e, "Failed to process");
                 failed_files += 1;
             }
         }
