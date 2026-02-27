@@ -407,7 +407,7 @@ impl VideoEditor for FfmpegEditor {
         // Background blur using person segmentation
         // Falls back to simple blur if ML not available
 
-        println!("Background blur: Processing video...");
+        info!("Background blur: Processing video...");
 
         // For now, use a simple boxblur
         // Full ML implementation would process each frame with segmentation
@@ -419,7 +419,7 @@ impl VideoEditor for FfmpegEditor {
             .unwrap_or(false);
 
         if use_ml {
-            println!("Using ML-powered background blur (experimental)...");
+            info!("Using ML-powered background blur (experimental)...");
             // ML blur would go here - requires significant processing time
             // For production, this would extract frames, process with segmentation, and re-encode
         }
