@@ -681,7 +681,6 @@ impl App {
     fn draw_modal(&mut self, ctx: &egui::Context) {
         let mut should_close = false;
         let mut should_save = false;
-        let mut should_delete = false;
 
         let screen_rect = ctx.screen_rect();
 
