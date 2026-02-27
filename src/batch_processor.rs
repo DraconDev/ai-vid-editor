@@ -254,7 +254,7 @@ where
 
     if config.video.stabilize {
         let stabilized = output_file.with_extension("stabilized.mp4");
-        println!("Stabilizing video...");
+        info!("Stabilizing video");
         editor.stabilize(&current_file, &stabilized)?;
         if current_file != output_file {
             let _ = fs::remove_file(&current_file);
@@ -264,7 +264,7 @@ where
 
     if config.video.color_correct {
         let corrected = output_file.with_extension("corrected.mp4");
-        println!("Color correcting...");
+        info!("Color correcting");
         editor.color_correct(&current_file, &corrected)?;
         if current_file != output_file {
             let _ = fs::remove_file(&current_file);
@@ -274,7 +274,7 @@ where
 
     if config.video.reframe {
         let reframed = output_file.with_extension("reframed.mp4");
-        println!("Auto-reframing to vertical (9:16)...");
+        info!("Auto-reframing to vertical (9:16)");
         editor.reframe(&current_file, &reframed)?;
         if current_file != output_file {
             let _ = fs::remove_file(&current_file);
@@ -284,7 +284,7 @@ where
 
     if config.video.blur_background {
         let blurred = output_file.with_extension("blurred.mp4");
-        println!("Blurring background...");
+        info!("Blurring background");
         editor.blur_background(&current_file, &blurred)?;
         if current_file != output_file {
             let _ = fs::remove_file(&current_file);
@@ -301,7 +301,7 @@ where
     // Step 6: Export additional files
     export_additional_files(&input_file, &final_file, &processed_segments, config)?;
 
-    println!("Successfully saved final video to: {:?}", final_file);
+    info!(file = ?final_file, "Successfully saved video");
     Ok(())
 }
 
