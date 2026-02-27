@@ -496,6 +496,7 @@ impl App {
 
             let mut toggle_idx: Option<usize> = None;
             let mut edit_idx: Option<usize> = None;
+            let mut delete_idx: Option<usize> = None;
 
             if self.state.folders.is_empty() {
                 inner_panel().show(ui, |ui| {
