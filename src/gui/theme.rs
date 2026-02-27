@@ -198,11 +198,11 @@ pub fn button_primary(text: impl Into<String>) -> egui::Button<'static> {
 
 #[allow(dead_code)]
 pub fn button_danger(text: impl Into<String>) -> egui::Button<'static> {
-    egui::Button::new(egui::RichText::new(text).color(ERROR).size(17.0).strong())
+    egui::Button::new(egui::RichText::new(text).color(ERROR).size(15.0).strong())
         .fill(ERROR_BG)
-        .stroke(egui::Stroke::new(2.0, ERROR))
-        .corner_radius(CORNER_RADIUS_PILL)
-        .min_size(egui::vec2(180.0, 52.0))
+        .stroke(egui::Stroke::new(1.0, ERROR))
+        .corner_radius(CORNER_RADIUS_SMALL)
+        .min_size(egui::vec2(80.0, 38.0))
 }
 
 pub fn button_toggle(is_active: bool, text: impl Into<String>) -> egui::Button<'static> {
