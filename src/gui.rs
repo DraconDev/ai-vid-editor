@@ -769,21 +769,6 @@ impl App {
                     ui.add_space(16.0);
 
                     ui.horizontal(|ui| {
-                        if self.state.modal.editing_idx.is_some() {
-                            let can_delete = self.state.folders.len() > 1;
-                            if can_delete {
-                                if ui.add(button_danger("Delete")).clicked() {
-                                    should_delete = true;
-                                    should_close = true;
-                                }
-                            } else {
-                                ui.add(button_small("Delete"));
-                                ui.label(
-                                    RichText::new("(last folder)").size(12.0).color(TEXT_MUTED),
-                                );
-                            }
-                        }
-
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             let btn_text = if self.state.modal.editing_idx.is_some() {
                                 "Save"
