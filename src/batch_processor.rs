@@ -405,10 +405,12 @@ where
         }
     }
 
-    println!("\n--- Batch Processing Summary ---");
-    println!("Total files processed: {}", total_files);
-    println!("Successful: {}", successful_files);
-    println!("Failed: {}", failed_files);
+    info!(
+        total = total_files,
+        successful = successful_files,
+        failed = failed_files,
+        "Batch processing complete"
+    );
 
     Ok(())
 }
