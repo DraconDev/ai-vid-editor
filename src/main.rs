@@ -194,8 +194,37 @@ fn notify_error(input: &std::path::Path, error: &str) {
     );
 }
 
+fn init_logging(verbose: u8, quiet: bool) {
+    let filter = if quiet {
+        "error"
+    } else {
+        match verbose {
+            0 => "warn",
+            1 => "info",
+            2 => "debug",
+            _ => "trace",
+        }
+    };
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::new(filter)
+                .add_directive("candle=warn".parse().unwrap())
+                .add_directive("tract=warn".parse().unwrap()),
+        )
+        .with_target(false)
+        .with_file(verbose >= 2)
+        .with_line_number(verbose >= 2)
+        .init();
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
+
+    // Initialize logging (skip for GUI)
+    if !cli.gui {
+        init_logging(cli.verbose, cli.quiet);
+    }
 
     // Handle --gui flag
     if cli.gui {
