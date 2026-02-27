@@ -1,6 +1,6 @@
 [package]
 name = "ai-vid-editor"
-version = "0.1.384"
+version = "0.1.385"
 edition = "2024"
 authors = ["DraconDev"]
 description = "AI-powered video editor for content creators"
@@ -48,3 +48,12 @@ tempfile = "3.25.0"
 [[bin]]
 name = "ai-vid-editor"
 path = "src/main.rs"
+
+[profile.release]
+lto = "thin"
+strip = true
+opt-level = "s"
+codegen-units = 1
+
+[profile.dev]
+opt-level = 1
