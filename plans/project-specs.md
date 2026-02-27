@@ -312,5 +312,5 @@ ai-vid-editor/
 │   ├── common/mod.rs
 │   ├── ml_integration.rs
 │   └── pipeline_integration.rs
-└── blur_test.mp4            # Test fixture
+└── ai-vid-editor.example.toml  # Example config file
 ```
