@@ -535,12 +535,6 @@ impl App {
                             ui.with_layout(
                                 egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
-                                    if self.state.folders.len() > 1 {
-                                        if ui.add(button_small("X")).clicked() {
-                                            delete_idx = Some(idx);
-                                        }
-                                    }
-                                    ui.add_space(8.0);
                                     preset_badge(&preset, ui);
                                 },
                             );
@@ -564,6 +558,20 @@ impl App {
                                     .size(13.0),
                             );
                         });
+
+                        if self.state.folders.len() > 1 {
+                            ui.add_space(4.0);
+                            ui.horizontal(|ui| {
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| {
+                                        if ui.add(button_small("Remove")).clicked() {
+                                            delete_idx = Some(idx);
+                                        }
+                                    },
+                                );
+                            });
+                        }
                     });
 
                     if response.response.clicked() {
