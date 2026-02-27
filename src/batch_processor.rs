@@ -192,12 +192,12 @@ where
     editor
         .trim_video(&input_file, &trimmed_file, &processed_segments)
         .context("Failed to trim video")?;
-    println!("Trimmed video saved to: {:?}", trimmed_file);
+    debug!(file = ?trimmed_file, "Trimmed video saved");
 
     // Step 2: Audio enhancement (optional)
     let enhanced_file = if config.audio.enhance {
         let enhanced = output_file.with_extension("enhanced.mp4");
-        println!("Enhancing audio...");
+        info!("Enhancing audio");
         editor
             .enhance_audio(&trimmed_file, &enhanced)
             .context("Failed to enhance audio")?;
@@ -213,7 +213,7 @@ where
     // Step 3: Music mixing (optional)
     let with_music_file = if let Some(ref music_path) = config.audio.music_file {
         let with_music = output_file.with_extension("music.mp4");
-        println!("Mixing with background music: {:?}", music_path);
+        info!(music = ?music_path, "Mixing background music");
 
         let empty_transcript = vec![];
         editor
@@ -230,7 +230,7 @@ where
 
     // Step 4: Intro/Outro concatenation (optional)
     let concat_file = if intro.is_some() || outro.is_some() {
-        println!("Adding intro/outro...");
+        info!("Adding intro/outro");
         concatenate_videos(
             intro.as_deref(),
             &with_music_file,
