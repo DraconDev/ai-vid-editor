@@ -416,7 +416,7 @@ pub fn status_badge_with_bg(
         .corner_radius(CORNER_RADIUS_SMALL)
         .inner_margin(egui::vec2(14.0, 10.0))
         .show(ui, |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.horizontal(|ui| {
                 let (rect, _) =
                     ui.allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
                 ui.painter().circle_filled(rect.center(), 5.0, dot_color);
