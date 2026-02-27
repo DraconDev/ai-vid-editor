@@ -316,7 +316,7 @@ fn export_additional_files(
 
     if config.export.subtitles {
         let srt_path = format!("{}.srt", base_path.display());
-        println!("Exporting SRT subtitles to: {}", srt_path);
+        debug!(path = %srt_path, "Exporting SRT subtitles");
         // TODO: Need actual transcript for subtitles
         // For now, create placeholder
         fs::write(
@@ -327,20 +327,20 @@ fn export_additional_files(
 
     if config.export.chapters {
         let chapters_path = format!("{}.chapters.txt", base_path.display());
-        println!("Exporting YouTube chapters to: {}", chapters_path);
+        debug!(path = %chapters_path, "Exporting YouTube chapters");
         // TODO: Need actual transcript for chapters
         fs::write(&chapters_path, "00:00 Intro\n")?;
     }
 
     if config.export.fcpxml {
         let fcpxml_path = format!("{}.fcpxml", base_path.display());
-        println!("Exporting FCPXML to: {}", fcpxml_path);
+        debug!(path = %fcpxml_path, "Exporting FCPXML");
         exporter::export_fcpxml(segments, input_file, Path::new(&fcpxml_path))?;
     }
 
     if config.export.edl {
         let edl_path = format!("{}.edl", base_path.display());
-        println!("Exporting EDL to: {}", edl_path);
+        debug!(path = %edl_path, "Exporting EDL");
         exporter::export_edl(segments, input_file, Path::new(&edl_path))?;
     }
 
