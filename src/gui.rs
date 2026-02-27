@@ -294,27 +294,6 @@ impl AppState {
         }
     }
 
-    #[allow(dead_code)]
-    fn save_config(&mut self, path: &PathBuf) {
-        self.config.paths.watch_folders = self.folders.iter().map(|f| f.clone().into()).collect();
-
-        match self.config.to_file(path) {
-            Ok(()) => {
-                self.config_path = Some(path.clone());
-                self.activity_log.push(ActivityEntry::simple(
-                    format!("Saved config to {}", path.display()),
-                    true,
-                ));
-            }
-            Err(e) => {
-                self.activity_log.push(ActivityEntry::simple(
-                    format!("Failed to save config: {}", e),
-                    false,
-                ));
-            }
-        }
-    }
-
     fn auto_save_config(&mut self) {
         self.config.paths.watch_folders = self.folders.iter().map(|f| f.clone().into()).collect();
 
