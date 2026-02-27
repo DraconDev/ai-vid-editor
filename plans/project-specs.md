@@ -125,6 +125,13 @@ Config
 - [x] ML feature tests
 - [x] Video processing pipeline tests
 
+### Phase 4: Desktop Integration ✅
+- [x] Application icon (SVG)
+- [x] Desktop entry for Linux app menu
+- [x] Install script handles icon/desktop installation
+- [x] GUI launches by default when not from terminal
+- [x] Window app ID for desktop tracking
+
 ---
 
 ## Future Roadmap
