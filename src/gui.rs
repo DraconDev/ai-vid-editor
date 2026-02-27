@@ -528,6 +528,12 @@ impl App {
                             ui.with_layout(
                                 egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
+                                    if self.state.folders.len() > 1 {
+                                        if ui.add(button_small("X")).clicked() {
+                                            delete_idx = Some(idx);
+                                        }
+                                    }
+                                    ui.add_space(8.0);
                                     preset_badge(&preset, ui);
                                 },
                             );
