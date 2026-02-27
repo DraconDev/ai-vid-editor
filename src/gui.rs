@@ -788,11 +788,7 @@ impl App {
             });
 
         if should_close {
-            if should_delete {
-                if let Some(idx) = self.state.modal.editing_idx {
-                    self.state.remove_folder(idx);
-                }
-            } else if should_save {
+            if should_save {
                 if let Some(idx) = self.state.modal.editing_idx {
                     self.state.update_folder_from_modal(idx);
                 } else {
