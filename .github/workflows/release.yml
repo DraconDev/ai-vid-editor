@@ -72,7 +72,7 @@ jobs:
           7z a ai-vid-editor-${{ matrix.target }}.zip ai-vid-editor
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ai-vid-editor-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/ai-vid-editor-*.tar.gz
