@@ -265,7 +265,7 @@ impl AppState {
         state
     }
 
-    fn load_config(&mut self, path: &PathBuf) {
+    fn load_config(&mut self, path: &std::path::Path) {
         match Config::from_file(path) {
             Ok(config) => {
                 self.config = config.clone();
@@ -279,7 +279,7 @@ impl AppState {
                         .map(|f| f.clone().into())
                         .collect()
                 };
-                self.config_path = Some(path.clone());
+                self.config_path = Some(path.to_path_buf());
                 self.activity_log.push(ActivityEntry::simple(
                     format!("Loaded config from {}", path.display()),
                     true,
