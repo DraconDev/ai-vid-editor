@@ -227,6 +227,7 @@ impl Default for AudioConfig {
 
 /// Configuration for export options
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct ExportConfig {
     /// Generate SRT subtitles
     #[serde(default)]
@@ -245,16 +246,6 @@ pub struct ExportConfig {
     pub edl: bool,
 }
 
-impl Default for ExportConfig {
-    fn default() -> Self {
-        Self {
-            subtitles: false,
-            chapters: false,
-            fcpxml: false,
-            edl: false,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FolderSettings {
@@ -404,6 +395,7 @@ impl Default for WatchConfig {
 
 /// Configuration for video processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct VideoConfig {
     /// Enable video stabilization (vidstab filter)
     #[serde(default)]
@@ -422,16 +414,6 @@ pub struct VideoConfig {
     pub blur_background: bool,
 }
 
-impl Default for VideoConfig {
-    fn default() -> Self {
-        Self {
-            stabilize: false,
-            color_correct: false,
-            reframe: false,
-            blur_background: false,
-        }
-    }
-}
 
 /// Join mode for combining processed videos
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
@@ -562,11 +544,10 @@ impl Config {
         let mut config = Config::default();
 
         // Try to load global config first
-        if let Some(global_path) = Self::default_config_path() {
-            if global_path.exists() {
+        if let Some(global_path) = Self::default_config_path()
+            && global_path.exists() {
                 config = Self::from_file(&global_path)?;
             }
-        }
 
         // Then try project config (overrides global)
         let project_path = Self::project_config_path();
@@ -576,12 +557,11 @@ impl Config {
         }
 
         // Then try explicitly specified config (overrides project)
-        if let Some(path) = cli_config_path {
-            if path.exists() {
+        if let Some(path) = cli_config_path
+            && path.exists() {
                 let file_config = Self::from_file(path)?;
                 config = config.merge(file_config);
             }
-        }
 
         // Finally, apply CLI overrides (highest precedence)
         if let Some(threshold) = cli_threshold {
@@ -725,11 +705,10 @@ impl Config {
         if let Ok(entries) = fs::read_dir(&presets_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().map(|e| e == "toml").unwrap_or(false) {
-                    if let Some(stem) = path.file_stem() {
+                if path.extension().map(|e| e == "toml").unwrap_or(false)
+                    && let Some(stem) = path.file_stem() {
                         presets.push(stem.to_string_lossy().to_string());
                     }
-                }
             }
         }
         presets.sort();

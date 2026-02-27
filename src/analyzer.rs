@@ -62,9 +62,9 @@ fn parse_ffmpeg_silence(output: &str) -> Vec<Segment> {
                     current_start = Some(start);
                 }
             }
-        } else if line.contains("silence_end:") {
-            if let Some(start) = current_start.take() {
-                if let Some(pos) = line.find("silence_end:") {
+        } else if line.contains("silence_end:")
+            && let Some(start) = current_start.take()
+                && let Some(pos) = line.find("silence_end:") {
                     let part = &line[pos + "silence_end:".len()..];
                     if let Some(pipe_pos) = part.find('|') {
                         let val_str = &part[..pipe_pos].trim();
@@ -78,8 +78,6 @@ fn parse_ffmpeg_silence(output: &str) -> Vec<Segment> {
                         }
                     }
                 }
-            }
-        }
     }
     segments
 }

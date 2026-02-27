@@ -237,12 +237,11 @@ fn main() -> Result<()> {
     };
 
     // Apply config file if specified
-    if let Some(ref config_path) = cli.config {
-        if config_path.exists() {
+    if let Some(ref config_path) = cli.config
+        && config_path.exists() {
             let file_config = Config::from_file(config_path)?;
             config = config.merge(file_config);
         }
-    }
 
     // Apply paths from config if not specified on CLI
     let input_file = cli.input_file.clone().or(config.paths.input.clone());
@@ -281,14 +280,13 @@ fn main() -> Result<()> {
         config.audio.music_file = Some(music_path.clone());
     } else if let Some(ref music_dir_path) = music_dir {
         // Only try to pick music if the directory exists
-        if music_dir_path.exists() {
-            if let Some(random_music) = pick_random_music_file(music_dir_path)? {
+        if music_dir_path.exists()
+            && let Some(random_music) = pick_random_music_file(music_dir_path)? {
                 if !cli.json {
                     println!("Selected random music: {:?}", random_music);
                 }
                 config.audio.music_file = Some(random_music);
             }
-        }
     }
 
     if cli.export_srt {
@@ -447,11 +445,10 @@ fn run_watch_mode(
         let entry = entry?;
         let path = entry.path();
 
-        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            if video_extensions.contains(&ext.to_lowercase().as_str()) {
+        if let Some(ext) = path.extension().and_then(|e| e.to_str())
+            && video_extensions.contains(&ext.to_lowercase().as_str()) {
                 processed.insert(path.clone());
             }
-        }
     }
 
     println!(
@@ -471,8 +468,8 @@ fn run_watch_mode(
             for entry in entries.flatten() {
                 let path = entry.path();
 
-                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                    if video_extensions.contains(&ext.to_lowercase().as_str())
+                if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                    && video_extensions.contains(&ext.to_lowercase().as_str())
                         && !processed.contains(&path)
                     {
                         println!("\n[NEW FILE] {:?}", path);
@@ -517,7 +514,6 @@ fn run_watch_mode(
                             }
                         }
                     }
-                }
             }
         }
     }

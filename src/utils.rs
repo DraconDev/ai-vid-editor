@@ -8,13 +8,11 @@ pub fn find_video_files(dir: &Path) -> Result<Vec<PathBuf>> {
 
     for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        if path.is_file() {
-            if let Some(extension) = path.extension().and_then(|s| s.to_str()) {
-                if supported_extensions.contains(&extension.to_lowercase().as_str()) {
+        if path.is_file()
+            && let Some(extension) = path.extension().and_then(|s| s.to_str())
+                && supported_extensions.contains(&extension.to_lowercase().as_str()) {
                     video_files.push(path.to_path_buf());
                 }
-            }
-        }
     }
     Ok(video_files)
 }

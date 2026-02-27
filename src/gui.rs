@@ -256,11 +256,10 @@ impl AppState {
             selected_folder_idx: 0,
         };
 
-        if let Some(path) = Config::default_config_path() {
-            if path.exists() {
+        if let Some(path) = Config::default_config_path()
+            && path.exists() {
                 state.load_config(&path);
             }
-        }
 
         state
     }
@@ -324,14 +323,13 @@ impl AppState {
             Config::default_config_path()
         };
 
-        if let Some(path) = path {
-            if let Err(e) = self.config.to_file(&path) {
+        if let Some(path) = path
+            && let Err(e) = self.config.to_file(&path) {
                 self.activity_log.push(ActivityEntry::simple(
                     format!("Failed to auto-save config: {}", e),
                     false,
                 ));
             }
-        }
     }
 
     fn add_folder_from_modal(&mut self) {
@@ -642,8 +640,8 @@ impl App {
 
                     ui.add_space(12.0);
 
-                    if let Some(idx) = self.state.modal.delete_confirm_idx {
-                        if let Some(folder) = self.state.folders.get(idx) {
+                    if let Some(idx) = self.state.modal.delete_confirm_idx
+                        && let Some(folder) = self.state.folders.get(idx) {
                             let folder_name = folder
                                 .input
                                 .file_name()
@@ -656,7 +654,6 @@ impl App {
                                 "Videos in this folder will no longer be auto-processed.",
                             ));
                         }
-                    }
 
                     ui.add_space(20.0);
 
@@ -675,11 +672,10 @@ impl App {
             });
 
         if should_close {
-            if should_delete {
-                if let Some(idx) = self.state.modal.delete_confirm_idx {
+            if should_delete
+                && let Some(idx) = self.state.modal.delete_confirm_idx {
                     self.state.remove_folder(idx);
                 }
-            }
             self.state.modal.delete_confirm_idx = None;
         }
     }
@@ -724,11 +720,10 @@ impl App {
                         let mut input_str = self.state.modal.input.to_string_lossy().to_string();
                         ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut input_str));
                         self.state.modal.input = PathBuf::from(&input_str);
-                        if ui.add(button_small("...")).clicked() {
-                            if let Some(path) = FileDialog::new().pick_folder() {
+                        if ui.add(button_small("...")).clicked()
+                            && let Some(path) = FileDialog::new().pick_folder() {
                                 self.state.modal.input = path;
                             }
-                        }
                     });
 
                     ui.add_space(12.0);
@@ -739,11 +734,10 @@ impl App {
                         let mut output_str = self.state.modal.output.to_string_lossy().to_string();
                         ui.add_sized(egui::vec2(240.0, 40.0), text_edit_style(&mut output_str));
                         self.state.modal.output = PathBuf::from(&output_str);
-                        if ui.add(button_small("...")).clicked() {
-                            if let Some(path) = FileDialog::new().pick_folder() {
+                        if ui.add(button_small("...")).clicked()
+                            && let Some(path) = FileDialog::new().pick_folder() {
                                 self.state.modal.output = path;
                             }
-                        }
                     });
 
                     ui.add_space(12.0);
@@ -898,12 +892,11 @@ impl App {
                 "Enhance Audio",
                 "Normalize speech and improve presence.",
                 &mut enhance,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.enhance_audio = Some(enhance);
                     needs_save = true;
                 }
-            }
             ui.add_space(6.0);
 
             let mut remove_silence = remove_silence_val;
@@ -912,12 +905,11 @@ impl App {
                 "Remove Silence",
                 "Cut dead air for tighter pacing.",
                 &mut remove_silence,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.remove_silence = Some(remove_silence);
                     needs_save = true;
                 }
-            }
             ui.add_space(6.0);
 
             let mut stabilize = stabilize_val;
@@ -926,12 +918,11 @@ impl App {
                 "Stabilize Video",
                 "Reduce camera shake in moving clips.",
                 &mut stabilize,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.stabilize = Some(stabilize);
                     needs_save = true;
                 }
-            }
             ui.add_space(6.0);
 
             let mut color_correct = color_correct_val;
@@ -940,12 +931,11 @@ impl App {
                 "Color Correct",
                 "Auto-balance contrast and white levels.",
                 &mut color_correct,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.color_correct = Some(color_correct);
                     needs_save = true;
                 }
-            }
             ui.add_space(6.0);
 
             let mut reframe = reframe_val;
@@ -954,12 +944,11 @@ impl App {
                 "Auto-Reframe (9:16)",
                 "Center content for vertical output.",
                 &mut reframe,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.reframe = Some(reframe);
                     needs_save = true;
                 }
-            }
             ui.add_space(6.0);
 
             let mut blur = blur_val;
@@ -968,12 +957,11 @@ impl App {
                 "Blur Background",
                 "Fill side space when reframing to portrait.",
                 &mut blur,
-            ) {
-                if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+            )
+                && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                     folder.settings.blur_background = Some(blur);
                     needs_save = true;
                 }
-            }
 
             ui.add_space(12.0);
 
@@ -997,12 +985,11 @@ impl App {
                             &mut threshold,
                             -60.0..=-10.0,
                             threshold_label,
-                        ) {
-                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        )
+                            && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                                 folder.settings.silence_threshold_db = Some(threshold);
                                 needs_save = true;
                             }
-                        }
 
                         let mut lufs = lufs_val;
                         let lufs_label = format!("{lufs:.0} LUFS");
@@ -1013,12 +1000,11 @@ impl App {
                             &mut lufs,
                             -24.0..=-6.0,
                             lufs_label,
-                        ) {
-                            if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                        )
+                            && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                                 folder.settings.target_lufs = Some(lufs);
                                 needs_save = true;
                             }
-                        }
                     });
                 } else {
                     let mut threshold = threshold_val;
@@ -1030,12 +1016,11 @@ impl App {
                         &mut threshold,
                         -60.0..=-10.0,
                         threshold_label,
-                    ) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    )
+                        && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                             folder.settings.silence_threshold_db = Some(threshold);
                             needs_save = true;
                         }
-                    }
 
                     ui.add_space(8.0);
 
@@ -1048,12 +1033,11 @@ impl App {
                         &mut lufs,
                         -24.0..=-6.0,
                         lufs_label,
-                    ) {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    )
+                        && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                             folder.settings.target_lufs = Some(lufs);
                             needs_save = true;
                         }
-                    }
                 }
             });
 
@@ -1064,8 +1048,8 @@ impl App {
                     "Restore this folder's settings to default values.",
                 ));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.add(button_small("Reset to Defaults")).clicked() {
-                        if let Some(folder) = self.state.folders.get_mut(folder_idx) {
+                    if ui.add(button_small("Reset to Defaults")).clicked()
+                        && let Some(folder) = self.state.folders.get_mut(folder_idx) {
                             folder.settings = FolderSettings::default();
                             needs_save = true;
                             self.state.activity_log.push(ActivityEntry::simple(
@@ -1073,7 +1057,6 @@ impl App {
                                 true,
                             ));
                         }
-                    }
                 });
             });
 
@@ -1209,7 +1192,7 @@ impl App {
                                         &format_file_size(entry.file_size),
                                         &entry
                                             .duration
-                                            .map(|d| format_duration(d))
+                                            .map(format_duration)
                                             .unwrap_or_default(),
                                     );
                                 }

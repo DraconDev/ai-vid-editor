@@ -149,7 +149,7 @@ impl FaceDetector {
     fn get_model_path() -> Result<std::path::PathBuf> {
         let cache_dir = directories::ProjectDirs::from("com", "ai-vid-editor", "ai-vid-editor")
             .map(|dirs| dirs.cache_dir().to_path_buf())
-            .unwrap_or_else(|| std::env::temp_dir());
+            .unwrap_or_else(std::env::temp_dir);
 
         Ok(cache_dir.join("face_detection.onnx"))
     }
@@ -336,7 +336,7 @@ impl PersonSegmenter {
     fn get_model_path() -> Result<std::path::PathBuf> {
         let cache_dir = directories::ProjectDirs::from("com", "ai-vid-editor", "ai-vid-editor")
             .map(|dirs| dirs.cache_dir().to_path_buf())
-            .unwrap_or_else(|| std::env::temp_dir());
+            .unwrap_or_else(std::env::temp_dir);
 
         Ok(cache_dir.join("person_segmentation.onnx"))
     }
