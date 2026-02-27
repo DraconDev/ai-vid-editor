@@ -160,6 +160,7 @@ struct ModalState {
     output: PathBuf,
     preset: String,
     enabled: bool,
+    delete_confirm_idx: Option<usize>,
 }
 
 impl ModalState {
@@ -181,9 +182,14 @@ impl ModalState {
         self.enabled = folder.enabled;
     }
 
+    fn prompt_delete(&mut self, idx: usize) {
+        self.delete_confirm_idx = Some(idx);
+    }
+
     fn close(&mut self) {
         self.show = false;
         self.editing_idx = None;
+        self.delete_confirm_idx = None;
     }
 }
 
