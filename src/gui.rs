@@ -672,9 +672,17 @@ impl App {
 
                     ui.horizontal(|ui| {
                         if self.state.modal.editing_idx.is_some() {
-                            if ui.add(button_danger("Delete")).clicked() {
-                                should_delete = true;
-                                should_close = true;
+                            let can_delete = self.state.folders.len() > 1;
+                            if can_delete {
+                                if ui.add(button_danger("Delete")).clicked() {
+                                    should_delete = true;
+                                    should_close = true;
+                                }
+                            } else {
+                                ui.add(button_small("Delete"));
+                                ui.label(
+                                    RichText::new("(last folder)").size(12.0).color(TEXT_MUTED),
+                                );
                             }
                         }
 
