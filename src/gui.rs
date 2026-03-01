@@ -912,9 +912,15 @@ impl App {
         ui.add_space(24.0);
 
         // Toggle options
-        self.setup_toggle(ui, "Enhance Audio", "Normalize speech & improve clarity", &mut self.state.setup_enhance);
+        let mut enhance = self.state.setup_enhance;
+        if self.setup_toggle(ui, "Enhance Audio", "Normalize speech & improve clarity", enhance) {
+            self.state.setup_enhance = enhance;
+        }
         ui.add_space(12.0);
-        self.setup_toggle(ui, "Remove Silence", "Auto-cut dead air & pauses", &mut self.state.setup_remove_silence);
+        let mut remove_silence = self.state.setup_remove_silence;
+        if self.setup_toggle(ui, "Remove Silence", "Auto-cut dead air & pauses", remove_silence) {
+            self.state.setup_remove_silence = remove_silence;
+        }
 
         ui.add_space(32.0);
 
@@ -931,10 +937,11 @@ impl App {
         });
     }
 
-    fn setup_toggle(&self, ui: &mut egui::Ui, title: &str, desc: &str, value: &mut bool) {
-        settings_toggle_frame(*value).show(ui, |ui| {
+    fn setup_toggle(&self, ui: &mut egui::Ui, title: &str, desc: &str, value: bool) -> bool {
+        let mut new_value = value;
+        settings_toggle_frame(value).show(ui, |ui| {
             ui.horizontal(|ui| {
-                let dot_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
+                let dot_color = if value { ACCENT_PRIMARY } else { TEXT_MUTED };
                 let (dot_rect, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
                 ui.painter().circle_filled(dot_rect.center(), 3.5, dot_color);
                 ui.add_space(8.0);
@@ -943,12 +950,13 @@ impl App {
                     ui.label(RichText::new(desc).size(12.0).color(TEXT_SECONDARY));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.add(button_toggle(*value, if *value { "ON" } else { "OFF" })).clicked() {
-                        *value = !*value;
+                    if ui.add(button_toggle(value, if value { "ON" } else { "OFF" })).clicked() {
+                        new_value = !value;
                     }
                 });
             });
         });
+        new_value
     }
 
     fn draw_setup_complete(&mut self, ui: &mut egui::Ui) {
