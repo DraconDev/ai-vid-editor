@@ -207,6 +207,11 @@ cargo build --release --no-default-features --features cli
 cargo build --features cli,gui
 ```
 
+## Testing
+
+- `cargo test --all-features` exercises config parsing, presets, silence detection, ML helpers, exporters, and CLI/GUI glue. `scripts/release.sh` already runs that plus `cargo clippy --all-features` before packaging each release.
+- For localized checks run `cargo test config::tests::test_preset_youtube` or `cargo test --package ai-vid-editor -- ml` to focus the suite on configuration/ML helpers.
+
 ## Project Status
 
 | Feature | Status |
