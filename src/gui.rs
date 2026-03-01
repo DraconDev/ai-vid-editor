@@ -697,6 +697,331 @@ impl App {
         }
     }
 
+    fn draw_setup_wizard(&mut self, ctx: &egui::Context) {
+        let screen_rect = ctx.screen_rect();
+
+        // Background overlay
+        egui::Area::new(egui::Id::new("setup_overlay"))
+            .anchor(egui::Align2::LEFT_TOP, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Background)
+            .show(ctx, |ui| {
+                ui.allocate_exact_size(screen_rect.size(), egui::Sense::hover());
+                ui.painter().rect_filled(
+                    screen_rect,
+                    0.0,
+                    egui::Color32::from_rgb(15, 15, 20),
+                );
+            });
+
+        // Center the wizard
+        egui::Area::new(egui::Id::new("setup_wizard"))
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .show(ctx, |ui| {
+                egui::Frame::NONE
+                    .fill(egui::Color32::from_rgb(30, 30, 35))
+                    .corner_radius(16.0)
+                    .inner_margin(egui::vec2(48.0, 40.0))
+                    .show(ui, |ui| {
+                        ui.set_min_width(520.0);
+                        ui.set_max_width(520.0);
+
+                        match self.state.setup_step {
+                            SetupStep::Welcome => self.draw_setup_welcome(ui),
+                            SetupStep::ChooseFolder => self.draw_setup_folder(ui),
+                            SetupStep::ProcessingOptions => self.draw_setup_options(ui),
+                            SetupStep::Complete => self.draw_setup_complete(ui),
+                        }
+                    });
+            });
+    }
+
+    fn draw_setup_welcome(&mut self, ui: &mut egui::Ui) {
+        ui.vertical_centered(|ui| {
+            ui.label(
+                RichText::new("Welcome to AI Video Editor")
+                    .size(28.0)
+                    .color(ACCENT_PRIMARY)
+                    .strong(),
+            );
+            ui.add_space(16.0);
+            ui.label(
+                RichText::new("Let's get you set up in just a few clicks.")
+                    .size(16.0)
+                    .color(TEXT_SECONDARY),
+            );
+            ui.add_space(32.0);
+
+            // Feature highlights
+            egui::Frame::NONE
+                .fill(PANEL_BG)
+                .corner_radius(12.0)
+                .inner_margin(egui::vec2(24.0, 16.0))
+                .show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        self.setup_feature_row(ui, "Auto-remove silence", "Cuts dead air automatically");
+                        ui.add_space(8.0);
+                        self.setup_feature_row(ui, "Audio enhancement", "Makes your voice sound professional");
+                        ui.add_space(8.0);
+                        self.setup_feature_row(ui, "Auto-reframe", "Convert to vertical video for Shorts/Reels");
+                    });
+                });
+
+            ui.add_space(32.0);
+
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.add(button_primary("Get Started →")).clicked() {
+                        self.state.setup_step = SetupStep::ChooseFolder;
+                    }
+                });
+            });
+        });
+    }
+
+    fn setup_feature_row(&self, ui: &mut egui::Ui, title: &str, desc: &str) {
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("✓").size(18.0).color(SUCCESS));
+            ui.add_space(12.0);
+            ui.vertical(|ui| {
+                ui.label(RichText::new(title).size(15.0).color(TEXT_PRIMARY).strong());
+                ui.label(RichText::new(desc).size(13.0).color(TEXT_SECONDARY));
+            });
+        });
+    }
+
+    fn draw_setup_folder(&mut self, ui: &mut egui::Ui) {
+        ui.label(
+            RichText::new("Choose Your Video Folder")
+                .size(24.0)
+                .color(ACCENT_PRIMARY)
+                .strong(),
+        );
+        ui.add_space(8.0);
+        ui.label(
+            RichText::new("Select where your raw videos are stored.\nWe'll create an 'output' folder next to it.")
+                .size(14.0)
+                .color(TEXT_SECONDARY),
+        );
+        ui.add_space(24.0);
+
+        // Folder path display
+        egui::Frame::NONE
+            .fill(PANEL_BG)
+            .corner_radius(8.0)
+            .inner_margin(egui::vec2(16.0, 12.0))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new(self.state.setup_folder.to_string_lossy().as_ref())
+                            .size(14.0)
+                            .color(TEXT_PRIMARY),
+                    );
+                });
+            });
+
+        ui.add_space(12.0);
+
+        ui.horizontal(|ui| {
+            if ui.add(button_secondary("📁 Choose Folder...")).clicked() {
+                if let Some(path) = FileDialog::new().pick_folder() {
+                    self.state.setup_folder = path;
+                }
+            }
+        });
+
+        ui.add_space(24.0);
+
+        // Preset selection
+        ui.label(RichText::new("What type of content?").size(16.0).color(TEXT_PRIMARY).strong());
+        ui.add_space(12.0);
+
+        ui.horizontal_wrapped(|ui| {
+            for (preset, icon, desc) in [
+                ("youtube", "🎬", "YouTube videos (landscape)"),
+                ("shorts", "📱", "Shorts/Reels/TikTok (vertical)"),
+                ("podcast", "🎙️", "Podcast/audio focus"),
+            ] {
+                let selected = self.state.setup_preset == preset;
+                if self.setup_preset_card(ui, selected, icon, preset, desc).clicked() {
+                    self.state.setup_preset = preset.to_string();
+                }
+                ui.add_space(8.0);
+            }
+        });
+
+        ui.add_space(32.0);
+
+        ui.horizontal(|ui| {
+            if ui.add(button_small("← Back")).clicked() {
+                self.state.setup_step = SetupStep::Welcome;
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(button_primary("Continue →")).clicked() {
+                    self.state.setup_step = SetupStep::ProcessingOptions;
+                }
+            });
+        });
+    }
+
+    fn setup_preset_card(
+        &self,
+        ui: &mut egui::Ui,
+        selected: bool,
+        icon: &str,
+        name: &str,
+        desc: &str,
+    ) -> egui::Response {
+        let bg_color = if selected { ACCENT_PRIMARY } else { PANEL_BG };
+        let stroke_color = if selected { ACCENT_PRIMARY } else { PANEL_BG_LIGHT };
+
+        egui::Frame::NONE
+            .fill(bg_color)
+            .corner_radius(10.0)
+            .stroke(egui::Stroke::new(2.0, stroke_color))
+            .inner_margin(egui::vec2(16.0, 12.0))
+            .show(ui, |ui| {
+                ui.set_min_width(140.0);
+                ui.vertical_centered(|ui| {
+                    ui.label(RichText::new(icon).size(28.0));
+                    ui.add_space(4.0);
+                    ui.label(RichText::new(name).size(14.0).color(if selected { egui::Color32::WHITE } else { TEXT_PRIMARY }).strong());
+                    ui.label(RichText::new(desc).size(11.0).color(if selected { egui::Color32::WHITE } else { TEXT_SECONDARY }));
+                });
+            })
+            .response
+    }
+
+    fn draw_setup_options(&mut self, ui: &mut egui::Ui) {
+        ui.label(
+            RichText::new("Processing Options")
+                .size(24.0)
+                .color(ACCENT_PRIMARY)
+                .strong(),
+        );
+        ui.add_space(8.0);
+        ui.label(
+            RichText::new("These can be changed later in Settings.")
+                .size(14.0)
+                .color(TEXT_SECONDARY),
+        );
+        ui.add_space(24.0);
+
+        // Toggle options
+        self.setup_toggle(ui, "Enhance Audio", "Normalize speech & improve clarity", &mut self.state.setup_enhance);
+        ui.add_space(12.0);
+        self.setup_toggle(ui, "Remove Silence", "Auto-cut dead air & pauses", &mut self.state.setup_remove_silence);
+
+        ui.add_space(32.0);
+
+        ui.horizontal(|ui| {
+            if ui.add(button_small("← Back")).clicked() {
+                self.state.setup_step = SetupStep::ChooseFolder;
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(button_primary("Finish Setup ✓")).clicked() {
+                    self.complete_setup();
+                    self.state.setup_step = SetupStep::Complete;
+                }
+            });
+        });
+    }
+
+    fn setup_toggle(&self, ui: &mut egui::Ui, title: &str, desc: &str, value: &mut bool) {
+        settings_toggle_frame(*value).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                let dot_color = if *value { ACCENT_PRIMARY } else { TEXT_MUTED };
+                let (dot_rect, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+                ui.painter().circle_filled(dot_rect.center(), 3.5, dot_color);
+                ui.add_space(8.0);
+                ui.vertical(|ui| {
+                    ui.label(RichText::new(title).size(15.0).color(TEXT_PRIMARY).strong());
+                    ui.label(RichText::new(desc).size(12.0).color(TEXT_SECONDARY));
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.add(button_toggle(*value, if *value { "ON" } else { "OFF" })).clicked() {
+                        *value = !*value;
+                    }
+                });
+            });
+        });
+    }
+
+    fn draw_setup_complete(&mut self, ui: &mut egui::Ui) {
+        ui.vertical_centered(|ui| {
+            ui.label(RichText::new("🎉").size(64.0));
+            ui.add_space(16.0);
+            ui.label(
+                RichText::new("You're All Set!")
+                    .size(28.0)
+                    .color(ACCENT_PRIMARY)
+                    .strong(),
+            );
+            ui.add_space(16.0);
+            ui.label(
+                RichText::new("Drop videos into your folder and they'll be processed automatically.")
+                    .size(14.0)
+                    .color(TEXT_SECONDARY),
+            );
+            ui.add_space(24.0);
+
+            // Summary
+            egui::Frame::NONE
+                .fill(PANEL_BG)
+                .corner_radius(10.0)
+                .inner_margin(egui::vec2(24.0, 16.0))
+                .show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ui.label(RichText::new("Setup Summary").size(14.0).color(TEXT_PRIMARY).strong());
+                        ui.add_space(8.0);
+                        ui.label(RichText::new(format!("📁 Folder: {}", self.state.setup_folder.display())).size(13.0).color(TEXT_SECONDARY));
+                        ui.label(RichText::new(format!("🎬 Preset: {}", self.state.setup_preset)).size(13.0).color(TEXT_SECONDARY));
+                        ui.label(RichText::new(format!("🔧 Enhance: {}", if self.state.setup_enhance { "ON" } else { "OFF" })).size(13.0).color(TEXT_SECONDARY));
+                        ui.label(RichText::new(format!("✂️ Silence removal: {}", if self.state.setup_remove_silence { "ON" } else { "OFF" })).size(13.0).color(TEXT_SECONDARY));
+                    });
+                });
+
+            ui.add_space(32.0);
+
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.add(button_primary("Start Editing →")).clicked() {
+                        self.state.show_setup = false;
+                    }
+                });
+            });
+        });
+    }
+
+    fn complete_setup(&mut self) {
+        // Create output folder
+        let output_folder = self.state.setup_folder.join("output");
+        let _ = std::fs::create_dir_all(&output_folder);
+        let _ = std::fs::create_dir_all(&self.state.setup_folder);
+
+        // Create the folder config
+        let folder = FolderState {
+            input: self.state.setup_folder.clone(),
+            output: output_folder,
+            preset: self.state.setup_preset.clone(),
+            enabled: true,
+            settings: FolderSettings {
+                enhance_audio: Some(self.state.setup_enhance),
+                remove_silence: Some(self.state.setup_remove_silence),
+                ..Default::default()
+            },
+        };
+
+        self.state.folders = vec![folder];
+        self.state.activity_log.push(ActivityEntry::simple(
+            format!("Setup complete! Watching: {}", self.state.setup_folder.display()),
+            true,
+        ));
+
+        // Save config
+        self.state.auto_save_config();
+    }
+
     fn draw_modal(&mut self, ctx: &egui::Context) {
         let mut should_close = false;
         let mut should_save = false;
