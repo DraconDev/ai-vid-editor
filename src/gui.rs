@@ -17,6 +17,14 @@ enum Tab {
     Activity,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum SetupStep {
+    Welcome,
+    ChooseFolder,
+    ProcessingOptions,
+    Complete,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 enum ProcessingStatus {
@@ -201,6 +209,13 @@ pub struct AppState {
     current_tab: Tab,
     modal: ModalState,
     selected_folder_idx: usize,
+    // First-run setup wizard
+    show_setup: bool,
+    setup_step: SetupStep,
+    setup_folder: PathBuf,
+    setup_preset: String,
+    setup_enhance: bool,
+    setup_remove_silence: bool,
 }
 
 #[allow(dead_code)]
