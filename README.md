@@ -38,6 +38,12 @@ The install script will:
 - Install the application icon and desktop entry (shows in app menu)
 - Optionally set up a systemd service for daemon mode
 
+### Releases & Distribution
+
+- Run `scripts/release.sh <version>` after tests to build, bundle, and checksum `release/ai-vid-editor-<version>.tar.gz`. The script already copies the binary, installer, desktop assets, and docs into the release directory.
+- Publish the generated artifacts plus any AppImage/DEB/RPM/Flatpak/Snap packages to GitHub Releases or your download site, then update `docs/release-locations.md` (and link from `docs/linux-release-guide.md`) so casual Linux users know where to download and how to install.
+- Point readers to `docs/linux-release-guide.md` for packaging options and `docs/customer-facing.md` for the onboarding story, so both builders and end users understand the experience.
+
 ### Requirements
 
 - [Rust](https://rustup.rs/) (edition 2024)
