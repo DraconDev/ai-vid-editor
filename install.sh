@@ -194,14 +194,15 @@ if [ -d "assets" ]; then
         fi
     fi
     
-    # Install desktop entry
+    # Install (or update) desktop entry for GUI launch
     if [ -f "assets/$BIN_NAME.desktop" ]; then
         mkdir -p "$DESKTOP_DIR"
-        cp "assets/$BIN_NAME.desktop" "$DESKTOP_DIR/"
+        echo -e "${BLUE}Installing desktop entry to $DESKTOP_DIR/$BIN_NAME.desktop...${NC}"
+        rm -f "$DESKTOP_DIR/$BIN_NAME.desktop"
+        cp -f "assets/$BIN_NAME.desktop" "$DESKTOP_DIR/"
         sed -i "s|@AI_VID_EDITOR_EXEC@|$PREFIX/bin/$BIN_NAME|g" "$DESKTOP_DIR/$BIN_NAME.desktop"
-        echo -e "${GREEN}✓ Installed desktop entry (GUI launch) to $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
-        
-        # Update desktop database
+        echo -e "${GREEN}✓ Overwrote desktop entry at $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
+        # Refresh desktop database
         if command -v update-desktop-database &> /dev/null; then
             update-desktop-database -q "$DESKTOP_DIR" 2>/dev/null || true
         fi
