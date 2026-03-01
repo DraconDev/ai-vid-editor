@@ -275,7 +275,11 @@ impl AppState {
             selected_folder_idx: 0,
             show_setup: is_first_run,
             setup_step: SetupStep::Welcome,
-            setup_folder: dirs::home_dir().unwrap_or_default().join("Videos"),
+            setup_folder: std::env::var("HOME")
+                .or_else(|_| std::env::var("USERPROFILE"))
+                .map(PathBuf::from)
+                .unwrap_or_default()
+                .join("Videos"),
             setup_preset: "youtube".to_string(),
             setup_enhance: true,
             setup_remove_silence: true,
