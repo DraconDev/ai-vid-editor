@@ -912,15 +912,19 @@ impl App {
         ui.add_space(24.0);
 
         // Toggle options
-        let mut enhance = self.state.setup_enhance;
-        if self.setup_toggle(ui, "Enhance Audio", "Normalize speech & improve clarity", enhance) {
-            self.state.setup_enhance = enhance;
-        }
+        self.state.setup_enhance = self.setup_toggle(
+            ui,
+            "Enhance Audio",
+            "Normalize speech & improve clarity",
+            self.state.setup_enhance,
+        );
         ui.add_space(12.0);
-        let mut remove_silence = self.state.setup_remove_silence;
-        if self.setup_toggle(ui, "Remove Silence", "Auto-cut dead air & pauses", remove_silence) {
-            self.state.setup_remove_silence = remove_silence;
-        }
+        self.state.setup_remove_silence = self.setup_toggle(
+            ui,
+            "Remove Silence",
+            "Auto-cut dead air & pauses",
+            self.state.setup_remove_silence,
+        );
 
         ui.add_space(32.0);
 
