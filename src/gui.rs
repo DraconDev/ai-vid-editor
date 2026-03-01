@@ -258,6 +258,12 @@ impl AppState {
                 .collect()
         };
 
+        // Check if this is first run (no config exists)
+        let config_exists = Config::default_config_path()
+            .map(|p| p.exists())
+            .unwrap_or(false);
+        let is_first_run = !config_exists;
+
         let mut state = Self {
             config,
             folders,
@@ -267,12 +273,23 @@ impl AppState {
             current_tab: Tab::All,
             modal: ModalState::default(),
             selected_folder_idx: 0,
+            show_setup: is_first_run,
+            setup_step: SetupStep::Welcome,
+            setup_folder: dirs::home_dir().unwrap_or_default().join("Videos"),
+            setup_preset: "youtube".to_string(),
+            setup_enhance: true,
+            setup_remove_silence: true,
         };
 
-        if let Some(path) = Config::default_config_path()
-            && path.exists()
-        {
-            state.load_config(&path);
+        if !is_first_run {
+            if let Some(path) = Config::default_config_path() {
+                state.load_config(&path);
+            }
+        } else {
+            state.activity_log.push(ActivityEntry::simple(
+                "Welcome! Complete setup to get started.",
+                true,
+            ));
         }
 
         state
