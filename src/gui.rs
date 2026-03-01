@@ -409,6 +409,12 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Show setup wizard for first-run
+        if self.state.show_setup {
+            self.draw_setup_wizard(ctx);
+            return;
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 self.draw_header(ui);
