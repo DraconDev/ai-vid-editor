@@ -198,7 +198,10 @@ if [ -d "assets" ]; then
     if [ -f "assets/$BIN_NAME.desktop" ]; then
         mkdir -p "$DESKTOP_DIR"
         cp "assets/$BIN_NAME.desktop" "$DESKTOP_DIR/"
-        echo -e "${GREEN}✓ Installed desktop entry to $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
+        sed -i \
+          -e "s|Exec=.*|Exec=$BIN_NAME --gui|" \
+          "$DESKTOP_DIR/$BIN_NAME.desktop"
+        echo -e "${GREEN}✓ Installed desktop entry (GUI launch) to $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
         
         # Update desktop database
         if command -v update-desktop-database &> /dev/null; then
