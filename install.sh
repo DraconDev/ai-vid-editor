@@ -198,9 +198,7 @@ if [ -d "assets" ]; then
     if [ -f "assets/$BIN_NAME.desktop" ]; then
         mkdir -p "$DESKTOP_DIR"
         cp "assets/$BIN_NAME.desktop" "$DESKTOP_DIR/"
-        sed -i \
-          -e "s|Exec=.*|Exec=$BIN_NAME --gui|" \
-          "$DESKTOP_DIR/$BIN_NAME.desktop"
+        sed -i "s|@AI_VID_EDITOR_EXEC@|$PREFIX/bin/$BIN_NAME|g" "$DESKTOP_DIR/$BIN_NAME.desktop"
         echo -e "${GREEN}✓ Installed desktop entry (GUI launch) to $DESKTOP_DIR/$BIN_NAME.desktop${NC}"
         
         # Update desktop database
