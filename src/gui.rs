@@ -222,7 +222,7 @@ impl ModalState {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AppState {
     config: Config,
     folders: Vec<FolderState>,
