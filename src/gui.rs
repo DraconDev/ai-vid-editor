@@ -3,9 +3,19 @@ mod theme;
 use eframe::egui;
 use egui::RichText;
 use rfd::FileDialog;
-use std::path::PathBuf;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+    mpsc::{self, Receiver},
+};
+use std::time::{Duration, Instant};
 
-use ai_vid_editor::{Config, FolderSettings, JoinMode, WatchFolder};
+use ai_vid_editor::{
+    Config, FfmpegAnalyzer, FfmpegDurationGetter, FfmpegEditor, FolderSettings, JoinMode, Preset,
+    SilenceMode, WatchFolder, process_single_file_with_intro_outro,
+};
 use theme::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -134,6 +144,19 @@ impl From<WatchFolder> for FolderState {
     }
 }
 
+#[derive(Debug)]
+enum WatcherEvent {
+    Status(ProcessingStatus),
+    Log { message: String, success: bool },
+    Processing { filename: String, file_size: u64 },
+    Completed {
+        filename: String,
+        file_size: u64,
+        duration_secs: u64,
+    },
+    Failed { filename: String, message: String },
+}
+
 impl From<FolderState> for WatchFolder {
     fn from(state: FolderState) -> Self {
         Self {
@@ -216,6 +239,8 @@ pub struct AppState {
     setup_preset: String,
     setup_enhance: bool,
     setup_remove_silence: bool,
+    watcher_rx: Option<Receiver<WatcherEvent>>,
+    watcher_stop: Option<Arc<AtomicBool>>,
 }
 
 #[allow(dead_code)]
@@ -283,6 +308,8 @@ impl AppState {
             setup_preset: "youtube".to_string(),
             setup_enhance: true,
             setup_remove_silence: true,
+            watcher_rx: None,
+            watcher_stop: None,
         };
 
         if !is_first_run {
@@ -294,6 +321,10 @@ impl AppState {
                 "Welcome! Complete setup to get started.",
                 true,
             ));
+        }
+
+        if !state.show_setup {
+            state.restart_watcher();
         }
 
         state
@@ -318,6 +349,7 @@ impl AppState {
                     format!("Loaded config from {}", path.display()),
                     true,
                 ));
+                self.restart_watcher();
             }
             Err(e) => {
                 self.activity_log.push(ActivityEntry::simple(
@@ -345,6 +377,8 @@ impl AppState {
                 false,
             ));
         }
+
+        self.restart_watcher();
     }
 
     fn add_folder_from_modal(&mut self) {
@@ -397,6 +431,280 @@ impl AppState {
             self.auto_save_config();
         }
     }
+
+    fn restart_watcher(&mut self) {
+        if let Some(stop) = self.watcher_stop.take() {
+            stop.store(true, Ordering::Relaxed);
+        }
+
+        let enabled_folders: Vec<FolderState> =
+            self.folders.iter().filter(|f| f.enabled).cloned().collect();
+
+        if enabled_folders.is_empty() {
+            self.watcher_rx = None;
+            self.status = ProcessingStatus::Idle;
+            self.activity_log.push(ActivityEntry::simple(
+                "No enabled watch folders. Auto-processing is paused.",
+                true,
+            ));
+            return;
+        }
+
+        let (rx, stop) = spawn_watcher(self.config.clone(), enabled_folders);
+        self.watcher_rx = Some(rx);
+        self.watcher_stop = Some(stop);
+        self.status = ProcessingStatus::Watching;
+    }
+
+    fn drain_watcher_events(&mut self) {
+        let Some(rx) = self.watcher_rx.as_ref() else {
+            return;
+        };
+
+        let mut drained = Vec::new();
+        while let Ok(event) = rx.try_recv() {
+            drained.push(event);
+        }
+
+        for event in drained {
+            match event {
+                WatcherEvent::Status(status) => self.status = status,
+                WatcherEvent::Log { message, success } => {
+                    self.activity_log.push(ActivityEntry::simple(message, success));
+                }
+                WatcherEvent::Processing {
+                    filename,
+                    file_size,
+                } => {
+                    self.status = ProcessingStatus::Processing(filename.clone());
+                    self.activity_log
+                        .push(ActivityEntry::processing(filename, file_size, 0.0));
+                }
+                WatcherEvent::Completed {
+                    filename,
+                    file_size,
+                    duration_secs,
+                } => {
+                    self.status = ProcessingStatus::Watching;
+                    self.activity_log.push(ActivityEntry::success(
+                        filename,
+                        file_size,
+                        duration_secs,
+                    ));
+                }
+                WatcherEvent::Failed { filename, message } => {
+                    self.status = ProcessingStatus::Error(message.clone());
+                    self.activity_log
+                        .push(ActivityEntry::error(filename, message));
+                }
+            }
+        }
+    }
+}
+
+impl Drop for AppState {
+    fn drop(&mut self) {
+        if let Some(stop) = self.watcher_stop.take() {
+            stop.store(true, Ordering::Relaxed);
+        }
+    }
+}
+
+fn spawn_watcher(config: Config, folders: Vec<FolderState>) -> (Receiver<WatcherEvent>, Arc<AtomicBool>) {
+    let (tx, rx) = mpsc::channel();
+    let stop = Arc::new(AtomicBool::new(false));
+    let thread_stop = Arc::clone(&stop);
+
+    std::thread::spawn(move || {
+        watch_folders_loop(config, folders, tx, thread_stop);
+    });
+
+    (rx, stop)
+}
+
+fn watch_folders_loop(
+    config: Config,
+    folders: Vec<FolderState>,
+    tx: mpsc::Sender<WatcherEvent>,
+    stop: Arc<AtomicBool>,
+) {
+    let poll_interval = Duration::from_secs(config.watch.interval.max(1));
+    let mut attempted = HashSet::new();
+    let intro = config.paths.intro.clone();
+    let outro = config.paths.outro.clone();
+    let analyzer = FfmpegAnalyzer;
+    let editor = FfmpegEditor;
+    let duration_getter = FfmpegDurationGetter;
+
+    let _ = tx.send(WatcherEvent::Log {
+        message: format!("Watching {} folder(s) for new videos", folders.len()),
+        success: true,
+    });
+    let _ = tx.send(WatcherEvent::Status(ProcessingStatus::Watching));
+
+    while !stop.load(Ordering::Relaxed) {
+        for folder in &folders {
+            if stop.load(Ordering::Relaxed) {
+                return;
+            }
+
+            if let Err(err) = std::fs::create_dir_all(&folder.input) {
+                let _ = tx.send(WatcherEvent::Log {
+                    message: format!(
+                        "Failed to create input folder {}: {}",
+                        folder.input.display(),
+                        err
+                    ),
+                    success: false,
+                });
+                continue;
+            }
+
+            if let Err(err) = std::fs::create_dir_all(&folder.output) {
+                let _ = tx.send(WatcherEvent::Log {
+                    message: format!(
+                        "Failed to create output folder {}: {}",
+                        folder.output.display(),
+                        err
+                    ),
+                    success: false,
+                });
+                continue;
+            }
+
+            let entries = match std::fs::read_dir(&folder.input) {
+                Ok(entries) => entries,
+                Err(err) => {
+                    let _ = tx.send(WatcherEvent::Log {
+                        message: format!(
+                            "Failed to read watch folder {}: {}",
+                            folder.input.display(),
+                            err
+                        ),
+                        success: false,
+                    });
+                    continue;
+                }
+            };
+
+            for entry in entries.flatten() {
+                if stop.load(Ordering::Relaxed) {
+                    return;
+                }
+
+                let path = entry.path();
+                if !is_video_file(&path) || attempted.contains(&path) {
+                    continue;
+                }
+
+                let Some(file_name) = path.file_name().map(|name| name.to_os_string()) else {
+                    continue;
+                };
+
+                let output_path = folder.output.join(&file_name);
+                if output_path.exists() {
+                    attempted.insert(path);
+                    continue;
+                }
+
+                let metadata = entry.metadata().ok();
+                let file_size = metadata.as_ref().map_or(0, |m| m.len());
+                let file_label = PathBuf::from(&file_name).display().to_string();
+
+                let _ = tx.send(WatcherEvent::Processing {
+                    filename: file_label.clone(),
+                    file_size,
+                });
+
+                let started = Instant::now();
+                let folder_config = build_folder_config(&config, folder);
+                let result = process_single_file_with_intro_outro(
+                    path.clone(),
+                    output_path,
+                    &folder_config,
+                    &analyzer,
+                    &editor,
+                    &duration_getter,
+                    intro.clone(),
+                    outro.clone(),
+                );
+
+                attempted.insert(path);
+
+                match result {
+                    Ok(()) => {
+                        let _ = tx.send(WatcherEvent::Completed {
+                            filename: file_label,
+                            file_size,
+                            duration_secs: started.elapsed().as_secs().max(1),
+                        });
+                    }
+                    Err(err) => {
+                        let _ = tx.send(WatcherEvent::Failed {
+                            filename: file_label,
+                            message: err.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        let _ = tx.send(WatcherEvent::Status(ProcessingStatus::Watching));
+
+        for _ in 0..poll_interval.as_millis().div_ceil(250) {
+            if stop.load(Ordering::Relaxed) {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(250));
+        }
+    }
+}
+
+fn build_folder_config(config: &Config, folder: &FolderState) -> Config {
+    let mut merged = if let Some(preset) = Preset::from_str(&folder.preset) {
+        preset.to_config().merge(config.clone())
+    } else {
+        config.clone()
+    };
+
+    if let Some(remove_silence) = folder.settings.remove_silence {
+        if !remove_silence {
+            merged.silence.mode = SilenceMode::Cut;
+            merged.silence.min_duration = f32::MAX;
+        }
+    }
+    if let Some(threshold) = folder.settings.silence_threshold_db {
+        merged.silence.threshold_db = threshold;
+    }
+    if let Some(enhance_audio) = folder.settings.enhance_audio {
+        merged.audio.enhance = enhance_audio;
+    }
+    if let Some(target_lufs) = folder.settings.target_lufs {
+        merged.audio.target_lufs = target_lufs;
+    }
+    if let Some(stabilize) = folder.settings.stabilize {
+        merged.video.stabilize = stabilize;
+    }
+    if let Some(color_correct) = folder.settings.color_correct {
+        merged.video.color_correct = color_correct;
+    }
+    if let Some(reframe) = folder.settings.reframe {
+        merged.video.reframe = reframe;
+    }
+    if let Some(blur_background) = folder.settings.blur_background {
+        merged.video.blur_background = blur_background;
+    }
+
+    merged
+}
+
+fn is_video_file(path: &Path) -> bool {
+    path.is_file()
+        && path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| matches!(ext.to_ascii_lowercase().as_str(), "mp4" | "mov" | "avi" | "mkv" | "webm"))
+            .unwrap_or(false)
 }
 
 pub struct App {
@@ -413,6 +721,9 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.state.drain_watcher_events();
+        ctx.request_repaint_after(Duration::from_millis(250));
+
         // Show setup wizard for first-run
         if self.state.show_setup {
             self.draw_setup_wizard(ctx);
