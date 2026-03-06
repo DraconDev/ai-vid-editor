@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 use ai_vid_editor::{
     Config, FfmpegAnalyzer, FfmpegDurationGetter, FfmpegEditor, FolderSettings, JoinMode, Preset,
-    SilenceMode, WatchFolder, process_single_file_with_intro_outro,
+    ProcessingProgress, SilenceMode, WatchFolder, process_single_file_with_intro_outro_progress,
 };
 use theme::*;
 
@@ -87,7 +87,7 @@ impl ActivityEntry {
             duration: None,
             progress: Some(progress),
             status: EntryStatus::Processing,
-            message: String::new(),
+            message: "Queued".to_string(),
         }
     }
 
@@ -149,6 +149,11 @@ enum WatcherEvent {
     Status(ProcessingStatus),
     Log { message: String, success: bool },
     Processing { filename: String, file_size: u64 },
+    Progress {
+        filename: String,
+        progress: f32,
+        message: String,
+    },
     Completed {
         filename: String,
         file_size: u64,
@@ -477,8 +482,15 @@ impl AppState {
                     file_size,
                 } => {
                     self.status = ProcessingStatus::Processing(filename.clone());
-                    self.activity_log
-                        .push(ActivityEntry::processing(filename, file_size, 0.0));
+                    self.upsert_processing_entry(&filename, file_size, 0.0, "Queued");
+                }
+                WatcherEvent::Progress {
+                    filename,
+                    progress,
+                    message,
+                } => {
+                    self.status = ProcessingStatus::Processing(filename.clone());
+                    self.upsert_processing_entry(&filename, 0, progress, &message);
                 }
                 WatcherEvent::Completed {
                     filename,
@@ -498,6 +510,32 @@ impl AppState {
                         .push(ActivityEntry::error(filename, message));
                 }
             }
+        }
+    }
+
+    fn upsert_processing_entry(
+        &mut self,
+        filename: &str,
+        file_size: u64,
+        progress: f32,
+        message: &str,
+    ) {
+        if let Some(entry) = self
+            .activity_log
+            .iter_mut()
+            .rev()
+            .find(|entry| entry.status == EntryStatus::Processing && entry.filename == filename)
+        {
+            entry.timestamp = chrono::Local::now().format("%H:%M:%S").to_string();
+            if file_size > 0 {
+                entry.file_size = file_size;
+            }
+            entry.progress = Some(progress.clamp(0.0, 1.0));
+            entry.message = message.to_string();
+        } else {
+            let mut entry = ActivityEntry::processing(filename.to_string(), file_size, progress);
+            entry.message = message.to_string();
+            self.activity_log.push(entry);
         }
     }
 }
@@ -618,7 +656,7 @@ fn watch_folders_loop(
 
                 let started = Instant::now();
                 let folder_config = build_folder_config(&config, folder);
-                let result = process_single_file_with_intro_outro(
+                let result = process_single_file_with_intro_outro_progress(
                     path.clone(),
                     output_path,
                     &folder_config,
@@ -627,6 +665,13 @@ fn watch_folders_loop(
                     &duration_getter,
                     intro.clone(),
                     outro.clone(),
+                    |progress: ProcessingProgress| {
+                        let _ = tx.send(WatcherEvent::Progress {
+                            filename: file_label.clone(),
+                            progress: progress.fraction,
+                            message: progress.stage,
+                        });
+                    },
                 );
 
                 attempted.insert(path);
@@ -1863,6 +1908,7 @@ impl App {
                                     ui,
                                     &entry.timestamp,
                                     &entry.filename,
+                                    &entry.message,
                                     entry.progress.unwrap_or(0.0),
                                 );
                             }

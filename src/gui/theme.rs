@@ -453,7 +453,13 @@ pub fn log_entry_success(
     });
 }
 
-pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, progress: f32) {
+pub fn log_entry_processing(
+    ui: &mut egui::Ui,
+    timestamp: &str,
+    filename: &str,
+    message: &str,
+    progress: f32,
+) {
     card_frame(PROCESSING_BG).show(ui, |ui| {
         ui.horizontal(|ui| {
             let (rect, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
@@ -462,6 +468,11 @@ pub fn log_entry_processing(ui: &mut egui::Ui, timestamp: &str, filename: &str, 
             ui.label(label_muted(timestamp));
             ui.add_space(6.0);
             ui.label(label_primary(filename));
+        });
+        ui.add_space(2.0);
+        ui.horizontal(|ui| {
+            ui.add_space(16.0);
+            ui.label(label_muted(message));
         });
         ui.add_space(4.0);
         ui.horizontal(|ui| {

@@ -12,8 +12,8 @@ pub mod utils;
 
 pub use analyzer::FfmpegAnalyzer;
 pub use batch_processor::{
-    FfmpegDurationGetter, process_batch_dir, process_single_file,
-    process_single_file_with_intro_outro,
+    FfmpegDurationGetter, ProcessingProgress, process_batch_dir, process_single_file,
+    process_single_file_with_intro_outro, process_single_file_with_intro_outro_progress,
 };
 pub use config::{
     Config, FolderSettings, JoinMode, Preset, ProcessingConfig, SilenceMode, WatchFolder,

@@ -2,9 +2,12 @@ use crate::analyzer::{ProcessedSegment, Segment};
 use crate::config::SilenceMode;
 use crate::stt_analyzer::TranscriptSegment;
 use anyhow::{Context, Result};
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tracing::{info, warn};
+
+const TRIM_SEGMENTS_PER_CHUNK: usize = 48;
 
 /// Calculate segments to keep after processing silences
 ///
@@ -131,6 +134,18 @@ pub fn calculate_keep_segments_from_transcript(
 
 pub trait VideoEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()>;
+    fn trim_video_with_progress(
+        &self,
+        input: &Path,
+        output: &Path,
+        segments: &[ProcessedSegment],
+        progress: &mut dyn FnMut(f32),
+    ) -> Result<()> {
+        progress(0.0);
+        self.trim_video(input, output, segments)?;
+        progress(1.0);
+        Ok(())
+    }
     fn mix_with_music(
         &self,
         input: &Path,
@@ -150,32 +165,41 @@ pub struct FfmpegEditor;
 
 impl VideoEditor for FfmpegEditor {
     fn trim_video(&self, input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()> {
+        self.trim_video_with_progress(input, output, segments, &mut |_| {})
+    }
+
+    fn trim_video_with_progress(
+        &self,
+        input: &Path,
+        output: &Path,
+        segments: &[ProcessedSegment],
+        progress: &mut dyn FnMut(f32),
+    ) -> Result<()> {
         if segments.is_empty() {
             anyhow::bail!("No segments to process");
         }
 
-        let (v_filter, a_filter) = generate_trim_filters(segments);
-
-        let status = Command::new("ffmpeg")
-            .args([
-                "-i",
-                input.to_str().context("invalid input path")?,
-                "-filter_complex",
-                &format!("{}{}", v_filter, a_filter),
-                "-map",
-                "[outv]",
-                "-map",
-                "[outa]",
-                "-y",
-                output.to_str().context("invalid output path")?,
-            ])
-            .status()
-            .context("failed to execute ffmpeg")?;
-
-        if !status.success() {
-            anyhow::bail!("ffmpeg failed with status: {}", status);
+        if segments.len() <= TRIM_SEGMENTS_PER_CHUNK {
+            run_trim_filter_job(input, output, segments)?;
+            progress(1.0);
+            return Ok(());
         }
 
+        let chunk_dir = create_trim_chunk_dir(output)?;
+        let chunk_count = segments.len().div_ceil(TRIM_SEGMENTS_PER_CHUNK);
+        let mut chunk_files = Vec::with_capacity(chunk_count);
+
+        for (idx, chunk) in segments.chunks(TRIM_SEGMENTS_PER_CHUNK).enumerate() {
+            let chunk_path = chunk_dir.join(format!("chunk_{idx:04}.mp4"));
+            run_trim_filter_job(input, &chunk_path, chunk)?;
+            chunk_files.push(chunk_path);
+            progress((idx + 1) as f32 / (chunk_count + 1) as f32);
+        }
+
+        concat_chunk_files(&chunk_files, output)?;
+        progress(1.0);
+
+        let _ = fs::remove_dir_all(&chunk_dir);
         Ok(())
     }
 
@@ -448,6 +472,108 @@ impl VideoEditor for FfmpegEditor {
 
         Ok(())
     }
+}
+
+fn run_trim_filter_job(input: &Path, output: &Path, segments: &[ProcessedSegment]) -> Result<()> {
+    let (v_filter, a_filter) = generate_trim_filters(segments);
+
+    let status = Command::new("ffmpeg")
+        .args([
+            "-i",
+            input.to_str().context("invalid input path")?,
+            "-filter_complex",
+            &format!("{}{}", v_filter, a_filter),
+            "-map",
+            "[outv]",
+            "-map",
+            "[outa]",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "20",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-movflags",
+            "+faststart",
+            "-y",
+            output.to_str().context("invalid output path")?,
+        ])
+        .status()
+        .context("failed to execute ffmpeg")?;
+
+    if !status.success() {
+        anyhow::bail!("ffmpeg failed with status: {}", status);
+    }
+
+    Ok(())
+}
+
+fn create_trim_chunk_dir(output: &Path) -> Result<PathBuf> {
+    let parent = output.parent().unwrap_or_else(|| Path::new("."));
+    let stem = output
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("trim");
+    let chunk_dir = parent.join(format!(
+        ".ai-vid-editor-{}-{}",
+        stem,
+        std::process::id()
+    ));
+
+    if chunk_dir.exists() {
+        let _ = fs::remove_dir_all(&chunk_dir);
+    }
+    fs::create_dir_all(&chunk_dir)?;
+    Ok(chunk_dir)
+}
+
+fn concat_chunk_files(chunk_files: &[PathBuf], output: &Path) -> Result<()> {
+    if chunk_files.is_empty() {
+        anyhow::bail!("No chunk files to concatenate");
+    }
+
+    if chunk_files.len() == 1 {
+        fs::rename(&chunk_files[0], output)?;
+        return Ok(());
+    }
+
+    let concat_list = output.with_extension("concat.txt");
+    let concat_contents = chunk_files
+        .iter()
+        .map(|path| format!("file '{}'\n", path.display().to_string().replace('\'', "'\\''")))
+        .collect::<String>();
+    fs::write(&concat_list, concat_contents)?;
+
+    let status = Command::new("ffmpeg")
+        .args([
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            concat_list.to_str().context("invalid concat list path")?,
+            "-c",
+            "copy",
+            "-y",
+            output.to_str().context("invalid output path")?,
+        ])
+        .status()
+        .context("failed to execute ffmpeg concat")?;
+
+    let _ = fs::remove_file(&concat_list);
+    for chunk_file in chunk_files {
+        let _ = fs::remove_file(chunk_file);
+    }
+
+    if !status.success() {
+        anyhow::bail!("ffmpeg concat failed with status: {}", status);
+    }
+
+    Ok(())
 }
 
 fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {

@@ -11,6 +11,12 @@ use crate::editor::calculate_keep_segments;
 use crate::exporter;
 use crate::utils::find_video_files;
 
+#[derive(Debug, Clone)]
+pub struct ProcessingProgress {
+    pub fraction: f32,
+    pub stage: String,
+}
+
 // Trait for getting video duration
 pub trait DurationGetter {
     fn get_duration(&self, path: &Path) -> Result<f32>;
@@ -152,6 +158,37 @@ where
     E: VideoEditor,
     D: DurationGetter,
 {
+    process_single_file_with_intro_outro_progress(
+        input_file,
+        output_file,
+        config,
+        analyzer,
+        editor,
+        duration_getter,
+        intro,
+        outro,
+        |_| {},
+    )
+}
+
+pub fn process_single_file_with_intro_outro_progress<A, E, D, F>(
+    input_file: PathBuf,
+    output_file: PathBuf,
+    config: &Config,
+    analyzer: &A,
+    editor: &E,
+    duration_getter: &D,
+    intro: Option<PathBuf>,
+    outro: Option<PathBuf>,
+    mut progress: F,
+) -> Result<()>
+where
+    A: VideoAnalyzer,
+    E: VideoEditor,
+    D: DurationGetter,
+    F: FnMut(ProcessingProgress),
+{
+    report_progress(&mut progress, 0.02, "Analyzing silence");
     info!(file = ?input_file, "Analyzing video");
     debug!(mode = ?config.silence.mode, "Silence mode");
 
@@ -165,6 +202,7 @@ where
 
     info!(count = silences.len(), "Detected silent segments");
 
+    report_progress(&mut progress, 0.1, "Planning edits");
     let video_duration = duration_getter.get_duration(&input_file)?;
     debug!(duration = video_duration, "Video duration");
 
@@ -178,7 +216,6 @@ where
     );
     debug!(count = processed_segments.len(), "Segments to process");
 
-    // Step 1: Trim video (silence removal/speedup)
     let trimmed_file = if config.audio.enhance
         || config.audio.music_file.is_some()
         || intro.is_some()
@@ -189,14 +226,22 @@ where
         output_file.clone()
     };
 
+    report_progress(&mut progress, 0.15, "Trimming video");
     editor
-        .trim_video(&input_file, &trimmed_file, &processed_segments)
+        .trim_video_with_progress(&input_file, &trimmed_file, &processed_segments, &mut |value| {
+            let percent = 0.15 + (value * 0.6);
+            report_progress(
+                &mut progress,
+                percent,
+                format!("Trimming video ({:.0}%)", value * 100.0),
+            );
+        })
         .context("Failed to trim video")?;
     debug!(file = ?trimmed_file, "Trimmed video saved");
 
-    // Step 2: Audio enhancement (optional)
     let enhanced_file = if config.audio.enhance {
         let enhanced = output_file.with_extension("enhanced.mp4");
+        report_progress(&mut progress, 0.78, "Enhancing audio");
         info!("Enhancing audio");
         editor
             .enhance_audio(&trimmed_file, &enhanced)
@@ -210,9 +255,9 @@ where
         trimmed_file
     };
 
-    // Step 3: Music mixing (optional)
     let with_music_file = if let Some(ref music_path) = config.audio.music_file {
         let with_music = output_file.with_extension("music.mp4");
+        report_progress(&mut progress, 0.84, "Mixing background music");
         info!(music = ?music_path, "Mixing background music");
 
         let empty_transcript = vec![];
@@ -228,8 +273,8 @@ where
         enhanced_file
     };
 
-    // Step 4: Intro/Outro concatenation (optional)
     let concat_file = if intro.is_some() || outro.is_some() {
+        report_progress(&mut progress, 0.88, "Adding intro/outro");
         info!("Adding intro/outro");
         concatenate_videos(
             intro.as_deref(),
@@ -249,11 +294,11 @@ where
         output_file.clone()
     };
 
-    // Step 5: Video processing (stabilize, color correct, reframe, blur)
     let mut current_file = concat_file;
 
     if config.video.stabilize {
         let stabilized = output_file.with_extension("stabilized.mp4");
+        report_progress(&mut progress, 0.9, "Stabilizing video");
         info!("Stabilizing video");
         editor.stabilize(&current_file, &stabilized)?;
         if current_file != output_file {
@@ -264,6 +309,7 @@ where
 
     if config.video.color_correct {
         let corrected = output_file.with_extension("corrected.mp4");
+        report_progress(&mut progress, 0.93, "Color correcting");
         info!("Color correcting");
         editor.color_correct(&current_file, &corrected)?;
         if current_file != output_file {
@@ -274,6 +320,7 @@ where
 
     if config.video.reframe {
         let reframed = output_file.with_extension("reframed.mp4");
+        report_progress(&mut progress, 0.95, "Auto-reframing");
         info!("Auto-reframing to vertical (9:16)");
         editor.reframe(&current_file, &reframed)?;
         if current_file != output_file {
@@ -284,6 +331,7 @@ where
 
     if config.video.blur_background {
         let blurred = output_file.with_extension("blurred.mp4");
+        report_progress(&mut progress, 0.97, "Blurring background");
         info!("Blurring background");
         editor.blur_background(&current_file, &blurred)?;
         if current_file != output_file {
@@ -292,17 +340,27 @@ where
         current_file = blurred;
     }
 
-    // Rename final file to output
     let final_file = output_file.clone();
     if current_file != final_file {
         fs::rename(&current_file, &final_file)?;
     }
 
-    // Step 6: Export additional files
+    report_progress(&mut progress, 0.99, "Writing exports");
     export_additional_files(&input_file, &final_file, &processed_segments, config)?;
 
+    report_progress(&mut progress, 1.0, "Done");
     info!(file = ?final_file, "Successfully saved video");
     Ok(())
+}
+
+fn report_progress<F>(progress: &mut F, fraction: f32, stage: impl Into<String>)
+where
+    F: FnMut(ProcessingProgress),
+{
+    progress(ProcessingProgress {
+        fraction: fraction.clamp(0.0, 1.0),
+        stage: stage.into(),
+    });
 }
 
 /// Export additional files (SRT, chapters, FCPXML, EDL) based on config
