@@ -153,7 +153,7 @@ pub trait VideoEditor {
         output: &Path,
         transcript: &[TranscriptSegment],
     ) -> Result<()>;
-    fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()>;
+    fn enhance_audio(&self, input: &Path, output: &Path, target_lufs: f32) -> Result<()>;
     fn reduce_noise(&self, input: &Path, output: &Path) -> Result<()>;
     fn stabilize(&self, input: &Path, output: &Path) -> Result<()>;
     fn color_correct(&self, input: &Path, output: &Path) -> Result<()>;
@@ -237,17 +237,16 @@ impl VideoEditor for FfmpegEditor {
         Ok(())
     }
 
-    fn enhance_audio(&self, input: &Path, output: &Path) -> Result<()> {
-        // Apply loudnorm and basic speech EQ
-        let filter =
-            "loudnorm=I=-14:TP=-1:LRA=11,equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3";
+    fn enhance_audio(&self, input: &Path, output: &Path, target_lufs: f32) -> Result<()> {
+        // Apply speech EQ first, then normalize to the requested loudness target.
+        let filter = generate_enhance_audio_filter(target_lufs);
 
         let status = Command::new("ffmpeg")
             .args([
                 "-i",
                 input.to_str().context("invalid input path")?,
                 "-af",
-                filter,
+                &filter,
                 "-c:v",
                 "copy",
                 "-y",
@@ -576,6 +575,12 @@ fn concat_chunk_files(chunk_files: &[PathBuf], output: &Path) -> Result<()> {
     Ok(())
 }
 
+fn generate_enhance_audio_filter(target_lufs: f32) -> String {
+    format!(
+        "equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3,loudnorm=I={target_lufs}:TP=-1:LRA=11"
+    )
+}
+
 fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
     let mut v_filter = String::new();
     let mut a_filter = String::new();
@@ -754,5 +759,13 @@ mod tests {
         assert!(filter.contains("between(t,1,2)"));
         assert!(filter.contains("volume='if(between(t,1,2),0.2,1.0)'"));
         assert!(filter.contains("amix=inputs=2"));
+    }
+
+    #[test]
+    fn test_generate_enhance_audio_filter_uses_target_lufs_last() {
+        let filter = generate_enhance_audio_filter(-16.0);
+        assert!(filter.starts_with("equalizer="));
+        assert!(filter.contains("loudnorm=I=-16"));
+        assert!(filter.ends_with("TP=-1:LRA=11"));
     }
 }

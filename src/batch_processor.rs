@@ -244,7 +244,7 @@ where
         report_progress(&mut progress, 0.78, "Enhancing audio");
         info!("Enhancing audio");
         editor
-            .enhance_audio(&trimmed_file, &enhanced)
+            .enhance_audio(&trimmed_file, &enhanced, config.audio.target_lufs)
             .context("Failed to enhance audio")?;
 
         if trimmed_file != output_file {
@@ -523,7 +523,7 @@ mod tests {
             Ok(())
         }
 
-        fn enhance_audio(&self, _input: &Path, _output: &Path) -> Result<()> {
+        fn enhance_audio(&self, _input: &Path, _output: &Path, _target_lufs: f32) -> Result<()> {
             Ok(())
         }
 

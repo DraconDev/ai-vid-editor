@@ -75,7 +75,7 @@ fn test_audio_enhancement() {
     let output_path = output_dir.path().join("enhanced.mp4");
 
     let editor = FfmpegEditor;
-    let result = editor.enhance_audio(&video_path, &output_path);
+    let result = editor.enhance_audio(&video_path, &output_path, -14.0);
 
     assert!(result.is_ok(), "Audio enhancement should succeed");
     assert!(output_path.exists(), "Output file should exist");
