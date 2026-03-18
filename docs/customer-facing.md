@@ -6,7 +6,7 @@ This document captures what we already ship (desktop install script, GUI launche
 1. **Single installer** (`./install.sh --user`) builds the current release, installs `ai-vid-editor --gui`, installs the icon and desktop entry, and optionally wires a system-wide daemon.
 2. **Desktop integration** now overwrites the desktop entry on every install so clicking the dash launches the GUI, and the icon is refreshed via `assets/icon.svg` (purple gradient film + AI badge).
 3. **First-run wizard** introduces the product to non-technical users: welcome screen, folder picker, content preset, and audio/mute toggles that automatically save into the config and start watch mode.
-4. **CLI & GUI parity** remains intact – the same binary contains both modes, and the README documents GUI/CLI usage and the install script.
+4. **CLI & GUI parity** is complete – the same binary contains both modes, both read `[[paths.watch_folders]]` from the same config file (`~/.config/ai-vid-editor/config.toml`, auto-loaded), and the README documents GUI/CLI usage and the install script.
 
 ## Remaining work to go fully customer-facing
 | Area | Work | Why it matters |
