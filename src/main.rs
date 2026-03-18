@@ -239,11 +239,19 @@ fn main() -> Result<()> {
     }
 
     // If no input specified and not a special command, launch GUI or show help
+    // But allow proceeding if watch_folders are configured with enabled entries
+    let has_config_watch_folders = config
+        .paths
+        .watch_folders
+        .iter()
+        .any(|f| f.enabled);
+
     if cli.input_file.is_none()
         && cli.input_dir.is_none()
         && cli.watch.is_none()
         && !cli.generate_config
         && !cli.dry_run
+        && !has_config_watch_folders
     {
         // Check if running from terminal (TTY) or launched from desktop
         let is_tty = unsafe { libc::isatty(libc::STDOUT_FILENO) != 0 };
