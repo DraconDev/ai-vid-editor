@@ -91,6 +91,9 @@ ai-vid-editor -I ./raw_videos -O ./edited --preset youtube
 # Watch folder (auto-process new videos)
 ai-vid-editor --watch ./incoming -O ./processed --notify
 
+# Watch using config (reads paths.watch_folders, no flags needed)
+ai-vid-editor
+
 # Preview without processing
 ai-vid-editor -i input.mp4 --dry-run
 ```
@@ -162,7 +165,21 @@ The GUI provides a visual interface for managing watch folders and settings.
 
 Create `ai-vid-editor.toml` in your project directory or `~/.config/ai-vid-editor/config.toml`:
 
+Config from `~/.config/ai-vid-editor/config.toml` is loaded automatically — no `--config` flag needed.
+
 ```toml
+[paths]
+input_dir = "watch"
+output_dir = "output"
+music_dir = "music"
+
+# Watch folders (also used by GUI). CLI reads these automatically.
+[[paths.watch_folders]]
+input = "/home/user/Videos/youtube"
+output = "/home/user/Videos/youtube/output"
+preset = "youtube"
+enabled = true
+
 [silence]
 threshold_db = -30.0
 min_duration = 0.5
@@ -192,6 +209,33 @@ subtitles = false
 chapters = false
 fcpxml = false
 edl = false
+
+[watch]
+enabled = false
+interval = 5
+```
+
+### Watch Folders
+
+The `[[paths.watch_folders]]` section works for both CLI and GUI. Drop a video in the configured folder and it gets processed automatically:
+
+```bash
+# Uses watch_folders from config — just run:
+ai-vid-editor
+
+# Or override with a specific folder:
+ai-vid-editor --watch ./incoming -O ./processed
+```
+
+Progress is shown with timestamps during processing:
+```
+[14:30:15] [NEW FILE] "/home/user/Videos/youtube/video.mp4"
+[14:30:15] [START] Processing video.mp4...
+[14:30:16] [2%] video.mp4 - Analyzing silence
+[14:30:25] [10%] video.mp4 - Planning edits
+[14:30:25] [15%] video.mp4 - Trimming video
+[14:30:45] [78%] video.mp4 - Enhancing audio
+[14:30:50] [DONE] video.mp4 -> output/video.mp4 (35.2s)
 ```
 
 ## Build Options
