@@ -639,6 +639,57 @@ impl Config {
             self.export.edl = true;
         }
 
+        // Paths config
+        if other.paths.input.is_some() {
+            self.paths.input = other.paths.input;
+        }
+        if other.paths.input_dir.is_some() {
+            self.paths.input_dir = other.paths.input_dir;
+        }
+        if other.paths.output.is_some() {
+            self.paths.output = other.paths.output;
+        }
+        if other.paths.output_dir.is_some() {
+            self.paths.output_dir = other.paths.output_dir;
+        }
+        if other.paths.music.is_some() {
+            self.paths.music = other.paths.music;
+        }
+        if other.paths.music_dir.is_some() {
+            self.paths.music_dir = other.paths.music_dir;
+        }
+        if other.paths.intro.is_some() {
+            self.paths.intro = other.paths.intro;
+        }
+        if other.paths.outro.is_some() {
+            self.paths.outro = other.paths.outro;
+        }
+        if !other.paths.watch_folders.is_empty() {
+            self.paths.watch_folders = other.paths.watch_folders;
+        }
+
+        // Watch config
+        if other.watch.enabled {
+            self.watch.enabled = true;
+        }
+        if other.watch.interval != default_watch_interval() {
+            self.watch.interval = other.watch.interval;
+        }
+
+        // Video config
+        if other.video.stabilize {
+            self.video.stabilize = true;
+        }
+        if other.video.color_correct {
+            self.video.color_correct = true;
+        }
+        if other.video.reframe {
+            self.video.reframe = true;
+        }
+        if other.video.blur_background {
+            self.video.blur_background = true;
+        }
+
         self
     }
 
