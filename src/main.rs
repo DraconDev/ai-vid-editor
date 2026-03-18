@@ -554,7 +554,8 @@ fn run_watch_mode(
                     && video_extensions.contains(&ext.to_lowercase().as_str())
                     && !processed.contains(&path)
                 {
-                    println!("\n[NEW FILE] {:?}", path);
+                    let now = chrono::Local::now().format("%H:%M:%S");
+                    println!("\n[{}] [NEW FILE] {:?}", now, path);
 
                     let file_name = path
                         .file_name()
@@ -562,12 +563,15 @@ fn run_watch_mode(
                         .unwrap_or_else(|| "output.mp4".to_string());
                     let output_path = output_dir.join(&file_name);
 
+                    println!("[{}] [START] Processing...", now);
+
                     if notify {
                         notify_processing(&path);
                     }
 
-                    // Process with intro/outro if specified
-                    let result = process_single_file_with_intro_outro(
+                    // Process with intro/outro, showing progress
+                    let file_name_for_progress = file_name.clone();
+                    let result = crate::batch_processor::process_single_file_with_intro_outro_progress(
                         path.clone(),
                         output_path.clone(),
                         config,
@@ -576,6 +580,16 @@ fn run_watch_mode(
                         &duration_getter,
                         intro.clone(),
                         outro.clone(),
+                        move |p| {
+                            let now = chrono::Local::now().format("%H:%M:%S");
+                            println!(
+                                "[{}] [{:.0}%] {} - {}",
+                                now,
+                                p.fraction * 100.0,
+                                file_name_for_progress,
+                                p.stage
+                            );
+                        },
                     );
 
                     match &result {
