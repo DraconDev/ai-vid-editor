@@ -581,6 +581,8 @@ fn run_watch_mode(
                         notify_processing(&path);
                     }
 
+                    let start_time = std::time::Instant::now();
+
                     // Process with intro/outro, showing progress
                     let file_name_for_progress = file_name.clone();
                     let result = crate::batch_processor::process_single_file_with_intro_outro_progress(
