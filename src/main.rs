@@ -521,9 +521,9 @@ fn run_watch_mode(
     use std::time::Duration;
 
     println!("=== WATCH MODE ===");
-    println!("Watching: {:?}", watch_dir);
-    println!("Output to: {:?}", output_dir);
-    println!("Polling interval: {}s", config.watch.interval);
+    println!("Watching: {}", watch_dir.display());
+    println!("Output to: {}", output_dir.display());
+    println!("Polling every {}s", config.watch.interval);
     println!("Press Ctrl+C to stop\n");
 
     // Create output directory if it doesn't exist
@@ -671,13 +671,12 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
     }
 
     println!("=== MULTI-FOLDER WATCH MODE ===");
+    println!("Config: ~/.config/ai-vid-editor/config.toml");
+    println!("Watching {} folder(s):", enabled_folders.len());
     for folder in &enabled_folders {
-        println!(
-            "  Watching: {:?} -> {:?} (preset: {})",
-            folder.input, folder.output, folder.preset
-        );
+        println!("  {} -> {} [{}]", folder.input.display(), folder.output.display(), folder.preset);
     }
-    println!("Polling interval: {}s", config.watch.interval);
+    println!("Polling every {}s", config.watch.interval);
     println!("Press Ctrl+C to stop\n");
 
     let analyzer = FfmpegAnalyzer;
