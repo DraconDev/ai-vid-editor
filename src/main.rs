@@ -686,7 +686,8 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                         && video_extensions.contains(&ext.to_lowercase().as_str())
                         && !processed_sets[idx].contains(&path)
                     {
-                        println!("\n[NEW FILE] {:?}", path);
+                        let now = chrono::Local::now().format("%H:%M:%S");
+                        println!("\n[{}] [NEW FILE] {:?}", now, path);
 
                         // Build config for this folder's preset
                         let folder_config = if let Some(preset) =
