@@ -557,14 +557,6 @@ fn run_watch_mode(
                     let now = chrono::Local::now().format("%H:%M:%S");
                     println!("\n[{}] [NEW FILE] {:?}", now, path);
 
-                    let file_name = path
-                        .file_name()
-                        .map(|n| n.to_string_lossy().to_string())
-                        .unwrap_or_else(|| "output.mp4".to_string());
-                    let output_path = output_dir.join(&file_name);
-
-                    println!("[{}] [START] Processing...", now);
-
                     if notify {
                         notify_processing(&path);
                     }
@@ -731,11 +723,14 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                             .unwrap_or_else(|| "output.mp4".to_string());
                         let output_path = folder.output.join(&file_name);
 
+                        println!("[{}] [START] Processing {}...", now, file_name);
+
                         if cli.notify {
                             notify_processing(&path);
                         }
 
-                        let result = process_single_file_with_intro_outro(
+                        let progress_name = file_name.clone();
+                        let result = crate::batch_processor::process_single_file_with_intro_outro_progress(
                             path.clone(),
                             output_path.clone(),
                             &folder_config,
@@ -744,6 +739,16 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                             &duration_getter,
                             None,
                             None,
+                            move |p| {
+                                let now = chrono::Local::now().format("%H:%M:%S");
+                                println!(
+                                    "[{}] [{:.0}%] {} - {}",
+                                    now,
+                                    p.fraction * 100.0,
+                                    progress_name,
+                                    p.stage
+                                );
+                            },
                         );
 
                         match &result {
