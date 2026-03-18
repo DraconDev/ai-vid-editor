@@ -608,14 +608,28 @@ fn run_watch_mode(
 
                     match &result {
                         Ok(_) => {
-                            println!("[DONE] Processed: {:?}", path);
+                            let elapsed = start_time.elapsed().as_secs_f32();
+                            println!(
+                                "[{}] [DONE] {} -> {} ({:.1}s)",
+                                timestamp(),
+                                file_name,
+                                output_path.display(),
+                                elapsed
+                            );
                             if notify {
                                 notify_complete(&path, &output_path);
                             }
                             processed.insert(path);
                         }
                         Err(e) => {
-                            eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                            let elapsed = start_time.elapsed().as_secs_f32();
+                            eprintln!(
+                                "[{}] [ERROR] {} failed after {:.1}s: {}",
+                                timestamp(),
+                                file_name,
+                                elapsed,
+                                e
+                            );
                             if notify {
                                 notify_error(&path, &e.to_string());
                             }
