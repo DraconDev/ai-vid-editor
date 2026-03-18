@@ -566,7 +566,7 @@ fn run_watch_mode(
                     && video_extensions.contains(&ext.to_lowercase().as_str())
                     && !processed.contains(&path)
                 {
-                    let now = chrono::Local::now().format("%H:%M:%S");
+                    let now = timestamp();
                     println!("\n[{}] [NEW FILE] {:?}", now, path);
 
                     if notify {
@@ -585,7 +585,7 @@ fn run_watch_mode(
                         intro.clone(),
                         outro.clone(),
                         move |p| {
-                            let now = chrono::Local::now().format("%H:%M:%S");
+                            let now = timestamp();
                             println!(
                                 "[{}] [{:.0}%] {} - {}",
                                 now,
@@ -690,7 +690,7 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                         && video_extensions.contains(&ext.to_lowercase().as_str())
                         && !processed_sets[idx].contains(&path)
                     {
-                        let now = chrono::Local::now().format("%H:%M:%S");
+                        let now = timestamp();
                         println!("\n[{}] [NEW FILE] {:?}", now, path);
 
                         // Build config for this folder's preset
@@ -752,7 +752,7 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                             None,
                             None,
                             move |p| {
-                                let now = chrono::Local::now().format("%H:%M:%S");
+                                let now = timestamp();
                                 println!(
                                     "[{}] [{:.0}%] {} - {}",
                                     now,
