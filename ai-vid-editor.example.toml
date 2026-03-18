@@ -99,6 +99,48 @@ intro = ""
 outro = ""
 
 # =============================================================================
+# WATCH FOLDERS - Multi-Folder Auto-Processing (CLI + GUI)
+# =============================================================================
+# Configure folders to watch. Works in both CLI and GUI modes.
+# The CLI auto-loads ~/.config/ai-vid-editor/config.toml — no --config flag needed.
+#
+# You can have multiple watch folders, each with its own preset:
+
+# [[paths.watch_folders]]
+# input = "/home/user/Videos/youtube"
+# output = "/home/user/Videos/youtube/output"
+# preset = "youtube"
+# enabled = true
+
+# [[paths.watch_folders]]
+# input = "/home/user/Videos/shorts"
+# output = "/home/user/Videos/shorts/output"
+# preset = "shorts"
+# enabled = true
+#
+# HOW IT WORKS:
+#   - Drop a video into a watched folder
+#   - The editor detects it and processes with that folder's preset
+#   - Output goes to the configured output folder
+#   - Already-present files are skipped on startup
+#   - Timestamped progress is printed during processing
+#
+# PER-FOLDER SETTINGS (optional, override preset defaults):
+# [[paths.watch_folders]]
+# input = "/home/user/Videos/raw"
+# output = "/home/user/Videos/edited"
+# preset = "youtube"
+# enabled = true
+# [paths.watch_folders.settings]
+# enhance_audio = true
+# silence_threshold_db = -30.0
+# target_lufs = -14.0
+# stabilize = false
+# color_correct = false
+# reframe = false
+# blur_background = false
+
+# =============================================================================
 # SILENCE DETECTION - How Silent Segments Are Handled
 # =============================================================================
 # The editor detects silent segments and either removes them or speeds through
