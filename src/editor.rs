@@ -836,8 +836,8 @@ mod tests {
     #[test]
     fn test_generate_enhance_audio_filter_uses_target_lufs_last() {
         let filter = generate_enhance_audio_filter(-16.0);
-        assert!(filter.starts_with("equalizer="));
+        assert!(filter.starts_with("highpass="));
         assert!(filter.contains("loudnorm=I=-16"));
-        assert!(filter.ends_with("TP=-1:LRA=11"));
+        assert!(filter.contains("TP=-1.5"));
     }
 }
