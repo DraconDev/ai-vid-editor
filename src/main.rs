@@ -18,6 +18,18 @@ use crate::analyzer::FfmpegAnalyzer;
 use crate::batch_processor::{
     FfmpegDurationGetter, process_batch_dir, process_single_file_with_intro_outro,
 };
+
+fn timestamp() -> String {
+    use std::time::SystemTime;
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default();
+    let secs = now.as_secs();
+    let hours = (secs / 3600) % 24;
+    let minutes = (secs / 60) % 60;
+    let seconds = secs % 60;
+    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+}
 use crate::config::{Config, Preset};
 use crate::editor::FfmpegEditor;
 
