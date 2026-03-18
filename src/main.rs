@@ -398,10 +398,32 @@ fn main() -> Result<()> {
     }
 
     // Handle watch mode (from config or CLI)
-    let watch_enabled = config.watch.enabled || cli.watch.is_some();
+    let has_watch_folders = config
+        .paths
+        .watch_folders
+        .iter()
+        .any(|f| f.enabled);
+    let watch_enabled = config.watch.enabled || cli.watch.is_some() || has_watch_folders;
     let watch_dir = cli.watch.clone().or(input_dir.clone());
 
     if watch_enabled {
+        // If CLI --watch flag was used, watch that single directory
+        if cli.watch.is_some() {
+            let watch_path = watch_dir.clone().ok_or_else(|| {
+                anyhow::anyhow!("Watch directory required (use --watch <dir>)")
+            })?;
+            let out_dir = output_dir
+                .clone()
+                .ok_or_else(|| anyhow::anyhow!("Output directory required for watch mode"))?;
+            return run_watch_mode(&watch_path, &out_dir, &config, &intro, &outro, cli.notify);
+        }
+
+        // Use watch_folders from config if available and enabled
+        if has_watch_folders {
+            return run_multi_watch_mode(&config, &cli);
+        }
+
+        // Fallback: single watch dir from input_dir
         let watch_path = watch_dir.clone().ok_or_else(|| {
             anyhow::anyhow!("Watch directory required (set input_dir in config or use --watch)")
         })?;
@@ -566,6 +588,159 @@ fn run_watch_mode(
                             }
                             // Still mark as processed to avoid retrying
                             processed.insert(path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Run watch mode for multiple folders from config
+fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
+    use std::collections::HashSet;
+    use std::time::Duration;
+
+    let enabled_folders: Vec<&crate::config::WatchFolder> = config
+        .paths
+        .watch_folders
+        .iter()
+        .filter(|f| f.enabled)
+        .collect();
+
+    if enabled_folders.is_empty() {
+        anyhow::bail!("No enabled watch folders in config");
+    }
+
+    println!("=== MULTI-FOLDER WATCH MODE ===");
+    for folder in &enabled_folders {
+        println!(
+            "  Watching: {:?} -> {:?} (preset: {})",
+            folder.input, folder.output, folder.preset
+        );
+    }
+    println!("Polling interval: {}s", config.watch.interval);
+    println!("Press Ctrl+C to stop\n");
+
+    let analyzer = FfmpegAnalyzer;
+    let editor = FfmpegEditor;
+    let duration_getter = FfmpegDurationGetter;
+    let video_extensions = ["mp4", "mov", "avi", "mkv", "webm"];
+
+    // Track processed files per folder
+    let mut processed_sets: Vec<HashSet<PathBuf>> = Vec::new();
+    for folder in &enabled_folders {
+        let mut processed: HashSet<PathBuf> = HashSet::new();
+
+        // Create output directory
+        std::fs::create_dir_all(&folder.output)?;
+
+        // Initial scan - mark existing files as already processed
+        if let Ok(entries) = std::fs::read_dir(&folder.input) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                    && video_extensions.contains(&ext.to_lowercase().as_str())
+                {
+                    processed.insert(path);
+                }
+            }
+        }
+
+        println!(
+            "[{:?}] Found {} existing files (will not reprocess)",
+            folder.input,
+            processed.len()
+        );
+        processed_sets.push(processed);
+    }
+
+    loop {
+        std::thread::sleep(Duration::from_secs(config.watch.interval));
+
+        for (idx, folder) in enabled_folders.iter().enumerate() {
+            if let Ok(entries) = std::fs::read_dir(&folder.input) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+
+                    if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                        && video_extensions.contains(&ext.to_lowercase().as_str())
+                        && !processed_sets[idx].contains(&path)
+                    {
+                        println!("\n[NEW FILE] {:?}", path);
+
+                        // Build config for this folder's preset
+                        let folder_config = if let Some(preset) =
+                            crate::config::Preset::from_str(&folder.preset)
+                        {
+                            let mut c = preset.to_config();
+                            // Apply folder-level settings overrides
+                            if let Some(enhance) = folder.settings.enhance_audio {
+                                c.audio.enhance = enhance;
+                            }
+                            if let Some(threshold) = folder.settings.silence_threshold_db {
+                                c.silence.threshold_db = threshold;
+                            }
+                            if let Some(lufs) = folder.settings.target_lufs {
+                                c.audio.target_lufs = lufs;
+                            }
+                            if let Some(stabilize) = folder.settings.stabilize {
+                                c.video.stabilize = stabilize;
+                            }
+                            if let Some(color_correct) = folder.settings.color_correct {
+                                c.video.color_correct = color_correct;
+                            }
+                            if let Some(reframe) = folder.settings.reframe {
+                                c.video.reframe = reframe;
+                            }
+                            if let Some(blur) = folder.settings.blur_background {
+                                c.video.blur_background = blur;
+                            }
+                            c
+                        } else {
+                            eprintln!(
+                                "Warning: Unknown preset '{}', using default config",
+                                folder.preset
+                            );
+                            config.clone()
+                        };
+
+                        let file_name = path
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_else(|| "output.mp4".to_string());
+                        let output_path = folder.output.join(&file_name);
+
+                        if cli.notify {
+                            notify_processing(&path);
+                        }
+
+                        let result = process_single_file_with_intro_outro(
+                            path.clone(),
+                            output_path.clone(),
+                            &folder_config,
+                            &analyzer,
+                            &editor,
+                            &duration_getter,
+                            None,
+                            None,
+                        );
+
+                        match &result {
+                            Ok(_) => {
+                                println!("[DONE] Processed: {:?}", path);
+                                if cli.notify {
+                                    notify_complete(&path, &output_path);
+                                }
+                                processed_sets[idx].insert(path);
+                            }
+                            Err(e) => {
+                                eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                                if cli.notify {
+                                    notify_error(&path, &e.to_string());
+                                }
+                                processed_sets[idx].insert(path);
+                            }
                         }
                     }
                 }
