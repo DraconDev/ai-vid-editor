@@ -710,8 +710,16 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
         processed_sets.push(processed);
     }
 
+    let mut heartbeat = 0u32;
+
     loop {
         std::thread::sleep(Duration::from_secs(config.watch.interval));
+        heartbeat += 1;
+
+        // Print a heartbeat every ~30s so user knows we're still watching
+        if heartbeat % 6 == 0 {
+            println!("[{}] Watching {} folder(s) for new files...", timestamp(), enabled_folders.len());
+        }
 
         for (idx, folder) in enabled_folders.iter().enumerate() {
             if let Ok(entries) = std::fs::read_dir(&folder.input) {
