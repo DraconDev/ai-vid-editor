@@ -700,16 +700,18 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                 if let Some(ext) = path.extension().and_then(|e| e.to_str())
                     && video_extensions.contains(&ext.to_lowercase().as_str())
                 {
+                    let name = path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default();
+                    println!("  Skipping existing: {}", name);
                     processed.insert(path);
                 }
             }
         }
 
-        println!(
-            "[{:?}] Found {} existing files (will not reprocess)",
-            folder.input,
-            processed.len()
-        );
+        if processed.is_empty() {
+            println!("  {:?}: No videos found. Drop a video here to start processing.", folder.input);
+        } else {
+            println!("  {:?}: {} existing file(s) skipped.", folder.input, processed.len());
+        }
         processed_sets.push(processed);
     }
 
