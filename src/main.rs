@@ -432,14 +432,7 @@ fn main() -> Result<()> {
     }
 
     // Handle watch mode (from config or CLI)
-    let has_watch_folders = config
-        .paths
-        .watch_folders
-        .iter()
-        .any(|f| f.enabled);
     let watch_enabled = config.watch.enabled || cli.watch.is_some() || has_watch_folders;
-    eprintln!("[DEBUG] watch.enabled={}, has_watch_folders={}, watch_enabled={}, watch_folders={}", 
-        config.watch.enabled, has_watch_folders, watch_enabled, config.paths.watch_folders.len());
     let watch_dir = cli.watch.clone().or(input_dir.clone());
 
     if watch_enabled {
