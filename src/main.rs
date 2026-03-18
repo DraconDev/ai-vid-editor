@@ -765,6 +765,7 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
                             notify_processing(&path);
                         }
 
+                        let start_time = std::time::Instant::now();
                         let progress_name = file_name.clone();
                         let result = crate::batch_processor::process_single_file_with_intro_outro_progress(
                             path.clone(),
@@ -789,14 +790,28 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
 
                         match &result {
                             Ok(_) => {
-                                println!("[DONE] Processed: {:?}", path);
+                                let elapsed = start_time.elapsed().as_secs_f32();
+                                println!(
+                                    "[{}] [DONE] {} -> {} ({:.1}s)",
+                                    timestamp(),
+                                    file_name,
+                                    output_path.display(),
+                                    elapsed
+                                );
                                 if cli.notify {
                                     notify_complete(&path, &output_path);
                                 }
                                 processed_sets[idx].insert(path);
                             }
                             Err(e) => {
-                                eprintln!("[ERROR] Failed to process {:?}: {}", path, e);
+                                let elapsed = start_time.elapsed().as_secs_f32();
+                                eprintln!(
+                                    "[{}] [ERROR] {} failed after {:.1}s: {}",
+                                    timestamp(),
+                                    file_name,
+                                    elapsed,
+                                    e
+                                );
                                 if cli.notify {
                                     notify_error(&path, &e.to_string());
                                 }
