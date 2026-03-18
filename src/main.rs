@@ -569,6 +569,14 @@ fn run_watch_mode(
                     let now = timestamp();
                     println!("\n[{}] [NEW FILE] {:?}", now, path);
 
+                    let file_name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "output.mp4".to_string());
+                    let output_path = output_dir.join(&file_name);
+
+                    println!("[{}] [START] Processing {}...", now, file_name);
+
                     if notify {
                         notify_processing(&path);
                     }
