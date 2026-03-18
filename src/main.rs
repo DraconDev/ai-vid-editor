@@ -250,12 +250,39 @@ fn main() -> Result<()> {
         }
     }
 
+    // Pre-load config to check if watch_folders are configured
+    // This must happen before the TTY/GUI check
+    let preloaded_config = {
+        let mut cfg = Config::default();
+        if let Some(ref config_path) = cli.config {
+            if config_path.exists() {
+                if let Ok(file_config) = Config::from_file(config_path) {
+                    cfg = cfg.merge(file_config);
+                }
+            }
+        } else if let Some(default_path) = Config::default_config_path() {
+            if default_path.exists() {
+                if let Ok(file_config) = Config::from_file(&default_path) {
+                    cfg = cfg.merge(file_config);
+                }
+            }
+        }
+        cfg
+    };
+
+    let has_watch_folders = preloaded_config
+        .paths
+        .watch_folders
+        .iter()
+        .any(|f| f.enabled);
+
     // If no input specified and not a special command, launch GUI or show help
     if cli.input_file.is_none()
         && cli.input_dir.is_none()
         && cli.watch.is_none()
         && !cli.generate_config
         && !cli.dry_run
+        && !has_watch_folders
     {
         // Check if running from terminal (TTY) or launched from desktop
         let is_tty = unsafe { libc::isatty(libc::STDOUT_FILENO) != 0 };
@@ -284,7 +311,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Start with preset or default config
+    // Apply config: use preloaded config if no CLI preset was specified
     let mut config = if let Some(ref preset_str) = cli.preset {
         let preset = Preset::from_str(preset_str).ok_or_else(|| {
             anyhow::anyhow!(
@@ -295,25 +322,13 @@ fn main() -> Result<()> {
         if !cli.json {
             println!("Using preset: {}", preset.as_str());
         }
-        preset.to_config()
+        let mut c = preset.to_config();
+        // Merge preloaded config over preset (so watch_folders etc. are preserved)
+        c = c.merge(preloaded_config);
+        c
     } else {
-        Config::default()
+        preloaded_config
     };
-
-    // Apply config file: CLI --config > default config path
-    if let Some(ref config_path) = cli.config
-        && config_path.exists()
-    {
-        let file_config = Config::from_file(config_path)?;
-        config = config.merge(file_config);
-    } else if let Some(default_path) = Config::default_config_path()
-        && default_path.exists()
-    {
-        eprintln!("[DEBUG] Loading config from: {:?}", default_path);
-        let file_config = Config::from_file(&default_path)?;
-        eprintln!("[DEBUG] Config loaded. watch_folders count: {}", file_config.paths.watch_folders.len());
-        config = config.merge(file_config);
-    }
 
     // Apply paths from config if not specified on CLI
     let input_file = cli.input_file.clone().or(config.paths.input.clone());
