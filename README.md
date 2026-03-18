@@ -156,7 +156,7 @@ The GUI provides a visual interface for managing watch folders and settings.
 
 | Preset | Description |
 |--------|-------------|
-| `youtube` | Cut silences, enhance audio, export chapters + FCPXML |
+| `youtube` | Cut silences, enhance audio (two-pass loudnorm + gentle EQ), export chapters + FCPXML |
 | `shorts` | Speedup silences (3x), enhance audio, tight padding |
 | `podcast` | Cut silences, enhance audio (-16 LUFS), export SRT |
 | `minimal` | Just silence detection, no enhancement |

@@ -332,14 +332,17 @@ padding = 0.05
 # Enable audio enhancement
 #
 # WHAT IT DOES:
-#   1. Loudness normalization (consistent volume)
-#   2. Speech EQ (boosts clarity frequencies)
+#   1. High-pass filter (80Hz) — removes low rumble
+#   2. Low-pass filter (12kHz) — removes sibilant hiss
+#   3. Gentle presence EQ (+1.5dB at 1.5kHz wide band)
+#   4. Two-pass loudness normalization (measures then corrects)
 #
 # WHY USE IT:
 #   - Consistent volume across videos
-#   - Better speech clarity
+#   - Better speech clarity without harsh/nasal coloration
 #   - Professional sound quality
 #   - Meets platform loudness standards
+#   - Two-pass normalization preserves natural dynamics
 #
 # RECOMMENDED: true (for all content)
 #
@@ -542,6 +545,9 @@ color_correct = false
 # WATCH MODE - Automatic Processing
 # =============================================================================
 # Monitor a folder and automatically process new videos
+#
+# NOTE: For multi-folder setups, prefer [[paths.watch_folders]] above.
+#       The [watch] section is for single-folder CLI watch mode.
 
 [watch]
 # Enable watch mode
@@ -552,6 +558,10 @@ color_correct = false
 #   3. Saves to output_dir
 #   4. Skips already-processed files
 #
+# NOTE: If [[paths.watch_folders]] entries are enabled in config,
+#       the CLI will use those instead of this single-folder setting.
+#       This section only applies when watch_folders are not configured.
+#
 # USE CASES:
 #   - Automation pipeline
 #   - Batch processing as files arrive
@@ -559,8 +569,8 @@ color_correct = false
 #
 # HOW TO USE:
 #   1. Set enabled = true
-#   2. Set input_dir and output_dir
-#   3. Run: ai-vid-editor --config config.toml
+#   2. Set input_dir and output_dir in [paths]
+#   3. Run: ai-vid-editor
 #   4. Drop videos into input_dir
 #
 # CLI equivalent: -w, --watch <directory>
@@ -650,6 +660,12 @@ interval = 5
 #   intro = "intro.mp4"
 #   outro = "outro.mp4"
 #
+#   [[paths.watch_folders]]
+#   input = "watch"
+#   output = "output"
+#   preset = "youtube"
+#   enabled = true
+#
 #   [audio]
 #   enhance = true
 #
@@ -659,6 +675,7 @@ interval = 5
 #
 # RUN:
 #   ai-vid-editor --project ./my-youtube-channel
+#   # or just: ai-vid-editor (auto-loads ~/.config/ai-vid-editor/config.toml)
 #
 # That's it! Drop videos into watch/ and they're automatically processed.
 
