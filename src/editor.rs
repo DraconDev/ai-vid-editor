@@ -238,13 +238,41 @@ impl VideoEditor for FfmpegEditor {
     }
 
     fn enhance_audio(&self, input: &Path, output: &Path, target_lufs: f32) -> Result<()> {
-        // Apply speech EQ first, then normalize to the requested loudness target.
-        let filter = generate_enhance_audio_filter(target_lufs);
+        let input_str = input.to_str().context("invalid input path")?;
+
+        // Pass 1: Measure audio loudness
+        let measure_filter = format!(
+            "highpass=f=80,lowpass=f=12000,equalizer=f=1500:t=q:w=3:g=1.5,loudnorm=I={target_lufs}:TP=-1.5:LRA=11:print_format=json"
+        );
+
+        let measure_output = Command::new("ffmpeg")
+            .args(["-i", input_str, "-af", &measure_filter, "-f", "null", "-"])
+            .stderr(std::process::Stdio::piped())
+            .output()
+            .context("failed to run loudnorm measurement pass")?;
+
+        let stderr = String::from_utf8_lossy(&measure_output.stderr);
+
+        // Parse loudnorm JSON stats from stderr
+        let stats = parse_loudnorm_stats(&stderr);
+
+        // Pass 2: Apply measured normalization
+        let filter = if let Some(s) = stats {
+            format!(
+                "highpass=f=80,lowpass=f=12000,equalizer=f=1500:t=q:w=3:g=1.5,loudnorm=I={}:TP=-1.5:LRA=11:measured_I={}:measured_TP={}:measured_LRA={}:measured_thresh={}:offset={}:linear=true",
+                target_lufs, s.i, s.tp, s.lra, s.thresh, s.offset
+            )
+        } else {
+            // Fallback to single-pass if measurement failed
+            format!(
+                "highpass=f=80,lowpass=f=12000,equalizer=f=1500:t=q:w=3:g=1.5,loudnorm=I={target_lufs}:TP=-1.5:LRA=11"
+            )
+        };
 
         let status = Command::new("ffmpeg")
             .args([
                 "-i",
-                input.to_str().context("invalid input path")?,
+                input_str,
                 "-af",
                 &filter,
                 "-c:v",
@@ -517,11 +545,7 @@ fn create_trim_chunk_dir(output: &Path) -> Result<PathBuf> {
         .file_stem()
         .and_then(|stem| stem.to_str())
         .unwrap_or("trim");
-    let chunk_dir = parent.join(format!(
-        ".ai-vid-editor-{}-{}",
-        stem,
-        std::process::id()
-    ));
+    let chunk_dir = parent.join(format!(".ai-vid-editor-{}-{}", stem, std::process::id()));
 
     if chunk_dir.exists() {
         let _ = fs::remove_dir_all(&chunk_dir);
@@ -543,7 +567,12 @@ fn concat_chunk_files(chunk_files: &[PathBuf], output: &Path) -> Result<()> {
     let concat_list = output.with_extension("concat.txt");
     let concat_contents = chunk_files
         .iter()
-        .map(|path| format!("file '{}'\n", path.display().to_string().replace('\'', "'\\''")))
+        .map(|path| {
+            format!(
+                "file '{}'\n",
+                path.display().to_string().replace('\'', "'\\''")
+            )
+        })
         .collect::<String>();
     fs::write(&concat_list, concat_contents)?;
 
@@ -576,9 +605,52 @@ fn concat_chunk_files(chunk_files: &[PathBuf], output: &Path) -> Result<()> {
 }
 
 fn generate_enhance_audio_filter(target_lufs: f32) -> String {
+    // Gentle, wide EQ boost for voice clarity + two-pass-ready loudnorm
+    // highpass removes rumble below speech range, EQ adds presence without harshness
     format!(
-        "equalizer=f=1000:t=q:w=1:g=2,equalizer=f=3000:t=q:w=1:g=3,loudnorm=I={target_lufs}:TP=-1:LRA=11"
+        "highpass=f=80,lowpass=f=12000,equalizer=f=1500:t=q:w=3:g=1.5,loudnorm=I={target_lufs}:TP=-1.5:LRA=11"
     )
+}
+
+struct LoudnormStats {
+    i: String,
+    tp: String,
+    lra: String,
+    thresh: String,
+    offset: String,
+}
+
+fn parse_loudnorm_stats(stderr: &str) -> Option<LoudnormStats> {
+    // Find the JSON block in ffmpeg stderr output
+    let json_start = stderr.find('{')?;
+    let json_str = &stderr[json_start..];
+    let json_end = json_str.find('}')? + 1;
+    let json_str = &json_str[..json_end];
+
+    let get_val = |key: &str| -> Option<String> {
+        let pattern = format!("\"{}\":", key);
+        let idx = json_str.find(&pattern)?;
+        let after = &json_str[idx + pattern.len()..];
+        let after = after.trim();
+        // Handle quoted strings and numbers
+        if after.starts_with('"') {
+            let end = after[1..].find('"')?;
+            Some(after[1..=end].to_string())
+        } else {
+            let end = after
+                .find(|c: char| c == ',' || c == '\n' || c == '}')
+                .unwrap_or(after.len());
+            Some(after[..end].trim().to_string())
+        }
+    };
+
+    Some(LoudnormStats {
+        i: get_val("input_i")?,
+        tp: get_val("input_tp")?,
+        lra: get_val("input_lra")?,
+        thresh: get_val("input_thresh")?,
+        offset: get_val("target_offset")?,
+    })
 }
 
 fn generate_trim_filters(segments: &[ProcessedSegment]) -> (String, String) {
