@@ -309,7 +309,9 @@ fn main() -> Result<()> {
     } else if let Some(default_path) = Config::default_config_path()
         && default_path.exists()
     {
+        eprintln!("[DEBUG] Loading config from: {:?}", default_path);
         let file_config = Config::from_file(&default_path)?;
+        eprintln!("[DEBUG] Config loaded. watch_folders count: {}", file_config.paths.watch_folders.len());
         config = config.merge(file_config);
     }
 
