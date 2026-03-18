@@ -554,8 +554,16 @@ fn run_watch_mode(
     let editor = FfmpegEditor;
     let duration_getter = FfmpegDurationGetter;
 
+    let mut heartbeat = 0u32;
+
     loop {
         std::thread::sleep(Duration::from_secs(config.watch.interval));
+        heartbeat += 1;
+
+        // Print a heartbeat every ~30s so user knows we're still watching
+        if heartbeat % 6 == 0 {
+            println!("[{}] Watching {:?} for new files...", timestamp(), watch_dir);
+        }
 
         // Check for new files
         if let Ok(entries) = std::fs::read_dir(watch_dir) {
