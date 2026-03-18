@@ -541,14 +541,17 @@ fn run_watch_mode(
         if let Some(ext) = path.extension().and_then(|e| e.to_str())
             && video_extensions.contains(&ext.to_lowercase().as_str())
         {
-            processed.insert(path.clone());
+            let name = path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default();
+            println!("  Skipping existing: {}", name);
+            processed.insert(path);
         }
     }
 
-    println!(
-        "Found {} existing files (will not reprocess)",
-        processed.len()
-    );
+    if processed.is_empty() {
+        println!("  No existing videos found. Drop a video in {:?} to start processing.", watch_dir);
+    } else {
+        println!("  {} existing file(s) skipped (already present on startup).", processed.len());
+    }
 
     let analyzer = FfmpegAnalyzer;
     let editor = FfmpegEditor;
