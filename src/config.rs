@@ -295,6 +295,14 @@ pub struct FolderSettings {
     pub reframe: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub blur_background: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subtitles: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chapters: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub captions: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clips: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
