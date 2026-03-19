@@ -130,6 +130,12 @@ pub struct Cli {
     pub export_chapters: bool,
 
     #[arg(long, hide = true)]
+    pub export_captions: bool,
+
+    #[arg(long, hide = true)]
+    pub export_clips: bool,
+
+    #[arg(long, hide = true)]
     pub export_fcpxml: bool,
 
     #[arg(long, hide = true)]
@@ -380,6 +386,12 @@ fn main() -> Result<()> {
     }
     if cli.export_chapters {
         config.export.chapters = true;
+    }
+    if cli.export_captions {
+        config.export.captions = true;
+    }
+    if cli.export_clips {
+        config.export.clips = true;
     }
     if cli.export_fcpxml {
         config.export.fcpxml = true;

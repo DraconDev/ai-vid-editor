@@ -428,11 +428,8 @@ duck_volume = 0.2
 # OUTPUT: <video_name>.srt
 #
 # WHAT IT IS:
-#   Standard subtitle format
+#   Standard subtitle format using Whisper transcription
 #   Can be uploaded to YouTube, embedded in videos
-#
-# NOTE: Currently requires Whisper STT
-#       Placeholder file generated if STT not available
 #
 # USE CASES:
 #   - YouTube auto-captions (upload SRT for accuracy)
@@ -447,16 +444,14 @@ subtitles = false
 # OUTPUT: <video_name>.chapters.txt
 #
 # WHAT IT IS:
-#   Timestamped chapter markers
+#   Timestamped chapter markers generated from Whisper transcript
+#   Groups transcript into ~3 minute sections
 #   Paste into YouTube description
 #
 # FORMAT:
 #   00:00 Intro
-#   00:45 Main Topic
-#   05:30 Conclusion
-#
-# NOTE: Currently generates placeholder
-#       Real chapters need scene detection or manual input
+#   03:00 Welcome everyone to today's video
+#   06:00 Now let's look at the main topic
 #
 # USE CASES:
 #   - YouTube SEO
@@ -464,6 +459,49 @@ subtitles = false
 #
 # CLI equivalent: --export-chapters
 chapters = false
+
+# Burn styled subtitles into video
+#
+# OUTPUT: <video_name>.mp4 (replaces original with captioned version)
+#
+# WHAT IT DOES:
+#   - Generates styled ASS subtitles from transcript
+#   - Burns white text with black outline into video
+#   - Professional-looking captions (Arial 48pt)
+#
+# USE CASES:
+#   - Social media videos (muted autoplay)
+#   - Accessibility
+#   - Non-native speakers
+#
+# CLI equivalent: --export-captions
+captions = false
+
+# Extract highlight clips for Shorts/Reels
+#
+# OUTPUT: <video_name>_clip_1.mp4, <video_name>_clip_2.mp4, etc.
+#
+# WHAT IT DOES:
+#   - Analyzes transcript segments by word density (energy proxy)
+#   - Extracts top N most content-rich segments
+#   - Good for finding key moments in long videos
+#
+# USE CASES:
+#   - YouTube Shorts from long videos
+#   - TikTok/Reels content
+#   - Highlight reels
+#
+# CLI equivalent: --export-clips
+clips = false
+
+# Number of highlight clips to extract
+clip_count = 3
+
+# Minimum clip duration (seconds)
+clip_min_duration = 15
+
+# Maximum clip duration (seconds)
+clip_max_duration = 60
 
 # Generate FCPXML for DaVinci Resolve / Adobe Premiere Pro
 #
@@ -612,6 +650,7 @@ interval = 5
 # ┌─────────┬──────────────────────────────────────────────────────┐
 # │ shorts  │ - Speedup silences (3x)                              │
 # │         │ - Audio enhancement (-14 LUFS)                       │
+# │         │ - Extract highlight clips for Shorts/Reels            │
 # │         │ - Padding: 0.05s (tight)                              │
 # │         │ - Best for: YouTube Shorts, TikTok, Reels            │
 # └─────────┴──────────────────────────────────────────────────────┘
@@ -619,7 +658,7 @@ interval = 5
 # ┌─────────┬──────────────────────────────────────────────────────┐
 # │ podcast │ - Cut silences                                       │
 # │         │ - Audio enhancement (-16 LUFS, podcast standard)     │
-# │         │ - Export SRT subtitles                               │
+# │         │ - Export SRT subtitles + styled captions            │
 # │         │ - Padding: 0.2s (relaxed, conversational)            │
 # │         │ - Best for: Podcasts, interviews                      │
 # └─────────┴──────────────────────────────────────────────────────┘
