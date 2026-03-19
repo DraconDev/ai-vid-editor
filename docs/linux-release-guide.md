@@ -8,7 +8,7 @@ This guide outlines the steps to prepare, package, and publish AI Video Editor f
   cargo test --all-features
   cargo clippy --all-features
   ```
-- Update the version in `Cargo.toml` and record release notes in `CHANGELOG.md` or your release tracker.
+- Update the version in `Cargo.toml` and record release notes in `CHANGELOG.md`.
 
 ## 2. Build the Release Binary
 ```bash

@@ -26,7 +26,7 @@
 |---------|-----|-----|-------|
 | Silence detection | ✅ | - | Core feature |
 | Silence trimming | ✅ | - | Cut or speedup modes |
-| Audio enhancement | ✅ | ✅ | Loudnorm + EQ |
+| Audio enhancement | ✅ | ✅ | Two-pass loudnorm + gentle EQ |
 | Noise reduction | ✅ | ✅ | FFmpeg afftdn |
 | Music mixing | ✅ | - | Auto-ducking |
 | Intro/outro | ✅ | - | Prepend/append videos |
@@ -36,11 +36,13 @@
 | Background blur | ✅ | ✅ | Portrait mode effect |
 | Filler word removal | ✅ | - | Whisper-based |
 | Presets | ✅ | ✅ | youtube, shorts, podcast, minimal |
-| Watch mode | ✅ | - | Auto-process new videos |
+| Watch mode | ✅ | ✅ | Shared `[[paths.watch_folders]]` config |
 | Batch processing | ✅ | - | Directory processing |
 | Export (SRT, FCPXML, EDL) | ✅ | - | Subtitles, timelines |
 | Desktop notifications | ✅ | - | `--notify` flag |
 | Unified binary | ✅ | ✅ | `--gui` flag launches GUI |
+| Config auto-loading | ✅ | ✅ | `~/.config/ai-vid-editor/config.toml` loaded automatically |
+| Progress feedback | ✅ | - | Timestamped stage output during processing |
 
 ### GUI Structure
 
@@ -137,9 +139,11 @@ Config
 ## Future Roadmap
 
 ### Phase 4: Watcher Integration
+- [x] CLI watches `[[paths.watch_folders]]` from config (same as GUI)
+- [x] Timestamped progress output during processing
+- [x] Config auto-loading from `~/.config/ai-vid-editor/config.toml`
 - [ ] Spawn watcher threads from GUI
-- [ ] Real-time activity log updates
-- [ ] Progress indicators per folder
+- [ ] Real-time activity log updates in GUI
 - [ ] Processing queue visualization
 
 ### Phase 5: Custom Presets
@@ -198,8 +202,10 @@ TOML file (~/.config/ai-vid-editor/config.toml)
 ### Config File Locations
 
 1. `./ai-vid-editor.toml` (project-local, highest priority)
-2. `~/.config/ai-vid-editor/config.toml` (user-global)
-3. `--config <path>` (explicit)
+2. `~/.config/ai-vid-editor/config.toml` (user-global, **auto-loaded**)
+3. `--config <path>` (explicit, overrides both)
+
+The global config (`~/.config/ai-vid-editor/config.toml`) is loaded automatically by both CLI and GUI — no `--config` flag needed. The `[[paths.watch_folders]]` section is shared between both modes.
 
 ---
 

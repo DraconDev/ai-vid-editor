@@ -34,7 +34,7 @@ cp "target/release/ai-vid-editor" "$DIST_DIR/bin/"
 cp assets/icon.svg assets/ai-vid-editor.desktop "$DIST_DIR/assets/"
 
 info "Bundling docs"
-cp README.md docs/customer-facing.md docs/release-locations.md "$DIST_DIR/docs/"
+cp README.md CHANGELOG.md docs/customer-facing.md docs/release-locations.md "$DIST_DIR/docs/"
 cp install.sh "$DIST_DIR/"
 
 info "Creating archive $ARCHIVE"
