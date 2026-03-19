@@ -116,12 +116,9 @@ pub fn export_youtube_chapters(transcript: &[TranscriptSegment], output_path: &P
             // Time to start a new chapter
             if !chapter_texts.is_empty() {
                 // Use first meaningful text as chapter title (first 50 chars)
-                let title = chapter_texts.join(" ").trim();
-                let title = if title.len() > 50 {
-                    &title[..50]
-                } else {
-                    title
-                };
+                let joined = chapter_texts.join(" ");
+                let title = joined.trim();
+                let title = if title.len() > 50 { &title[..50] } else { title };
                 let title = title.replace('\n', " ").replace('\r', "");
                 chapters.push_str(&format!(
                     "{} {}\n",
@@ -129,6 +126,28 @@ pub fn export_youtube_chapters(transcript: &[TranscriptSegment], output_path: &P
                     title
                 ));
             }
+            chapter_start = seg.start;
+            chapter_texts.clear();
+        }
+        // Collect non-empty text
+        let text = seg.text.trim();
+        if !text.is_empty() && text != "[No speech detected]" {
+            chapter_texts.push(text.to_string());
+        }
+    }
+
+    // Don't forget the last chapter
+    if !chapter_texts.is_empty() {
+        let joined = chapter_texts.join(" ");
+        let title = joined.trim();
+        let title = if title.len() > 50 { &title[..50] } else { title };
+        let title = title.replace('\n', " ").replace('\r', "");
+        chapters.push_str(&format!(
+            "{} {}\n",
+            format_youtube_time(chapter_start),
+            title
+        ));
+    }
             chapter_start = seg.start;
             chapter_texts.clear();
         }
