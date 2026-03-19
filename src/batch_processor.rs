@@ -434,8 +434,9 @@ fn export_additional_files(
         }
     }
 
-    if config.export.clips {
-        if let Some(ref t) = transcript {
+    if config.export.clips
+        && let Some(ref t) = transcript
+    {
             let clips_output_dir = base_path.parent().unwrap_or_else(|| Path::new("."));
             let clip_pattern = format!(
                 "{}_clip",
@@ -457,7 +458,6 @@ fn export_additional_files(
                     warn!(error = %e, "Failed to extract highlight clips");
                 }
             }
-        }
     }
 
     if config.export.fcpxml {
@@ -500,7 +500,8 @@ fn generate_styled_captions(transcript: &[TranscriptSegment], output_path: &Path
         }
         let start = format_ass_time(seg.start);
         let end = format_ass_time(seg.end);
-        // Escape text for ASS format
+        // Escape text for ASS format (replace(['\\', '\n'], "\\N") not available in stable Rust)
+        #[allow(clippy::collapsible_str_replace)]
         let escaped = text
             .replace('\\', "\\N")
             .replace('\n', "\\N")

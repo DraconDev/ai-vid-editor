@@ -149,8 +149,10 @@ The GUI provides a visual interface for managing watch folders and settings.
 
 | Flag | Description |
 |------|-------------|
-| `--export-srt` | Generate SRT subtitles |
-| `--export-chapters` | Generate YouTube chapters |
+| `--export-srt` | Generate SRT subtitles (Whisper transcription) |
+| `--export-captions` | Burn styled subtitles into video |
+| `--export-chapters` | Generate YouTube chapters (from Whisper) |
+| `--export-clips` | Extract highlight clips for Shorts/Reels |
 | `--export-fcpxml` | Generate FCPXML |
 | `--export-edl` | Generate EDL |
 
@@ -159,8 +161,8 @@ The GUI provides a visual interface for managing watch folders and settings.
 | Preset | Description |
 |--------|-------------|
 | `youtube` | Cut silences, enhance audio (two-pass loudnorm + gentle EQ), export chapters + FCPXML |
-| `shorts` | Speedup silences (3x), enhance audio, tight padding |
-| `podcast` | Cut silences, enhance audio (-16 LUFS), export SRT |
+| `shorts` | Speedup silences (3x), enhance audio, extract highlight clips |
+| `podcast` | Cut silences, enhance audio (-16 LUFS), export SRT + styled captions |
 | `minimal` | Just silence detection, no enhancement |
 
 ## Configuration

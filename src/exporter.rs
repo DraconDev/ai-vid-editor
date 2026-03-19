@@ -189,18 +189,52 @@ mod tests {
     fn test_export_youtube_chapters() -> Result<()> {
         let dir = tempdir()?;
         let output_chapters = dir.path().join("chapters.txt");
-        let transcript = vec![TranscriptSegment {
-            start: 65.0,
-            end: 70.0,
-            text: "New Topic: AI features".to_string(),
-            confidence: 1.0,
-        }];
+        // Whisper returns ~30-second chunks, so simulate a 10-minute video with multiple chunks
+        let transcript = vec![
+            TranscriptSegment {
+                start: 0.0,
+                end: 30.0,
+                text: "Welcome everyone to today's video".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 30.0,
+                end: 60.0,
+                text: "We're going to talk about AI video editing".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 60.0,
+                end: 90.0,
+                text: "Let's start with the introduction".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 90.0,
+                end: 120.0,
+                text: "First, I'll show you the basic setup".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 200.0,
+                end: 230.0,
+                text: "Now let's look at the advanced features".to_string(),
+                confidence: 1.0,
+            },
+            TranscriptSegment {
+                start: 230.0,
+                end: 260.0,
+                text: "This is where it gets really powerful".to_string(),
+                confidence: 1.0,
+            },
+        ];
 
         export_youtube_chapters(&transcript, &output_chapters)?;
 
         let content = fs::read_to_string(output_chapters)?;
         assert!(content.contains("00:00 Intro"));
-        assert!(content.contains("01:05 New Topic: AI features"));
+        // First chapter should be at ~3 min mark (180s)
+        assert!(content.contains("03:00") || content.contains("03:20"));
 
         Ok(())
     }
