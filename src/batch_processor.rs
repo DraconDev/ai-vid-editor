@@ -596,7 +596,6 @@ fn extract_highlight_clips(
 
     let mut clip_times: Vec<(f32, f32)> = Vec::new();
     for &(start, end, _) in segment_energy.iter().take(clip_count as usize) {
-        let duration = end - start;
         // Expand segment to reasonable clip duration
         let clip_start = (start - 2.0).max(0.0);
         let clip_end = (end + 2.0).min(
