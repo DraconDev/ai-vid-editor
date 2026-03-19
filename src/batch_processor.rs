@@ -9,7 +9,7 @@ use crate::config::Config;
 use crate::editor::calculate_keep_segments;
 use crate::editor::VideoEditor;
 use crate::exporter;
-use crate::stt_analyzer::{CandleSttAnalyzer, TranscriptSegment};
+use crate::stt_analyzer::{CandleSttAnalyzer, TranscriptSegment, VideoSttAnalyzer};
 use crate::utils::find_video_files;
 
 #[derive(Debug, Clone)]
@@ -391,7 +391,7 @@ where
     });
 }
 
-/// Export additional files (SRT, chapters, FCPXML, EDL) based on config
+/// Export additional files (SRT, chapters, FCPXML, EDL, clips) based on config
 fn export_additional_files(
     input_file: &Path,
     output_file: &Path,
@@ -400,22 +400,90 @@ fn export_additional_files(
 ) -> Result<()> {
     let base_path = output_file.with_extension("");
 
+    // Run transcription if we need transcript for any export
+    let transcript = if config.export.subtitles
+        || config.export.chapters
+        || config.export.captions
+        || config.export.clips
+    {
+        match CandleSttAnalyzer.transcribe(output_file) {
+            Ok(t) => {
+                info!(segments = t.len(), "Transcription complete");
+                Some(t)
+            }
+            Err(e) => {
+                warn!(error = %e, "Transcription failed");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     if config.export.subtitles {
         let srt_path = format!("{}.srt", base_path.display());
         debug!(path = %srt_path, "Exporting SRT subtitles");
-        // TODO: Need actual transcript for subtitles
-        // For now, create placeholder
-        fs::write(
-            &srt_path,
-            "# Subtitles will be generated when STT is complete\n",
-        )?;
+        if let Some(ref t) = transcript {
+            exporter::export_srt(t, Path::new(&srt_path))?;
+        } else {
+            fs::write(&srt_path, "# Transcription failed\n")?;
+        }
     }
 
     if config.export.chapters {
         let chapters_path = format!("{}.chapters.txt", base_path.display());
         debug!(path = %chapters_path, "Exporting YouTube chapters");
-        // TODO: Need actual transcript for chapters
-        fs::write(&chapters_path, "00:00 Intro\n")?;
+        if let Some(ref t) = transcript {
+            exporter::export_youtube_chapters(t, Path::new(&chapters_path))?;
+        } else {
+            fs::write(&chapters_path, "00:00 Intro\n")?;
+        }
+    }
+
+    if config.export.captions {
+        let srt_path = format!("{}.srt", base_path.display());
+        let ass_path = format!("{}.ass", base_path.display());
+        debug!(path = %ass_path, "Generating styled captions");
+        // Generate styled ASS captions from SRT
+        if let Some(ref t) = transcript {
+            if let Err(e) = generate_styled_captions(t, Path::new(&ass_path)) {
+                warn!(error = %e, "Failed to generate styled captions, falling back to SRT");
+            } else {
+                // Burn captions into video
+                info!("Burning captions into video");
+                burn_subtitles_into_video(
+                    output_file,
+                    &ass_path,
+                    &output_file.with_extension("captioned.mp4"),
+                )?;
+            }
+        }
+    }
+
+    if config.export.clips {
+        if let Some(ref t) = transcript {
+            let clips_output_dir = base_path.parent().unwrap_or_else(|| Path::new("."));
+            let clip_pattern = format!(
+                "{}_clip",
+                base_path.file_stem().unwrap_or_default().to_string_lossy()
+            );
+            match extract_highlight_clips(
+                output_file,
+                t,
+                config.export.clip_count,
+                config.export.clip_min_duration,
+                config.export.clip_max_duration,
+                clips_output_dir,
+                &clip_pattern,
+            ) {
+                Ok(clip_paths) => {
+                    info!(count = clip_paths.len(), "Extracted highlight clips");
+                }
+                Err(e) => {
+                    warn!(error = %e, "Failed to extract highlight clips");
+                }
+            }
+        }
     }
 
     if config.export.fcpxml {
@@ -431,6 +499,173 @@ fn export_additional_files(
     }
 
     Ok(())
+}
+
+/// Generate styled ASS subtitle file from transcript
+fn generate_styled_captions(transcript: &[TranscriptSegment], output_path: &Path) -> Result<()> {
+    let mut ass = String::new();
+    ass.push_str("[Script Info]\n");
+    ass.push_str("Title: Generated Captions\n");
+    ass.push_str("ScriptType: v4.00+\n");
+    ass.push_str("Collisions: Normal\n");
+    ass.push_str("PlayDepth: 0\n\n");
+
+    ass.push_str("[V4+ Styles]\n");
+    ass.push_str("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n");
+    ass.push_str("Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,2,2,10,10,30,1\n\n");
+
+    ass.push_str("[Events]\n");
+    ass.push_str(
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n",
+    );
+
+    for seg in transcript {
+        let text = seg.text.trim();
+        if text.is_empty() || text == "[No speech detected]" {
+            continue;
+        }
+        let start = format_ass_time(seg.start);
+        let end = format_ass_time(seg.end);
+        // Escape text for ASS format
+        let escaped = text
+            .replace('\\', "\\N")
+            .replace('\n', "\\N")
+            .replace('\r', "");
+        ass.push_str(&format!(
+            "Dialogue: 0,{},{},Default,,0,0,0,,{}\n",
+            start, end, escaped
+        ));
+    }
+
+    fs::write(output_path, ass)?;
+    Ok(())
+}
+
+fn format_ass_time(seconds: f32) -> String {
+    let hours = (seconds / 3600.0) as u32;
+    let minutes = ((seconds % 3600.0) / 60.0) as u32;
+    let secs = (seconds % 60.0) as u32;
+    let centisecs = ((seconds % 1.0) * 100.0) as u32;
+    format!("{}:{:02}:{:02}.{:02}", hours, minutes, secs, centisecs)
+}
+
+/// Burn subtitle file into video using FFmpeg
+fn burn_subtitles_into_video(
+    video_path: &Path,
+    subtitle_path: &Path,
+    output_path: &Path,
+) -> Result<()> {
+    let status = std::process::Command::new("ffmpeg")
+        .args([
+            "-i",
+            video_path.to_str().context("invalid video path")?,
+            "-vf",
+            &format!(
+                "subtitles='{}'",
+                subtitle_path.to_str().context("invalid subtitle path")?
+            ),
+            "-c:a",
+            "copy",
+            "-y",
+            output_path.to_str().context("invalid output path")?,
+        ])
+        .status()
+        .context("failed to burn subtitles")?;
+
+    if !status.success() {
+        anyhow::bail!("ffmpeg subtitle burn failed with status: {}", status);
+    }
+
+    // Replace original with captioned version
+    if output_path.exists() {
+        fs::rename(output_path, video_path)?;
+    }
+    Ok(())
+}
+
+/// Extract highlight clips based on audio energy peaks in transcript
+fn extract_highlight_clips(
+    video_path: &Path,
+    transcript: &[TranscriptSegment],
+    clip_count: u32,
+    min_duration: f32,
+    max_duration: f32,
+    output_dir: &Path,
+    clip_pattern: &str,
+) -> Result<Vec<PathBuf>> {
+    use std::process::Command as Proc;
+
+    // Analyze audio energy per transcript segment using ffprobe
+    let mut segment_energy: Vec<(f32, f32, f32)> = Vec::new(); // (start, end, energy)
+
+    for seg in transcript {
+        let text = seg.text.trim();
+        if text.is_empty() || text == "[No speech detected]" {
+            continue;
+        }
+
+        // Estimate energy from segment duration and word count (proxy for speech energy)
+        // Longer segments with more words = more content = higher energy
+        let duration = seg.end - seg.start;
+        let word_count = text.split_whitespace().count() as f32;
+        let energy = word_count / duration.max(1.0); // words per second
+
+        segment_energy.push((seg.start, seg.end, energy));
+    }
+
+    if segment_energy.is_empty() {
+        return Ok(vec![]);
+    }
+
+    // Find peaks: sort by energy and take top N segments
+    segment_energy.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+    let mut clip_times: Vec<(f32, f32)> = Vec::new();
+    for &(start, end, _) in segment_energy.iter().take(clip_count as usize) {
+        let duration = end - start;
+        // Expand segment to reasonable clip duration
+        let clip_start = (start - 2.0).max(0.0);
+        let clip_end = (end + 2.0).min(
+            segment_energy
+                .iter()
+                .map(|(_, e, _)| *e)
+                .fold(0.0f32, f32::max),
+        );
+        let clip_duration = clip_end - clip_start;
+
+        if clip_duration >= min_duration && clip_duration <= max_duration {
+            clip_times.push((clip_start, clip_end));
+        }
+    }
+
+    // Extract clips using FFmpeg
+    let mut clip_paths = Vec::new();
+    for (i, (clip_start, clip_end)) in clip_times.iter().enumerate() {
+        let clip_path = output_dir.join(format!("{}_{}.mp4", clip_pattern, i + 1));
+
+        let duration = clip_end - clip_start;
+        let status = Proc::new("ffmpeg")
+            .args([
+                "-i",
+                video_path.to_str().context("invalid path")?,
+                "-ss",
+                &format!("{}", clip_start),
+                "-t",
+                &format!("{}", duration),
+                "-c",
+                "copy",
+                "-y",
+                clip_path.to_str().context("invalid output path")?,
+            ])
+            .status()
+            .context("failed to extract clip")?;
+
+        if status.success() && clip_path.exists() {
+            clip_paths.push(clip_path);
+        }
+    }
+
+    Ok(clip_paths)
 }
 
 pub fn process_batch_dir<A, E, D>(
