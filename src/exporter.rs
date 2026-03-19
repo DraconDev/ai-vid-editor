@@ -105,17 +105,54 @@ pub fn export_youtube_chapters(transcript: &[TranscriptSegment], output_path: &P
     let mut chapters = String::new();
     chapters.push_str("00:00 Intro\n");
 
-    // Simplistic logic: Every 5 minutes or significant topic change (TODO)
-    // For now, let's just generate a few placeholders based on transcript
+    // Group transcript segments into chapters every ~3 minutes
+    // Whisper returns ~30-second chunks, so we group by ~6 segments per chapter
+    let chapter_interval_secs = 180.0; // 3 minutes
+    let mut chapter_start = 0.0;
+    let mut chapter_texts: Vec<String> = Vec::new();
+
     for seg in transcript {
-        if seg.text.to_lowercase().contains("chapter") || seg.text.to_lowercase().contains("topic")
-        {
-            chapters.push_str(&format!(
-                "{} {}\n",
-                format_youtube_time(seg.start),
-                seg.text.trim()
-            ));
+        if seg.start >= chapter_start + chapter_interval_secs {
+            // Time to start a new chapter
+            if !chapter_texts.is_empty() {
+                // Use first meaningful text as chapter title (first 50 chars)
+                let title = chapter_texts.join(" ").trim();
+                let title = if title.len() > 50 {
+                    &title[..50]
+                } else {
+                    title
+                };
+                let title = title.replace('\n', " ").replace('\r', "");
+                chapters.push_str(&format!(
+                    "{} {}\n",
+                    format_youtube_time(chapter_start),
+                    title
+                ));
+            }
+            chapter_start = seg.start;
+            chapter_texts.clear();
         }
+        // Collect non-empty text
+        let text = seg.text.trim();
+        if !text.is_empty() && text != "[No speech detected]" {
+            chapter_texts.push(text.to_string());
+        }
+    }
+
+    // Don't forget the last chapter
+    if !chapter_texts.is_empty() {
+        let title = chapter_texts.join(" ").trim();
+        let title = if title.len() > 50 {
+            &title[..50]
+        } else {
+            title
+        };
+        let title = title.replace('\n', " ").replace('\r', "");
+        chapters.push_str(&format!(
+            "{} {}\n",
+            format_youtube_time(chapter_start),
+            title
+        ));
     }
 
     fs::write(output_path, chapters).context("failed to write chapters file")?;

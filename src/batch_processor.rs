@@ -6,9 +6,10 @@ use tracing::{debug, info, warn};
 use crate::analyzer::ProcessedSegment;
 use crate::analyzer::VideoAnalyzer;
 use crate::config::Config;
-use crate::editor::VideoEditor;
 use crate::editor::calculate_keep_segments;
+use crate::editor::VideoEditor;
 use crate::exporter;
+use crate::stt_analyzer::{CandleSttAnalyzer, TranscriptSegment};
 use crate::utils::find_video_files;
 
 #[derive(Debug, Clone)]
@@ -228,14 +229,19 @@ where
 
     report_progress(&mut progress, 0.15, "Trimming video");
     editor
-        .trim_video_with_progress(&input_file, &trimmed_file, &processed_segments, &mut |value| {
-            let percent = 0.15 + (value * 0.6);
-            report_progress(
-                &mut progress,
-                percent,
-                format!("Trimming video ({:.0}%)", value * 100.0),
-            );
-        })
+        .trim_video_with_progress(
+            &input_file,
+            &trimmed_file,
+            &processed_segments,
+            &mut |value| {
+                let percent = 0.15 + (value * 0.6);
+                report_progress(
+                    &mut progress,
+                    percent,
+                    format!("Trimming video ({:.0}%)", value * 100.0),
+                );
+            },
+        )
         .context("Failed to trim video")?;
     debug!(file = ?trimmed_file, "Trimmed video saved");
 
@@ -253,6 +259,28 @@ where
         enhanced
     } else {
         trimmed_file
+    };
+
+    // Run STT on the enhanced/trimmed audio (before music mixing) for clean transcription
+    let transcript = if config.export.subtitles
+        || config.export.chapters
+        || config.export.captions
+        || config.export.clips
+    {
+        report_progress(&mut progress, 0.79, "Transcribing audio");
+        info!("Transcribing audio with Whisper");
+        match CandleSttAnalyzer.transcribe(&enhanced_file) {
+            Ok(t) => {
+                debug!(segments = t.len(), "Transcription complete");
+                Some(t)
+            }
+            Err(e) => {
+                warn!(error = %e, "Transcription failed, exports requiring transcript will be skipped");
+                None
+            }
+        }
+    } else {
+        None
     };
 
     let with_music_file = if let Some(ref music_path) = config.audio.music_file {

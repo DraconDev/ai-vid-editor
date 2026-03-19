@@ -43,11 +43,12 @@ impl Preset {
                 config.export.fcpxml = true;
             }
             Preset::Shorts => {
-                // Short-form: speedup silences, enhance audio, tighter cuts
+                // Short-form: speedup silences, enhance audio, extract clips
                 config.silence.mode = SilenceMode::Speedup;
                 config.silence.speedup_factor = 3.0;
                 config.silence.padding = 0.05; // Tighter for fast-paced content
                 config.audio.enhance = true;
+                config.export.clips = true;
             }
             Preset::Podcast => {
                 // Podcast: cut silences, enhance audio, generate subtitles
@@ -56,6 +57,7 @@ impl Preset {
                 config.audio.enhance = true;
                 config.audio.target_lufs = -16.0; // Podcast standard
                 config.export.subtitles = true;
+                config.export.captions = true;
             }
             Preset::Minimal => {
                 // Just silence detection, nothing else
@@ -228,13 +230,33 @@ impl Default for AudioConfig {
 /// Configuration for export options
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ExportConfig {
-    /// Generate SRT subtitles
+    /// Generate SRT subtitles (raw text with timestamps)
     #[serde(default)]
     pub subtitles: bool,
+
+    /// Burn styled subtitles into the video
+    #[serde(default)]
+    pub captions: bool,
 
     /// Generate YouTube chapters
     #[serde(default)]
     pub chapters: bool,
+
+    /// Extract highlight clips for Shorts/Reels
+    #[serde(default)]
+    pub clips: bool,
+
+    /// Number of clips to extract
+    #[serde(default = "default_clip_count")]
+    pub clip_count: u32,
+
+    /// Minimum clip duration in seconds
+    #[serde(default = "default_clip_min_duration")]
+    pub clip_min_duration: f32,
+
+    /// Maximum clip duration in seconds
+    #[serde(default = "default_clip_max_duration")]
+    pub clip_max_duration: f32,
 
     /// Generate FCPXML for DaVinci/Premiere
     #[serde(default)]
@@ -243,6 +265,16 @@ pub struct ExportConfig {
     /// Generate EDL
     #[serde(default)]
     pub edl: bool,
+}
+
+fn default_clip_count() -> u32 {
+    3
+}
+fn default_clip_min_duration() -> f32 {
+    15.0
+}
+fn default_clip_max_duration() -> f32 {
+    60.0
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
