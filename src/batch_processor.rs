@@ -441,21 +441,17 @@ fn export_additional_files(
     }
 
     if config.export.captions {
-        let srt_path = format!("{}.srt", base_path.display());
-        let ass_path = format!("{}.ass", base_path.display());
-        debug!(path = %ass_path, "Generating styled captions");
-        // Generate styled ASS captions from SRT
+        let ass_path = PathBuf::from(format!("{}.ass", base_path.display()));
+        debug!(path = %ass_path.display(), "Generating styled captions");
+        // Generate styled ASS captions from transcript
         if let Some(ref t) = transcript {
-            if let Err(e) = generate_styled_captions(t, Path::new(&ass_path)) {
-                warn!(error = %e, "Failed to generate styled captions, falling back to SRT");
+            if let Err(e) = generate_styled_captions(t, &ass_path) {
+                warn!(error = %e, "Failed to generate styled captions");
             } else {
                 // Burn captions into video
                 info!("Burning captions into video");
-                burn_subtitles_into_video(
-                    output_file,
-                    &ass_path,
-                    &output_file.with_extension("captioned.mp4"),
-                )?;
+                let captioned_path = output_file.with_extension("captioned.mp4");
+                burn_subtitles_into_video(output_file, &ass_path, &captioned_path)?;
             }
         }
     }
