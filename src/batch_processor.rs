@@ -261,28 +261,6 @@ where
         trimmed_file
     };
 
-    // Run STT on the enhanced/trimmed audio (before music mixing) for clean transcription
-    let transcript = if config.export.subtitles
-        || config.export.chapters
-        || config.export.captions
-        || config.export.clips
-    {
-        report_progress(&mut progress, 0.79, "Transcribing audio");
-        info!("Transcribing audio with Whisper");
-        match CandleSttAnalyzer.transcribe(&enhanced_file) {
-            Ok(t) => {
-                debug!(segments = t.len(), "Transcription complete");
-                Some(t)
-            }
-            Err(e) => {
-                warn!(error = %e, "Transcription failed, exports requiring transcript will be skipped");
-                None
-            }
-        }
-    } else {
-        None
-    };
-
     let with_music_file = if let Some(ref music_path) = config.audio.music_file {
         let with_music = output_file.with_extension("music.mp4");
         report_progress(&mut progress, 0.84, "Mixing background music");
