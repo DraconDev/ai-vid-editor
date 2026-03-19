@@ -1553,6 +1553,10 @@ impl App {
             color_correct_val,
             reframe_val,
             blur_val,
+            subtitles_val,
+            chapters_val,
+            captions_val,
+            clips_val,
             threshold_val,
             lufs_val,
         ) = {
@@ -1564,11 +1568,15 @@ impl App {
                     folder.settings.color_correct.unwrap_or(false),
                     folder.settings.reframe.unwrap_or(false),
                     folder.settings.blur_background.unwrap_or(false),
+                    folder.settings.subtitles.unwrap_or(false),
+                    folder.settings.chapters.unwrap_or(false),
+                    folder.settings.captions.unwrap_or(false),
+                    folder.settings.clips.unwrap_or(false),
                     folder.settings.silence_threshold_db.unwrap_or(-30.0),
                     folder.settings.target_lufs.unwrap_or(-14.0),
                 )
             } else {
-                (true, true, false, false, false, false, -30.0, -14.0)
+                (true, true, false, false, false, false, false, false, false, false, -30.0, -14.0)
             }
         };
 
@@ -1676,6 +1684,67 @@ impl App {
             ) && let Some(folder) = self.state.folders.get_mut(folder_idx)
             {
                 folder.settings.blur_background = Some(blur);
+                needs_save = true;
+            }
+
+            ui.add_space(12.0);
+
+            ui.label(
+                RichText::new("Exports")
+                    .size(16.0)
+                    .color(ACCENT_PRIMARY)
+                    .strong(),
+            );
+            ui.add_space(10.0);
+
+            let mut subtitles = subtitles_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "SRT Subtitles",
+                "Generate .srt subtitle file from transcript.",
+                &mut subtitles,
+            ) && let Some(folder) = self.state.folders.get_mut(folder_idx)
+            {
+                folder.settings.subtitles = Some(subtitles);
+                needs_save = true;
+            }
+            ui.add_space(6.0);
+
+            let mut chapters = chapters_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "YouTube Chapters",
+                "Generate timestamped chapters from transcript.",
+                &mut chapters,
+            ) && let Some(folder) = self.state.folders.get_mut(folder_idx)
+            {
+                folder.settings.chapters = Some(chapters);
+                needs_save = true;
+            }
+            ui.add_space(6.0);
+
+            let mut captions = captions_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Burn Captions",
+                "Embed styled subtitles directly in video.",
+                &mut captions,
+            ) && let Some(folder) = self.state.folders.get_mut(folder_idx)
+            {
+                folder.settings.captions = Some(captions);
+                needs_save = true;
+            }
+            ui.add_space(6.0);
+
+            let mut clips = clips_val;
+            if Self::draw_settings_toggle(
+                ui,
+                "Extract Clips",
+                "Pull highlight clips for Shorts/Reels.",
+                &mut clips,
+            ) && let Some(folder) = self.state.folders.get_mut(folder_idx)
+            {
+                folder.settings.clips = Some(clips);
                 needs_save = true;
             }
 
