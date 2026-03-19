@@ -327,6 +327,10 @@ impl FolderSettings {
             && self.color_correct.is_none()
             && self.reframe.is_none()
             && self.blur_background.is_none()
+            && self.subtitles.is_none()
+            && self.chapters.is_none()
+            && self.captions.is_none()
+            && self.clips.is_none()
     }
 }
 
