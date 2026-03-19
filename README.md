@@ -2,6 +2,8 @@
 
 A command-line and GUI tool for automated video editing using AI. Designed for content creators who want to drop in raw footage and get polished results without manual editing.
 
+![AI Video Editor GUI](assets/Screenshot_20260319_124018.png)
+
 ## Quick Start
 
 **GUI** (default when launched from desktop):
