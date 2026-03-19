@@ -228,7 +228,7 @@ impl Default for AudioConfig {
 }
 
 /// Configuration for export options
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExportConfig {
     /// Generate SRT subtitles (raw text with timestamps)
     #[serde(default)]
@@ -265,6 +265,22 @@ pub struct ExportConfig {
     /// Generate EDL
     #[serde(default)]
     pub edl: bool,
+}
+
+impl Default for ExportConfig {
+    fn default() -> Self {
+        Self {
+            subtitles: false,
+            captions: false,
+            chapters: false,
+            clips: false,
+            clip_count: default_clip_count(),
+            clip_min_duration: default_clip_min_duration(),
+            clip_max_duration: default_clip_max_duration(),
+            fcpxml: false,
+            edl: false,
+        }
+    }
 }
 
 fn default_clip_count() -> u32 {
