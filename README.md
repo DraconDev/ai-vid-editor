@@ -209,10 +209,15 @@ reframe = false
 blur_background = false
 
 [export]
-subtitles = false
-chapters = false
-fcpxml = false
-edl = false
+subtitles = false       # Generate SRT subtitles (Whisper transcription)
+chapters = false        # Generate YouTube chapters (from transcript)
+fcpxml = false          # Generate Final Cut Pro XML
+edl = false             # Generate Edit Decision List
+captions = false        # Burn styled subtitles into video
+clips = false           # Extract highlight clips for Shorts/Reels
+clip_count = 3          # Number of clips to extract
+clip_min_duration = 15  # Minimum clip duration (seconds)
+clip_max_duration = 60  # Maximum clip duration (seconds)
 
 [watch]
 enabled = false
