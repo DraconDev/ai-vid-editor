@@ -254,18 +254,16 @@ fn main() -> Result<()> {
     // This must happen before the TTY/GUI check
     let preloaded_config = {
         let mut cfg = Config::default();
-        if let Some(ref config_path) = cli.config {
-            if config_path.exists() {
-                if let Ok(file_config) = Config::from_file(config_path) {
-                    cfg = cfg.merge(file_config);
-                }
-            }
-        } else if let Some(default_path) = Config::default_config_path() {
-            if default_path.exists() {
-                if let Ok(file_config) = Config::from_file(&default_path) {
-                    cfg = cfg.merge(file_config);
-                }
-            }
+        if let Some(ref config_path) = cli.config
+            && config_path.exists()
+            && let Ok(file_config) = Config::from_file(config_path)
+        {
+            cfg = cfg.merge(file_config);
+        } else if let Some(default_path) = Config::default_config_path()
+            && default_path.exists()
+            && let Ok(file_config) = Config::from_file(&default_path)
+        {
+            cfg = cfg.merge(file_config);
         }
         cfg
     };
@@ -576,7 +574,7 @@ fn run_watch_mode(
         heartbeat += 1;
 
         // Print a heartbeat every ~30s so user knows we're still watching
-        if heartbeat % 6 == 0 {
+        if heartbeat.is_multiple_of(6) {
             println!("[{}] Watching {:?} for new files...", timestamp(), watch_dir);
         }
 
@@ -733,7 +731,7 @@ fn run_multi_watch_mode(config: &Config, cli: &Cli) -> Result<()> {
         heartbeat += 1;
 
         // Print a heartbeat every ~30s so user knows we're still watching
-        if heartbeat % 6 == 0 {
+        if heartbeat.is_multiple_of(6) {
             println!("[{}] Watching {} folder(s) for new files...", timestamp(), enabled_folders.len());
         }
 

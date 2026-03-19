@@ -604,14 +604,6 @@ fn concat_chunk_files(chunk_files: &[PathBuf], output: &Path) -> Result<()> {
     Ok(())
 }
 
-fn generate_enhance_audio_filter(target_lufs: f32) -> String {
-    // Gentle, wide EQ boost for voice clarity + two-pass-ready loudnorm
-    // highpass removes rumble below speech range, EQ adds presence without harshness
-    format!(
-        "highpass=f=80,lowpass=f=12000,equalizer=f=1500:t=q:w=3:g=1.5,loudnorm=I={target_lufs}:TP=-1.5:LRA=11"
-    )
-}
-
 struct LoudnormStats {
     i: String,
     tp: String,
@@ -633,12 +625,12 @@ fn parse_loudnorm_stats(stderr: &str) -> Option<LoudnormStats> {
         let after = &json_str[idx + pattern.len()..];
         let after = after.trim();
         // Handle quoted strings and numbers
-        if after.starts_with('"') {
-            let end = after[1..].find('"')?;
-            Some(after[1..=end].to_string())
+        if let Some(stripped) = after.strip_prefix('"') {
+            let end = stripped.find('"')?;
+            Some(stripped[..=end].to_string())
         } else {
             let end = after
-                .find(|c: char| c == ',' || c == '\n' || c == '}')
+                .find(|c| [',', '\n', '}'].contains(&c))
                 .unwrap_or(after.len());
             Some(after[..end].trim().to_string())
         }
@@ -831,13 +823,5 @@ mod tests {
         assert!(filter.contains("between(t,1,2)"));
         assert!(filter.contains("volume='if(between(t,1,2),0.2,1.0)'"));
         assert!(filter.contains("amix=inputs=2"));
-    }
-
-    #[test]
-    fn test_generate_enhance_audio_filter_uses_target_lufs_last() {
-        let filter = generate_enhance_audio_filter(-16.0);
-        assert!(filter.starts_with("highpass="));
-        assert!(filter.contains("loudnorm=I=-16"));
-        assert!(filter.contains("TP=-1.5"));
     }
 }

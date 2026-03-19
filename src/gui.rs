@@ -712,11 +712,11 @@ fn build_folder_config(config: &Config, folder: &FolderState) -> Config {
         config.clone()
     };
 
-    if let Some(remove_silence) = folder.settings.remove_silence {
-        if !remove_silence {
-            merged.silence.mode = SilenceMode::Cut;
-            merged.silence.min_duration = f32::MAX;
-        }
+    if let Some(remove_silence) = folder.settings.remove_silence
+        && !remove_silence
+    {
+        merged.silence.mode = SilenceMode::Cut;
+        merged.silence.min_duration = f32::MAX;
     }
     if let Some(threshold) = folder.settings.silence_threshold_db {
         merged.silence.threshold_db = threshold;
@@ -1183,10 +1183,10 @@ impl App {
         ui.add_space(12.0);
 
         ui.horizontal(|ui| {
-            if ui.add(button_secondary("📁 Choose Folder...")).clicked() {
-                if let Some(path) = FileDialog::new().pick_folder() {
-                    self.state.setup_folder = path;
-                }
+            if ui.add(button_secondary("📁 Choose Folder...")).clicked()
+                && let Some(path) = FileDialog::new().pick_folder()
+            {
+                self.state.setup_folder = path;
             }
         });
 
