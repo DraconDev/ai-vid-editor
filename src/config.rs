@@ -950,6 +950,9 @@ enhance = false
         assert_eq!(config.silence.speedup_factor, 3.0);
         assert_eq!(config.silence.padding, 0.05);
         assert!(config.audio.enhance);
+        assert!(config.export.clips);
+        assert!(!config.export.captions);
+        assert!(!config.export.subtitles);
     }
 
     #[test]
@@ -960,6 +963,8 @@ enhance = false
         assert!(config.audio.enhance);
         assert_eq!(config.audio.target_lufs, -16.0);
         assert!(config.export.subtitles);
+        assert!(config.export.captions);
+        assert!(!config.export.clips);
     }
 
     #[test]
@@ -967,6 +972,23 @@ enhance = false
         let config = Preset::Minimal.to_config();
         assert_eq!(config.silence.mode, SilenceMode::Cut);
         assert!(!config.audio.enhance);
+        assert!(!config.export.clips);
+        assert!(!config.export.captions);
+        assert!(!config.export.subtitles);
+    }
+
+    #[test]
+    fn test_export_config_defaults() {
+        let config = Config::default();
+        assert!(!config.export.subtitles);
+        assert!(!config.export.chapters);
+        assert!(!config.export.captions);
+        assert!(!config.export.clips);
+        assert!(!config.export.fcpxml);
+        assert!(!config.export.edl);
+        assert_eq!(config.export.clip_count, 3);
+        assert_eq!(config.export.clip_min_duration, 15.0);
+        assert_eq!(config.export.clip_max_duration, 60.0);
     }
 
     #[test]
