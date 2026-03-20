@@ -43,7 +43,7 @@ cli = ["clap", "notify-rust"]
 gui = ["eframe", "egui", "rfd", "chrono", "notify-rust"]
 
 [dev-dependencies]
-tempfile = "3.25.0"
+tempfile = "3.26.0"
 
 [[bin]]
 name = "ai-vid-editor"
